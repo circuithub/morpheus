@@ -1,7 +1,7 @@
 {
   "name": "mecha",
   "version": "0.0.1",
-  "description": "3D solid modeling for electronic circuit boards",
+  "description": "3D solid modeling for electronic components and circuit boards",
   "homepage": "http://CircuitHub.com",
   "author": "Rehno Lindeque (http://rehno.lindeque.name)",
   "private": true,
