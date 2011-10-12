@@ -19,4 +19,4 @@ registerDOMEvents = () ->
 
 # Register UI controls events
 registerControlEvents = () ->
-
+  ($ '#compile').click controlsSourceCompile
