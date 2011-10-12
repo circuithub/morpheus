@@ -5,8 +5,18 @@ canvasInit = () ->
   windowResize()
 
 sceneInit = () ->
+  shaderDef =
+    type: 'shader',
+    id: 'main-shader',
+    shaders: [
+      stage: 'fragment',
+      code: ""
+    ]
+    vars: {}
+  (state.scene.findNode 'cube-transform').insert 'node', shaderDef
 
 controlsInit = () ->
+  
 
 # Start rendering as soon as possible
 canvasInit()

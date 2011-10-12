@@ -233,7 +233,21 @@
     return zoomLookAtNode(state.scene.findNode('main-lookAt'), zoomDistance);
   };
   keyDown = function(event) {};
-  controlsSourceCompile = function() {};
+  controlsSourceCompile = function() {
+    console.log("hello");
+    try {
+      return (state.scene.findNode('cube-transform')).set('shaders', [
+        {
+          stage: 'fragment',
+          code: compileGLSL(compileAST(($('#source-code')).val()))
+        }
+      ]);
+    } catch (error) {
+      if ((typeof console !== "undefined" && console !== null) && (console.log != null)) {
+        return console.log(error);
+      }
+    }
+  };
   registerDOMEvents = function() {
     state.viewport.domElement.addEventListener('mousedown', mouseDown, true);
     state.viewport.domElement.addEventListener('mouseup', mouseUp, true);
@@ -244,13 +258,27 @@
     return window.addEventListener('resize', windowResize, true);
   };
   registerControlEvents = function() {
-    return ($('#compile')).click(controlsSourceCompile);
+    return ($('#source-compile')).click(controlsSourceCompile);
   };
   sceneIdle = function() {};
   canvasInit = function() {
     return windowResize();
   };
-  sceneInit = function() {};
+  sceneInit = function() {
+    var shaderDef;
+    shaderDef = {
+      type: 'shader',
+      id: 'main-shader',
+      shaders: [
+        {
+          stage: 'fragment',
+          code: ""
+        }
+      ],
+      vars: {}
+    };
+    return (state.scene.findNode('cube-transform')).insert('node', shaderDef);
+  };
   controlsInit = function() {};
   canvasInit();
   sceneInit();
