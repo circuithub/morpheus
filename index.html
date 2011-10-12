@@ -21,7 +21,23 @@
     /* General styling */
     
     /* Application styling */
-    
+    #source-panel {
+      position: relative;
+      float: left;
+      width: 502px;
+      height: 512px;
+      margin: 0 10px;
+    }
+    #source-code {
+      display: block;
+      width: 100%;
+      height: 480px;
+      resize: none;
+    }
+    #source-compile {
+      position: absolute;
+      right: 0;
+    }
   </style>
 </head>
 <body>
@@ -31,6 +47,11 @@
   <div id='scenejsLog'></div>
 
   <div id='main-layout'>
+    <form id='source-panel'>
+      <textarea id='source-code' name='source-code' disabled='disabled'></textarea>
+      <span><input id='source-autocompile' name='source-autocompile' type='checkbox' disabled='disabled'><label for='source-autocompile'>Auto-compile</label></span>
+      <input id='source-compile' name='source-compile' type='button' value='Compile'>
+    </form>
     <div id='viewport'>
       <!-- -->
       <canvas id='scenejsCanvas' width='512' height='512'>
