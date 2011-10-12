@@ -2,7 +2,6 @@
 # Program state should not be manipulated outside events files
 
 controlsSourceCompile = () ->
-  console.log "hello"
   try
     (state.scene.findNode 'cube-transform').set 'shaders', [
         stage: 'fragment',
