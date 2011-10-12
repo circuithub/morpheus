@@ -1,0 +1,14 @@
+SceneJS-Boilerplate is hereby released into the public domain. You may use it
+in any way that you please. Once you create your own project, replace this file
+with your own LICENSE file and remove the licenses/ directory entirely.
+
+Please note, if for some strange reason (different laws for example) you wish
+to use SceneJS-Boilerplate under different terms you may also use any of the
+licenses provided in the licenses/ directory. Currently a GPL v2.0 and a MIT
+license is provided.
+
+Also note that SceneJS and JQuery, both of which are used in this project, each
+have their own licensing terms. SceneJS-Ext, on the other hand, has similar
+licensing terms to SceneJS-Boilerplate and is also released into the public
+domain.
+

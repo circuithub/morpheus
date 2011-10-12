@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<!--
+      Copyright header comes here
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Project Name</title>
+  <meta name='description' content=''>
+  <meta name='author' content='Your Name'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- Stylesheet -->
+  <style type='text/css' media='screen'>
+    /* Resets */
+    
+    /* Normalization (taken from http://necolas.github.com/normalize.css/ and a little bit from html5 boilerplate) */
+    
+    /* General styling */
+    
+    /* Application styling */
+    
+  </style>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='scenejsLog'></div>
+
+  <div id='main-layout'>
+    <div id='viewport'>
+      <!-- -->
+      <canvas id='scenejsCanvas' width='512' height='512'>
+        <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
+      </canvas>
+      <!-- -->
+    </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='static/lib/jquery/jquery-1.6.2.min.js'><\/script>")</script>
+  <!-- JQuery UI --
+  <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js'></script>
+  <script>window.jQuery.ui || document.write("<script src='static/lib/jquery/jquery-ui-1.8.15.custom.min.js'><\/script>")</script>
+  <!-- -->
+  <script src='static/lib/scenejs-2.0.0.0/scenejs.math.js'></script>
+  <script src='static/lib/scenejs-2.0.0.0/scenejs.math.extra.js'></script>
+  <!-- DEVELOPMENT -->
+  <script src='static/lib/scenejs-2.0.0.0/scenejs.js'></script>
+  <!-- PRODUCTION --
+  <script src='static/lib/scenejs-2.0.0.0/scenejs.min.js'></script>
+  <!-- -->
+  
+  <!-- Resources -->
+
+  <script src='static/models/cube.js'></script>
+
+  <!-- Application logic -->
+
+  <!-- DEVELOPMENT -->
+  <script src='static/lib/app.js'></script>
+  <!-- PRODUCTION --
+  <script src='static/lib/app.min.js'></script>
+  <!-- -->
+</body>
+</html>
