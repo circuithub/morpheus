@@ -1,15 +1,35 @@
 # Compile the abstract solid model tree into a GLSL string
 compileGLSL = (abstractSolidModel) ->
   '''
-  void main(void) {
-    gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-  }
-  '''
+  #ifdef GL_ES
+    precision highp float;
+  #endif
 
-
-###
-  '''
+  //attribute vec3 SCENEJS_aVertex;           // Model coordinates
+  uniform vec3 SCENEJS_uEye;                  // World-space eye position
+  varying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector
+  // attribute vec3 SCENEJS_aNormal;          // Normal vectors
+  // uniform   mat4 SCENEJS_uMNMatrix;        // Model normal matrix
+  // uniform   mat4 SCENEJS_uVNMatrix;        // View normal matrix
+  // varying   vec3 SCENEJS_vWorldNormal;     // Output world-space vertex normal
+  // varying   vec3 SCENEJS_vViewNormal;      // Output view-space vertex normal
+  // uniform vec3 SCENEJS_uLightDir0;
+  // uniform vec4 SCENEJS_uLightPos0;
+  // uniform vec4 SCENEJS_uLightPos0;
+  // varying vec4 SCENEJS_vLightVecAndDist0;  // varying for fragment lighting
+  // attribute vec2 SCENEJS_aUVCoord;         // UV coords
+  // attribute vec2 SCENEJS_aUVCoord2;        // UV2 coords
+  // attribute vec4 SCENEJS_aVertexColor;     // UV2 coords
+  // varying vec4 SCENEJS_vColor;             // Varying for fragment texturing
+  // uniform mat4 SCENEJS_uMMatrix;           // Model matrix
+  // uniform mat4 SCENEJS_uVMatrix;           // View matrix
+  // uniform mat4 SCENEJS_uPMatrix;           // Projection matrix
+  varying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook
+  // varying vec4 SCENEJS_vViewVertex;        // Varying for fragment view clip hook
+  // varying vec2 SCENEJS_vUVCoord;
+  // varying vec2 SCENEJS_vUVCoord2;
   uniform float radius;
+  
   float sceneRayDist(in vec3 p, in float r, in vec3 d) {
     return length(p)-r;
   }
@@ -27,15 +47,15 @@ compileGLSL = (abstractSolidModel) ->
   }
   
   float sceneDist(in vec3 rayOrigin){
-    /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);* /
+    /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);*/
     return _union(sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49), sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));
-    /*return _difference(sphereDist(vec3(0.5,0.0,0.0) - rayOrigin, 0.49), sphereDist(vec3(-0.5,0.0,0.0) - rayOrigin, 0.49));* /
+    /*return _difference(sphereDist(vec3(0.5,0.0,0.0) - rayOrigin, 0.49), sphereDist(vec3(-0.5,0.0,0.0) - rayOrigin, 0.49));*/
   }
   
   float sceneRayDist(in vec3 rayOrigin, in vec3 rayDir) {
-    /*return sceneRayDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99, rayDir);* /
+    /*return sceneRayDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99, rayDir);*/
     return _union(sceneRayDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));
-    /*return _difference(rayOrigin - sceneRayDist(vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));* /
+    /*return _difference(rayOrigin - sceneRayDist(vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));*/
   }
   
   vec3 sceneNormal( in vec3 pos )
@@ -47,10 +67,10 @@ compileGLSL = (abstractSolidModel) ->
     n.z = sceneDist( vec3(pos.xy, pos.z+eps) ) - sceneDist( vec3(pos.xy, pos.z-eps) );
     return normalize(n);
   }
-  void foo(void) {
+  void main(void) {
     const int steps = 64;
     const float threshold = 0.01;
-    vec3 rayDir = /*normalize* /(/*SCENEJS_uMMatrix * * /SCENEJS_vEyeVec);
+    vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ SCENEJS_vEyeVec);
     vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
     bool hit = false;
     float dist = 0.0;
@@ -62,10 +82,8 @@ compileGLSL = (abstractSolidModel) ->
       }
       rayOrigin += dist * rayDir;
     }
-    
     if(!hit) { discard; }
-    /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }* /
-    
+    /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/
     const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
     const vec3 lightPos = vec3(0.8,4.0, 0.8);
     vec3 ldir = normalize(lightPos - rayOrigin);
@@ -73,5 +91,4 @@ compileGLSL = (abstractSolidModel) ->
     gl_FragColor = vec4(diffuse, 1.0);
   }
   '''
-###
 
