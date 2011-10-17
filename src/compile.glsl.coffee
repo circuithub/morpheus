@@ -1,4 +1,3 @@
-# Compile the abstract solid model tree into a GLSL string
 compileGLSL = (abstractSolidModel) ->
   '''
   #ifdef GL_ES
@@ -35,6 +34,47 @@ compileGLSL = (abstractSolidModel) ->
   }
   float sphereDist(in vec3 p, in float r) {
     return length(p)-r;
+  }
+  float box(in vec3 p, in vec3 c, in vec3 r) {
+    vec3 rel = abs(p - c);
+    if (all(lessThan(rel, r)))
+      return 0.0;
+    vec3 d = max(vec3(0.0), rel - r);
+    return min(min(d.x, d.y), d.z);
+  }
+  float box_chamfer(in vec3 p, in vec3 c, in vec3 r, in float cr) {
+    vec3 rel = abs(p - c);
+    vec3 d = max(vec3(0.0), rel - r);
+
+    // Optimization: Approximation
+    if (any(greaterThan(rel, r + vec3(cr)))) { return min(min(d.x, d.y), d.z); }
+
+    // Quick inner box test (might not be necessary if we assume camera is outside bounding box)
+    vec3 cr_center = r - cr;
+    bvec3 gtCrCenter = greaterThan(rel, cr_center);
+    if (!any(gtCrCenter)) { return 0.0; }
+
+    // Distance to box sides (if at least two dimensions are inside the inner box)
+    vec3 dcr = rel - cr_center;
+    if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0) { return min(min(d.x, d.y), d.z); }
+
+    // Distance to corner chamfer
+    float dcr_length;
+    if (all(gtCrCenter)) {
+      dcr_length = length(dcr);
+    }
+    // Distance to edge chamfer
+    else if(dcr.x > 0.0) {
+      dcr_length = length(dcr.yz);
+    }
+    else if (dcr.y > 0.0) {
+      dcr_length = length(dcr.xz);
+    }
+    else { // dcr.z > 0.0
+      dcr_length = length(dcr.xy);
+    }
+    if (dcr_length < cr) { return 0.0; }
+    return dcr_length - cr;
   }
   float _intersect(in float a, in float b) {
     return max(a,b);
@@ -91,4 +131,20 @@ compileGLSL = (abstractSolidModel) ->
     gl_FragColor = vec4(diffuse, 1.0);
   }
   '''
+
+###
+# Compile the abstract solid model tree into a GLSL string
+glslFunctions =
+  'b':
+    verbose: 'box'
+    arguments: ['in vec3 p', 'in vec3 c', 'in vec3 r', 'in cr']
+    code: 
+      '''
+      vec3 rel = abs(p - c);
+      if (any(lessThan(rel, r)))
+        return 0;
+      vec3 d = rel - r;
+      return min(d.x, d.y, d.z);
+      '''
+###
 
