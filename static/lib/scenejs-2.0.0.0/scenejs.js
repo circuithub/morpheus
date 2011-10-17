@@ -9121,7 +9121,7 @@ var SceneJS_DrawList = new (function() {
         src.push("uniform mat4 SCENEJS_uVMatrix;");                 // View matrix
         src.push("uniform mat4 SCENEJS_uPMatrix;");                 // Projection matrix
 
-        if (clipping || fragmentHooks.worldPos) {
+        if (clipping || !customFragmentShader.hooks || fragmentHooks.worldPos) {
             src.push("varying vec4 SCENEJS_vWorldVertex;");         // Varying for fragment clip or world pos hook
         }
 
@@ -9204,7 +9204,7 @@ var SceneJS_DrawList = new (function() {
             src.push("  SCENEJS_vViewNormal = (SCENEJS_uVNMatrix * vec4(worldNormal, 1.0)).xyz;");
         }
 
-        if (clipping || fragmentHooks.worldPos) {
+        if (clipping || !customFragmentShader.hooks || fragmentHooks.worldPos) {
             src.push("  SCENEJS_vWorldVertex = worldVertex;");                  // Varying for fragment world clip or hooks
         }
 
