@@ -8666,7 +8666,7 @@ var SceneJS_DrawList = new (function() {
 
         var customShaders = shaderState.shader.shaders || {};
 
-        var customVertexShader = customShaders.vertex || {};
+        var customVertexShader = customShaders.vertexPick || {};
         var vertexHooks = customVertexShader.hooks || {};
 
         var customFragmentShader = customShaders.fragment || {};
@@ -8758,7 +8758,7 @@ var SceneJS_DrawList = new (function() {
     this._composePickingFragmentShader = function() {
 
         var customShaders = shaderState.shader.shaders || {};
-        var customFragmentShader = customShaders.fragment || {};
+        var customFragmentShader = customShaders.fragmentPick || {};
         var fragmentHooks = customFragmentShader.hooks || {};
 
         var clipping = clipState && clipState.clips.length > 0;
@@ -9045,7 +9045,7 @@ var SceneJS_DrawList = new (function() {
         /* Do a full custom shader replacement if code supplied without hooks
          */
         if (customShaders.vertex && customShaders.vertex.code && !customShaders.vertex.hooks) {
-            return customShaders.vertex.code;
+            return [customShaders.vertex.code];
         }
 
         var customVertexShader = customShaders.vertex || {};
@@ -9271,7 +9271,7 @@ var SceneJS_DrawList = new (function() {
         /* Do a full custom shader replacement if code supplied without hooks
          */
         if (customShaders.fragment && customShaders.fragment.code && !customShaders.fragment.hooks) {
-            return customShaders.fragment.code;
+            return [customShaders.fragment.code];
         }
 
         var customFragmentShader = customShaders.fragment || {};
@@ -23119,6 +23119,12 @@ new (function() {
                     if (stackLen > 0) {
                         var shader = {
                             shaders: {
+                                fragmentPick: {
+                                  // TODO
+                                },
+                                vertexPick: {
+                                  // TODO
+                                },
                                 fragment: {
                                     code: shaderFragmentCodeStack.slice(0, stackLen).join("\n"),
                                     hooks: combineMapStack(shaderFragmentHooksStack)
@@ -23144,15 +23150,17 @@ new (function() {
         var map1;
         var map2 = {};
         var name;
+        var empty = true;
         for (var i = 0; i < stackLen; i++) {
             map1 = maps[i];
             for (name in map1) {
                 if (map1.hasOwnProperty(name)) {
+                    empty = false;
                     map2[name] = map1[name];
                 }
             }
         }
-        return map2;
+        return empty? undefined : map2;
     }
 
     function pushHooks(hooks, hookStacks) {
@@ -23172,12 +23180,12 @@ new (function() {
 
     Shader.prototype._init = function(params) {
         if (this.core._nodeCount == 1) { // This node is the resource definer
-            this._setShaders(params.shaders);
+            this.setShaders(params.shaders);
             this.setParams(params.params);
         }
     };
 
-    Shader.prototype._setShaders = function(shaders) {
+    Shader.prototype.setShaders = function(shaders) {
         shaders = shaders || [];
         this.core.shaders = {};
         var shader;
@@ -23201,6 +23209,7 @@ new (function() {
                 hooks: shader.hooks
             };
         }
+        //TODO: this.dirty = true;
     };
 
     Shader.prototype.setParams = function(params) {
