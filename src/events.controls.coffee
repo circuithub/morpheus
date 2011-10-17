@@ -3,9 +3,9 @@
 
 controlsSourceCompile = () ->
   try
-    (state.scene.findNode 'cube-transform').set 'shaders', [
+    (state.scene.findNode 'main-shader').set 'shaders', [
         stage: 'fragment',
-        code: compileGLSL compileAST ($ '#source-code').val()
+        code: compileGLSL compileASM ($ '#source-code').val()
       ]
   catch error
     if console? and console.log?

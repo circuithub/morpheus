@@ -17,3 +17,4 @@ sphere = (attr, nodes...) ->
   console.log attr
   for node in nodes
     console.log node
+
