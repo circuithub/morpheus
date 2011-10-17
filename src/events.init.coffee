@@ -10,10 +10,10 @@ sceneInit = () ->
     id: 'main-shader',
     shaders: [
       stage: 'fragment',
-      code: ""
+      code: compileGLSL compileASM {}
     ]
     vars: {}
-  (state.scene.findNode 'cube-transform').insert 'node', shaderDef
+  (state.scene.findNode 'cube-mat').insert 'node', shaderDef
 
 controlsInit = () ->
   

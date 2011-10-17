@@ -3,6 +3,7 @@
 
 controlsSourceCompile = () ->
   try
+    # TODO: SceneJS does not yet support updating the shader like this
     (state.scene.findNode 'main-shader').set 'shaders', [
         stage: 'fragment',
         code: compileGLSL compileASM ($ '#source-code').val()

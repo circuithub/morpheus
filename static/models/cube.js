@@ -144,6 +144,7 @@ SceneJS.createScene({
                                         {
                                             type: 'material',
                                             coreId: 'cube-mat',
+                                            id: 'cube-mat',
                                             nodes: [
                                                 {
                                                     type: 'geometry',

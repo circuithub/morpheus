@@ -300,10 +300,10 @@
   keyDown = function(event) {};
   controlsSourceCompile = function() {
     try {
-      return (state.scene.findNode('main-shader')).set('shader', [
+      return (state.scene.findNode('main-shader')).set('shaders', [
         {
           stage: 'fragment',
-          code: compileGLSL(compileASM(($('#source-code')).val()))
+          code: [compileGLSL(compileASM(($('#source-code')).val()))]
         }
       ]);
     } catch (error) {
@@ -336,12 +336,12 @@
       shaders: [
         {
           stage: 'fragment',
-          code: ""
+          code: [compileGLSL(compileASM({}))]
         }
       ],
       vars: {}
     };
-    return (state.scene.findNode('cube-transform')).insert('node', shaderDef);
+    return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
   };
   controlsInit = function() {};
   canvasInit();
