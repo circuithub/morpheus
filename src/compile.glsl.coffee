@@ -62,20 +62,16 @@ compileGLSL = (abstractSolidModel) ->
     float dcr_length;
     if (all(gtCrCenter)) {
       dcr_length = length(dcr);
-      return 1000.0;
     }
     // Distance to edge chamfer
-    else if(dcr.x > 0.0) {
+    else if(dcr.x < 0.0) {
       dcr_length = length(dcr.yz);
-      return 1000.0;
     }
-    else if (dcr.y > 0.0) {
+    else if (dcr.y < 0.0) {
       dcr_length = length(dcr.xz);
-      return 1000.0;
     }
-    else { // dcr.z > 0.0
+    else { // dcr.z < 0.0
       dcr_length = length(dcr.xy);
-      return 1000.0;
     }
     if (dcr_length < cr) { return 0.0; }
     return dcr_length - cr;
