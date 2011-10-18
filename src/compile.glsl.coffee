@@ -121,7 +121,7 @@ compileGLSL = (abstractSolidModel) ->
   void main(void) {
     const int steps = 64;
     const float threshold = 0.01;
-    vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ SCENEJS_vEyeVec);
+    vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);
     vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
     bool hit = false;
     float dist = 0.0;
@@ -138,7 +138,7 @@ compileGLSL = (abstractSolidModel) ->
     /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/
     const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
     /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/
-    const vec3 lightPos = vec3(0.8,4.0, 0.8);
+    const vec3 lightPos = vec3(1.5,1.5, 4.0);
     vec3 ldir = normalize(lightPos - rayOrigin);
     vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);
     gl_FragColor = vec4(diffuse, 1.0);
