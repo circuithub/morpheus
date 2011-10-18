@@ -47,31 +47,35 @@ compileGLSL = (abstractSolidModel) ->
     vec3 d = max(vec3(0.0), rel - r);
 
     // Optimization: Approximation
-    if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }
+    //if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }
 
     // Quick inner box test (might not be necessary if we assume camera is outside bounding box)
-    vec3 cr_center = r - cr;
+    vec3 cr_center = r - vec3(cr);
     bvec3 gtCrCenter = greaterThan(rel, cr_center);
     if (!any(gtCrCenter)) { return 0.0; }
 
     // Distance to box sides (if at least two dimensions are inside the inner box)
     vec3 dcr = rel - cr_center;
-    if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0) { return max(max(d.x, d.y), d.z); }
+    if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0 && min(dcr.y, dcr.z) < 0.0) { return max(max(d.x, d.y), d.z); }
 
     // Distance to corner chamfer
     float dcr_length;
     if (all(gtCrCenter)) {
       dcr_length = length(dcr);
+      return 1000.0;
     }
     // Distance to edge chamfer
     else if(dcr.x > 0.0) {
       dcr_length = length(dcr.yz);
+      return 1000.0;
     }
     else if (dcr.y > 0.0) {
       dcr_length = length(dcr.xz);
+      return 1000.0;
     }
     else { // dcr.z > 0.0
       dcr_length = length(dcr.xy);
+      return 1000.0;
     }
     if (dcr_length < cr) { return 0.0; }
     return dcr_length - cr;
@@ -88,10 +92,13 @@ compileGLSL = (abstractSolidModel) ->
   
   float sceneDist(in vec3 rayOrigin){
     /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);*/
-    float b = boxDist(rayOrigin, vec3(0.0), vec3(0.55));
+    float b = box_chamferDist(rayOrigin, vec3(0.0), vec3(0.55), 0.1);
+    float s1 = sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59);
+    float s2 = sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59);
+    return b;
     return _union(
-      _intersect(sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59), b),
-      _intersect(sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59), b));
+      _intersect(s1, b),
+      _intersect(s2, b));
     /*return _union(
       sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49),
       sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));*/
