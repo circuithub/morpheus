@@ -29,25 +29,25 @@ compileGLSL = (abstractSolidModel) ->
   // varying vec2 SCENEJS_vUVCoord2;
   uniform float radius;
   
-  float sceneRayDist(in vec3 p, in float r, in vec3 d) {
+  float sphereRayDist(in vec3 p, in float r, in vec3 d) {
     return length(p)-r;
   }
   float sphereDist(in vec3 p, in float r) {
     return length(p)-r;
   }
-  float box(in vec3 p, in vec3 c, in vec3 r) {
+  float boxDist(in vec3 p, in vec3 c, in vec3 r) {
     vec3 rel = abs(p - c);
     if (all(lessThan(rel, r)))
       return 0.0;
     vec3 d = max(vec3(0.0), rel - r);
-    return min(min(d.x, d.y), d.z);
+    return max(max(d.x, d.y), d.z);
   }
-  float box_chamfer(in vec3 p, in vec3 c, in vec3 r, in float cr) {
+  float box_chamferDist(in vec3 p, in vec3 c, in vec3 r, in float cr) {
     vec3 rel = abs(p - c);
     vec3 d = max(vec3(0.0), rel - r);
 
     // Optimization: Approximation
-    if (any(greaterThan(rel, r + vec3(cr)))) { return min(min(d.x, d.y), d.z); }
+    if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }
 
     // Quick inner box test (might not be necessary if we assume camera is outside bounding box)
     vec3 cr_center = r - cr;
@@ -56,7 +56,7 @@ compileGLSL = (abstractSolidModel) ->
 
     // Distance to box sides (if at least two dimensions are inside the inner box)
     vec3 dcr = rel - cr_center;
-    if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0) { return min(min(d.x, d.y), d.z); }
+    if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0) { return max(max(d.x, d.y), d.z); }
 
     // Distance to corner chamfer
     float dcr_length;
@@ -88,13 +88,21 @@ compileGLSL = (abstractSolidModel) ->
   
   float sceneDist(in vec3 rayOrigin){
     /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);*/
-    return _union(sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49), sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));
+    float b = boxDist(rayOrigin, vec3(0.0), vec3(0.55));
+    return _union(
+      _intersect(sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59), b),
+      _intersect(sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59), b));
+    /*return _union(
+      sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49),
+      sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));*/
     /*return _difference(sphereDist(vec3(0.5,0.0,0.0) - rayOrigin, 0.49), sphereDist(vec3(-0.5,0.0,0.0) - rayOrigin, 0.49));*/
   }
   
   float sceneRayDist(in vec3 rayOrigin, in vec3 rayDir) {
     /*return sceneRayDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99, rayDir);*/
-    return _union(sceneRayDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));
+    return _union(
+      _union(sphereRayDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49, rayDir), boxDist(rayOrigin, vec3(0.0), vec3(0.3))),
+      sphereRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));
     /*return _difference(rayOrigin - sceneRayDist(vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));*/
   }
   
@@ -115,7 +123,8 @@ compileGLSL = (abstractSolidModel) ->
     bool hit = false;
     float dist = 0.0;
     for(int i = 0; i < steps; i++) {
-      dist = sceneRayDist(rayOrigin, rayDir);
+      //dist = sceneRayDist(rayOrigin, rayDir);
+      dist = sceneDist(rayOrigin);
       if (dist < threshold) {
         hit = true;
         break;
@@ -125,6 +134,7 @@ compileGLSL = (abstractSolidModel) ->
     if(!hit) { discard; }
     /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/
     const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+    /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/
     const vec3 lightPos = vec3(0.8,4.0, 0.8);
     vec3 ldir = normalize(lightPos - rayOrigin);
     vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);
