@@ -9,6 +9,7 @@ appFiles  = [
   'scenejs.orbitlookat'
   'scenejs.zoomlookat'
   'api.csm'
+  'compile.csm'
   'compile.asm'
   'compile.glsl'
   'constants'
