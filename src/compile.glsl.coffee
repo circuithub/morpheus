@@ -47,7 +47,7 @@ compileGLSL = (abstractSolidModel) ->
     vec3 d = max(vec3(0.0), rel - r);
 
     // Optimization: Approximation
-    //if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }
+    if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }
 
     // Quick inner box test (might not be necessary if we assume camera is outside bounding box)
     vec3 cr_center = r - vec3(cr);
@@ -91,7 +91,6 @@ compileGLSL = (abstractSolidModel) ->
     float b = box_chamferDist(rayOrigin, vec3(0.0), vec3(0.55), 0.1);
     float s1 = sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59);
     float s2 = sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59);
-    return b;
     return _union(
       _intersect(s1, b),
       _intersect(s2, b));
