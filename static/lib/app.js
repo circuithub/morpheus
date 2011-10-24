@@ -1,5 +1,5 @@
 /*
- * Copyright header comes here
+ * Copyright 2011, CircuitHub.com
  */
 "use strict";
 
@@ -121,8 +121,8 @@
   } : function() {});
   compileCSM = function(source) {
     var postfix, prefix, requestId;
-    prefix = 'return (function(){\n  /* BEGIN API */\n' + state.api.sourceCode + '\n  /* BEGIN SOURCE */\n';
-    postfix = '\n  /* END SOURCE */\n  return model;\n})();';
+    prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  \n  /* BEGIN SOURCE */\n  return scene(\n';
+    postfix = '  \n  );\n})();';
     return requestId = JSandbox.eval({
       data: prefix + source + postfix,
       callback: function(result) {
@@ -130,16 +130,8 @@
         return console.log(result);
       },
       onerror: function(data, request) {
-        var d, _i, _len;
-        console.log(prefix + source + postfix);
         console.log("Error");
-        console.log(data);
-        console.log(data.toString());
-        for (_i = 0, _len = data.length; _i < _len; _i++) {
-          d = data[_i];
-          console.log(d);
-        }
-        return console.log(request);
+        return console.log(data);
       }
     });
   };

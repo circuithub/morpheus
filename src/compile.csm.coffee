@@ -3,20 +3,20 @@ compileCSM = (source) ->
   #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
   prefix = 
     '''
-    return (function(){
+    (function(){
       /* BEGIN API */
-
+      
     ''' + state.api.sourceCode +
     '''
-
+      
       /* BEGIN SOURCE */
+      return scene(
     
     '''
   postfix =
     '''
-    
-      /* END SOURCE */
-      return model;
+      
+      );
     })();
     '''
   #mecha.log prefix + source + postfix
@@ -24,14 +24,9 @@ compileCSM = (source) ->
     data: prefix + source + postfix
     callback: (result) ->
       console.log "Success"
-      #console.log prefix + source + postfix
       console.log result
     onerror: (data,request) ->
-      console.log prefix + source + postfix
+      #console.log prefix + source + postfix
       console.log "Error"
       console.log data
-      console.log data.toString()
-      console.log d for d in data
-      console.log request
-      #console.log e for e in error
   

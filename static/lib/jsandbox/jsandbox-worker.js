@@ -62,6 +62,7 @@
 			}
 		} catch (e) {
 			response.error = e;
+			//throw response.error;
 		}
 		
 		delete self.input;
