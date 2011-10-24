@@ -1,5 +1,5 @@
 /*
- * Copyright header comes here
+ * Copyright 2011, CircuitHub.com
  */
 "use strict";
 
