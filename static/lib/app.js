@@ -117,7 +117,7 @@
   };
   mecha = {};
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log(Array.prototype.slice.call(arguments));
+    return console.log.apply(console, arguments);
   } : function() {});
   compileCSM = function(source) {
     var postfix, prefix, requestId;
