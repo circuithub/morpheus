@@ -86,7 +86,6 @@ var JSandbox = (function (self) {
 					if (typeof sandbox[$onresponse] === fun_type) {
 						sandbox[$onresponse](data, request);
 					}
-				
 					if (typeof request[$callback] === fun_type) {
 						request[$callback][$call](sandbox, data.results);
 					}
@@ -125,12 +124,23 @@ var JSandbox = (function (self) {
 			
 			this[$requests][id] = options;
 			
-			this[$worker].postMessage(jsonStringify({
+			var msg = {
 				id       : id,
 				method   : method,
 				data     : data,
 				input    : input
-			}));
+			};
+			try {
+				// Attempt to use structured clone in browsers that support it
+				this[$worker].postMessage(msg);
+			} catch (e) {
+				if (e.code == DOMException.DATA_CLONE_ERR) {
+					this[$worker].postMessage(jsonStringify(msg));
+				}
+				else {
+					throw(e);
+				}
+			}
 		
 			return id;
 		};

@@ -67,7 +67,17 @@
 		delete self.input;
 		delete self.onmessage; // in case the code defined it
 		
-		postMessage(jsonStringify(response));
+		try {
+			// Attempt to use structured clone in browsers that support it
+			postMessage(response);
+		} catch (e) {
+			if (e.code == 25) { // DOMException.DATA_CLONE_ERR (not available inside web workers)
+				postMessage(jsonStringify(response));
+			}
+			else {
+				throw(e);
+			}
+		}
 	};
 	
 	if (self.addEventListener) {
