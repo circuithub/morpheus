@@ -8,7 +8,9 @@ appFiles  = [
   'scenejs.conversion'
   'scenejs.orbitlookat'
   'scenejs.zoomlookat'
-  'api.csm'
+  'mecha'
+  'mecha.log'
+  #'api.csm'
   'compile.csm'
   'compile.asm'
   'compile.glsl'
@@ -51,7 +53,20 @@ task 'build', "Build single application file from source files", ->
               # Write out the result
               fs.writeFile 'static/lib/app.js', headerjsContents + appjsContents, 'utf8', (err) ->
                 throw err if err
-                console.log "Done."
+                console.log "...Done (app.js)"
+  # Translate the CSM API separately (compile into a separate file)
+  exec "coffee -o static/lib -c src/api.csm.coffee", (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    # Concatenate the header file
+    fs.readFile 'static/lib/api.csm.js', 'utf8', (err, appjsContents) ->
+      throw err if err
+      fs.readFile 'src/header.js', 'utf8', (err, headerjsContents) ->
+        throw err if err
+        # Write out the result
+        fs.writeFile 'static/lib/api.csm.js', headerjsContents + appjsContents, 'utf8', (err) ->
+          throw err if err
+          console.log "...Done (api.csm.js)"
 
 task 'fetch:npm', "Fetch the npm package manager", ->
   exec "curl http://npmjs.org/install.sh | sudo sh", (err, stdout, stderr) ->
@@ -71,15 +86,23 @@ task 'minify', "Minify the resulting application file after build", ->
       exec "node_modules/.bin/uglifyjs static/lib/app.js > static/lib/app.min.js", (err, stdout, stderr) ->
         throw err if err
         console.log stdout + stderr
-        console.log "Done."
+        console.log "...Done (app.min.js)"
+      exec "node_modules/.bin/uglifyjs static/lib/api.csm.js > static/lib/api.csm.min.js", (err, stdout, stderr) ->
+        throw err if err
+        console.log stdout + stderr
+        console.log "...Done (api.csm.min.js)"
     else
       exec "uglifyjs static/lib/app.js > static/lib/app.min.js", (err, stdout, stderr) ->
         throw err if err
         console.log stdout + stderr
-        console.log "Done."
+        console.log "...Done (app.min.js)"
+      exec "uglifyjs static/lib/api.csm.js > static/lib/api.csm.min.js", (err, stdout, stderr) ->
+        throw err if err
+        console.log stdout + stderr
+        console.log "...Done (api.csm.min.js)"
 
 task 'clean', "Cleanup all build files and distribution files", ->
-  exec "rm -rf build;rm static/lib/app.js;rm static/lib/app.min.js", (err, stdout, stderr) ->
+  exec "rm -rf build;rm static/lib/app.js;rm static/lib/app.min.js;rm static/lib/api.csm.js;rm static/lib/api.csm.min.js", (err, stdout, stderr) ->
     console.log stdout + stderr
-    console.log "Done."
+    console.log "...Done (clean)"
 

@@ -4,18 +4,31 @@ compileCSM = (source) ->
   prefix = 
     '''
     return (function(){
+      /* BEGIN API */
+
+    '''
+    + 
+    '''
+
       /* BEGIN SOURCE */
+    
     '''
   postfix =
     '''
+    
       /* END SOURCE */
       return model;
     })();
     '''
+  #mecha.log prefix + source + postfix
   requestId = JSandbox.eval 
     data: prefix + source + postfix
     callback: (result) ->
-      console.log result
-    onerror: (error) ->
-      console.log error
+      #mecha.log prefix + source + postfix
+      mecha.log result
+    onerror: (data,request) ->
+      mecha.log data
+      mecha.log d for d in data
+      mecha.log request
+      #mecha.log e for e in error
   

@@ -10,6 +10,8 @@ state =
       last: [0, 0]
       leftDragging: false
       middleDragging: false
+  api:
+    url: null
+    sourceCode: null
   application:
     initialized: false
-

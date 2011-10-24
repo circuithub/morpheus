@@ -9,6 +9,5 @@ controlsSourceCompile = () ->
         code: compileGLSL compileASM compileCSM ($ '#source-code').val()
       ]
   catch error
-    if console? and console.log?
-      console.log error
+    mecha.log error
 
