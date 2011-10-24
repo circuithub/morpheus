@@ -25,8 +25,9 @@ controlsInit = () ->
 apiInit = () ->
   # Get the API code
   state.api.url = ($ "link[rel='api']").attr 'href'
-  state.api.sourceCode = ($.get encodeURIComponent state.api.url, undefined, undefined, 'text')
-    .success () -> 
+  ($.get encodeURIComponent state.api.url, undefined, undefined, 'text')
+    .success (data, textStatus, jqXHR) -> 
+      state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
     .error () -> 
       mecha.log "Error loading API script"

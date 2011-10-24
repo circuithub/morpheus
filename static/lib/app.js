@@ -121,22 +121,25 @@
   } : function() {});
   compileCSM = function(source) {
     var postfix, prefix, requestId;
-    prefix = 'return (function(){\n  /* BEGIN API */\n';
-    +'\n  /* BEGIN SOURCE */\n';
+    prefix = 'return (function(){\n  /* BEGIN API */\n' + state.api.sourceCode + '\n  /* BEGIN SOURCE */\n';
     postfix = '\n  /* END SOURCE */\n  return model;\n})();';
     return requestId = JSandbox.eval({
       data: prefix + source + postfix,
       callback: function(result) {
-        return mecha.log(result);
+        console.log("Success");
+        return console.log(result);
       },
       onerror: function(data, request) {
         var d, _i, _len;
-        mecha.log(data);
+        console.log(prefix + source + postfix);
+        console.log("Error");
+        console.log(data);
+        console.log(data.toString());
         for (_i = 0, _len = data.length; _i < _len; _i++) {
           d = data[_i];
-          mecha.log(d);
+          console.log(d);
         }
-        return mecha.log(request);
+        return console.log(request);
       }
     });
   };
@@ -287,7 +290,8 @@
   controlsInit = function() {};
   apiInit = function() {
     state.api.url = ($("link[rel='api']")).attr('href');
-    return state.api.sourceCode = ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function() {
+    return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
+      state.api.sourceCode = data;
       return mecha.log("Loaded " + state.api.url);
     }).error(function() {
       return mecha.log("Error loading API script");

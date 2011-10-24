@@ -6,8 +6,7 @@ compileCSM = (source) ->
     return (function(){
       /* BEGIN API */
 
-    '''
-    + 
+    ''' + state.api.sourceCode +
     '''
 
       /* BEGIN SOURCE */
@@ -24,11 +23,15 @@ compileCSM = (source) ->
   requestId = JSandbox.eval 
     data: prefix + source + postfix
     callback: (result) ->
-      #mecha.log prefix + source + postfix
-      mecha.log result
+      console.log "Success"
+      #console.log prefix + source + postfix
+      console.log result
     onerror: (data,request) ->
-      mecha.log data
-      mecha.log d for d in data
-      mecha.log request
-      #mecha.log e for e in error
+      console.log prefix + source + postfix
+      console.log "Error"
+      console.log data
+      console.log data.toString()
+      console.log d for d in data
+      console.log request
+      #console.log e for e in error
   
