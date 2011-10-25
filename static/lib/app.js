@@ -5,7 +5,12 @@
 
 (function() {
   var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
-  var __slice = Array.prototype.slice;
+  var __slice = Array.prototype.slice, __indexOf = Array.prototype.indexOf || function(item) {
+    for (var i = 0, l = this.length; i < l; i++) {
+      if (this[i] === item) return i;
+    }
+    return -1;
+  };
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
     attrRecord = node.get(attr);
@@ -152,7 +157,7 @@
     });
   };
   compileASM = function(concreteSolidModel) {
-    var asm, compileASMNode;
+    var asm, compileASMNode, dispatch;
     asm = {
       union: function() {
         var nodes;
@@ -188,56 +193,92 @@
         };
       }
     };
+    dispatch = {
+      scene: function(node) {
+        var n;
+        if (node.nodes.length > 1) {
+          return asm.union.apply(asm, (function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })());
+        } else if (node.nodes.length === 1) {
+          return compileASMNode(node.nodes[0]);
+        } else {
+          return {};
+        }
+      },
+      box: function(node) {
+        var ALL_EDGES, halfPlanes;
+        halfPlanes = [
+          asm.halfplane({
+            val: -node.attr.dimensions[0],
+            axis: 0
+          }), asm.halfplane({
+            val: -node.attr.dimensions[1],
+            axis: 1
+          }), asm.halfplane({
+            val: -node.attr.dimensions[2],
+            axis: 2
+          }), asm.halfplane({
+            val: node.attr.dimensions[0],
+            axis: 0
+          }), asm.halfplane({
+            val: node.attr.dimensions[1],
+            axis: 1
+          }), asm.halfplane({
+            val: node.attr.dimensions[2],
+            axis: 2
+          })
+        ];
+        if (node.attr.chamfer != null) {
+          node.attr.chamfer.edges.reduce(function(result, current) {
+            return result + Math.pow(2, current);
+          });
+          ALL_EDGES = (Math.pow(2, 12)) - 1;
+          if (chamferEdges === ALL_EDGES) {
+            if (node.attr.chamfer.corners) {
+              return asm.intersect({
+                chamfer: true
+              }, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert.apply(asm, halfplanes.slice(3, 7)));
+            } else {
+              return asm.intersect(({
+                chamfer: true
+              }, asm.intersect({
+                chamfer: true
+              }, halfplanes[0], halfplanes[1], asm.invert(halfplanes[3], halfplanes[4])), halfplanes[2], asm.invert(halfplanes[5])));
+            }
+          }
+        } else {
+          return asm.intersect(({}, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert.apply(asm, halfplanes.slice(3, 7))));
+        }
+      },
+      sphere: function(node) {
+        return {};
+      },
+      cylinder: function(node) {
+        return {};
+      }
+    };
     compileASMNode = function(node) {
-      var n;
+      var _ref;
       switch (typeof node) {
         case 'object':
-          switch (node.type) {
-            case 'scene':
-              if (node.nodes.length > 1) {
-                return asm.union.apply(asm, (function() {
-                  var _i, _len, _ref, _results;
-                  _ref = node.nodes;
-                  _results = [];
-                  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                    n = _ref[_i];
-                    _results.push(compileASMNode(n));
-                  }
-                  return _results;
-                })());
-              } else if (node.nodes.length === 1) {
-                return compileASMNode(node.nodes[0]);
-              } else {
-                return {};
-              }
-              break;
-            case 'box':
-              return asm.intersect(({
-                symmetric: false
-              }, asm.halfplane({
-                val: -node.attr.dimensions[0],
-                axis: 0
-              }), asm.halfplane({
-                val: -node.attr.dimensions[1],
-                axis: 1
-              }), asm.halfplane({
-                val: -node.attr.dimensions[2],
-                axis: 2
-              }), asm.invert((asm.halfplane({
-                val: node.attr.dimensions[0],
-                axis: 0
-              }), asm.halfplane({
-                val: node.attr.dimensions[1],
-                axis: 1
-              }), asm.halfplane({
-                val: node.attr.dimensions[2],
-                axis: 2
-              })))));
-            case 'sphere':
-              return {};
-            case 'cylinder':
-              return {};
+          if (_ref = node.type, __indexOf.call(dispatch, _ref) >= 0) {
+            return dispatch[node.type](node);
+          } else {
+            mecha.log("Unexpected node type '" + node.type + "'.");
+            return {};
           }
+          break;
+        default:
+          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
+          return {};
       }
     };
     if (concreteSolidModel.type !== 'scene') {

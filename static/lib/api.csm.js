@@ -23,6 +23,16 @@
         nodes: nodes
       };
     };
+    window.chamfer = function() {
+      var attr, node, nodes, _i, _len, _results;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      _results = [];
+      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+        node = nodes[_i];
+        _results.push(node.attr.chamfer = attr);
+      }
+      return _results;
+    };
     window.intersect = function() {
       var attr, nodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -44,6 +54,12 @@
     window.box = function() {
       var attr, nodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      if (attr.chamfer != null) {
+        if (!(attr.chamfer.corners != null)) {
+          attr.chamfer.corners = true;
+        }
+        node.chamfer.edges = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      }
       return {
         type: 'box',
         attr: attr,

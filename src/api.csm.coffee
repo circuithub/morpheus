@@ -20,32 +20,43 @@ do () ->
     nodes: nodes
   
   window.union = (attr, nodes...) ->
-      type: 'union'
-      attr: attr
-      nodes: nodes
+    type: 'union'
+    attr: attr
+    nodes: nodes
 
+  window.chamfer = (attr, nodes...) ->
+    for node in nodes
+      node.attr.chamfer = attr
+  
   window.intersect = (attr, nodes...) ->
-      type: 'intersect'
-      attr: attr
-      nodes: nodes
+    type: 'intersect'
+    attr: attr
+    nodes: nodes
 
   window.difference = (attr, nodes...) ->
-      type: 'difference'
-      attr: attr
-      nodes: nodes
+    type: 'difference'
+    attr: attr
+    nodes: nodes
 
   window.box = (attr, nodes...) ->
-      type: 'box'
-      attr: attr
-      nodes: nodes
+    # Apply defaults
+    if attr.chamfer?
+      # Chamfer corners is on by default
+      if not attr.chamfer.corners?
+        attr.chamfer.corners = true
+      # Chamfer all edges by default
+      node.chamfer.edges = [0..11]
+    type: 'box'
+    attr: attr
+    nodes: nodes
 
   window.cylinder = (attr, nodes...) ->
-      type: 'cylinder'
-      attr: attr
-      nodes: nodes
+    type: 'cylinder'
+    attr: attr
+    nodes: nodes
 
   window.sphere = (attr, nodes...) ->
-      type: 'sphere'
-      attr: attr
-      nodes: nodes
+    type: 'sphere'
+    attr: attr
+    nodes: nodes
 
