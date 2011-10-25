@@ -1,6 +1,11 @@
 compileGLSL = (abstractSolidModel) ->
   glslFunctions = {}
   
+  match = (node, pattern) ->
+    subpattern = pattern[node.type]
+    if subpattern?
+      return match node, subpattern
+    
 
   '''
   #ifdef GL_ES
