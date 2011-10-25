@@ -288,16 +288,79 @@
     return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
-    var glslFunctions, match;
-    glslFunctions = {};
-    match = function(node, pattern) {
-      var subpattern;
-      subpattern = pattern[node.type];
-      if (subpattern != null) {
-        return match(node, subpattern);
+    var distanceFunctions, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    distanceFunctions = {
+      sphereDist: {
+        id: '__sphereDist',
+        returnType: 'float',
+        arguments: ['vec3', 'float'],
+        code: (function() {
+          var position, radius;
+          position = 'a';
+          radius = 'b';
+          return ["return length(" + position + ") - " + radius + ";"];
+        })()
+      },
+      boxDist: {
+        id: '__boxDist',
+        arguments: ['vec3', 'vec3', 'vec3'],
+        code: (function() {
+          var center, dist, position, radius, rel;
+          position = 'a';
+          center = 'b';
+          radius = 'c';
+          rel = 'r';
+          dist = 's';
+          return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "if (all(lessThan(" + rel + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
+        })()
+      },
+      boxChamferDist: {
+        id: '__boxChamferDist',
+        arguments: ['vec3', 'vec3', 'vec3', 'float'],
+        code: (function() {
+          var center, chamferCenter, chamferDist, chamferDistLength, chamferRadius, dist, gtChamferCenter, position, radius, rel;
+          position = 'a';
+          center = 'b';
+          radius = 'c';
+          chamferRadius = 'd';
+          rel = 'r';
+          dist = 's';
+          chamferCenter = 'cc';
+          chamferDist = 'ccd';
+          chamferDistLength = 'ccdl';
+          gtChamferCenter = 'gtcc';
+          return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "if (any(greaterThan(" + rel + ", " + center + " + vec3(" + chamferRadius + ")))) { return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "vec3 " + chamferCenter + " = " + radius + " - vec3(" + chamferRadius + ");", "bvec3 " + gtChamferCenter + " = greaterThan(" + rel + ", " + chamferCenter + ");", "if (!any(" + gtChamferCenter + ")) { return 0.0; }", "vec3 " + chamferDist + " = " + rel + " - " + chamferCenter + ";", "if (min(" + chamferDist + ".x, " + chamferDist + ".y) < 0.0 && min(" + chamferDist + ".x, " + chamferDist + ".z) < 0.0 && min(" + chamferDist + ".y, " + chamferDist + ".z) < 0.0)", "{ return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "float " + chamferDistLength + ";", "if (all(" + gtChamferCenter + ")) {", "  " + chamferDistLength + " = length(" + chamferDist + ");", "}", "else if(" + chamferDist + ".x < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".yz);", "}", "else if (" + chamferDist + ".y < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".xz);", "}", "else { // " + chamferDist + ".z < 0.0", "  " + chamferDistLength + " = length(" + chamferDist + ".xy);", "}", "return min(" + chamferDistLength + " - " + chamferRadius + ", 0.0);"];
+        })(),
+        intersectDist: {
+          id: '__intersectDist',
+          arguments: ['float', 'float'],
+          code: ["return max(a,b);"]
+        },
+        differenceDist: {
+          id: '__differenceDist',
+          arguments: ['float', 'float'],
+          code: ["return max(a,-b);"]
+        },
+        unionDist: {
+          id: '__unionDist',
+          arguments: ['float', 'float'],
+          code: ["return min(a,b);"]
+        }
       }
     };
-    return '#ifdef GL_ES\n  precision highp float;\n#endif\n\n//attribute vec3 SCENEJS_aVertex;           // Model coordinates\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\n// attribute vec3 SCENEJS_aNormal;          // Normal vectors\n// uniform   mat4 SCENEJS_uMNMatrix;        // Model normal matrix\n// uniform   mat4 SCENEJS_uVNMatrix;        // View normal matrix\n// varying   vec3 SCENEJS_vWorldNormal;     // Output world-space vertex normal\n// varying   vec3 SCENEJS_vViewNormal;      // Output view-space vertex normal\n// uniform vec3 SCENEJS_uLightDir0;\n// uniform vec4 SCENEJS_uLightPos0;\n// uniform vec4 SCENEJS_uLightPos0;\n// varying vec4 SCENEJS_vLightVecAndDist0;  // varying for fragment lighting\n// attribute vec2 SCENEJS_aUVCoord;         // UV coords\n// attribute vec2 SCENEJS_aUVCoord2;        // UV2 coords\n// attribute vec4 SCENEJS_aVertexColor;     // UV2 coords\n// varying vec4 SCENEJS_vColor;             // Varying for fragment texturing\n// uniform mat4 SCENEJS_uMMatrix;           // Model matrix\n// uniform mat4 SCENEJS_uVMatrix;           // View matrix\n// uniform mat4 SCENEJS_uPMatrix;           // Projection matrix\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n// varying vec4 SCENEJS_vViewVertex;        // Varying for fragment view clip hook\n// varying vec2 SCENEJS_vUVCoord;\n// varying vec2 SCENEJS_vUVCoord2;\nuniform float radius;\n\nfloat sphereRayDist(in vec3 p, in float r, in vec3 d) {\n  return length(p)-r;\n}\nfloat sphereDist(in vec3 p, in float r) {\n  return length(p)-r;\n}\nfloat boxDist(in vec3 p, in vec3 c, in vec3 r) {\n  vec3 rel = abs(p - c);\n  if (all(lessThan(rel, r)))\n    return 0.0;\n  vec3 d = max(vec3(0.0), rel - r);\n  return max(max(d.x, d.y), d.z);\n}\nfloat box_chamferDist(in vec3 p, in vec3 c, in vec3 r, in float cr) {\n  vec3 rel = abs(p - c);\n  vec3 d = max(vec3(0.0), rel - r);\n\n  // Optimization: Approximation\n  if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }\n\n  // Quick inner box test (might not be necessary if we assume camera is outside bounding box)\n  vec3 cr_center = r - vec3(cr);\n  bvec3 gtCrCenter = greaterThan(rel, cr_center);\n  if (!any(gtCrCenter)) { return 0.0; }\n\n  // Distance to box sides (if at least two dimensions are inside the inner box)\n  vec3 dcr = rel - cr_center;\n  if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0 && min(dcr.y, dcr.z) < 0.0) { return max(max(d.x, d.y), d.z); }\n\n  // Distance to corner chamfer\n  float dcr_length;\n  if (all(gtCrCenter)) {\n    dcr_length = length(dcr);\n  }\n  // Distance to edge chamfer\n  else if(dcr.x < 0.0) {\n    dcr_length = length(dcr.yz);\n  }\n  else if (dcr.y < 0.0) {\n    dcr_length = length(dcr.xz);\n  }\n  else { // dcr.z < 0.0\n    dcr_length = length(dcr.xy);\n  }\n  if (dcr_length < cr) { return 0.0; }\n  return dcr_length - cr;\n}\nfloat _intersect(in float a, in float b) {\n  return max(a,b);\n}\nfloat _difference(in float a, in float b) {\n  return max(a,-b);\n}\nfloat _union(in float a, in float b) {\n  return min(a,b);\n}\n\nfloat sceneDist(in vec3 rayOrigin){\n  /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);*/\n  float b = box_chamferDist(rayOrigin, vec3(0.0), vec3(0.55), 0.1);\n  float s1 = sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59);\n  float s2 = sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59);\n  return _union(\n    _intersect(s1, b),\n    _intersect(s2, b));\n  /*return _union(\n    sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49),\n    sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));*/\n  /*return _difference(sphereDist(vec3(0.5,0.0,0.0) - rayOrigin, 0.49), sphereDist(vec3(-0.5,0.0,0.0) - rayOrigin, 0.49));*/\n}\n\nfloat sceneRayDist(in vec3 rayOrigin, in vec3 rayDir) {\n  /*return sceneRayDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99, rayDir);*/\n  return _union(\n    _union(sphereRayDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49, rayDir), boxDist(rayOrigin, vec3(0.0), vec3(0.3))),\n    sphereRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));\n  /*return _difference(rayOrigin - sceneRayDist(vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));*/\n}\n\nvec3 sceneNormal( in vec3 pos )\n{\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(pos.x+eps, pos.yz) ) - sceneDist( vec3(pos.x-eps, pos.yz) );\n  n.y = sceneDist( vec3(pos.x, pos.y+eps, pos.z) ) - sceneDist( vec3(pos.x, pos.y-eps, pos.z) );\n  n.z = sceneDist( vec3(pos.xy, pos.z+eps) ) - sceneDist( vec3(pos.xy, pos.z-eps) );\n  return normalize(n);\n}\nvoid main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}';
+    glslFunctions = {};
+    console.log(distanceFunctions);
+    match = function(node, pattern) {
+      var subpattern;
+      return subpattern = pattern[node.type];
+    };
+    prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook';
+    uniforms = "";
+    sceneDist = 'float sceneDist(in vec3 ro){\n}';
+    sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n}';
+    sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}';
+    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}';
+    return main;
   };
   /*
   # Compile the abstract solid model tree into a GLSL string
