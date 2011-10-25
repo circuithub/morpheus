@@ -1,4 +1,7 @@
 compileGLSL = (abstractSolidModel) ->
+  glslFunctions = {}
+  
+
   '''
   #ifdef GL_ES
     precision highp float;

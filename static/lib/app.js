@@ -5,6 +5,7 @@
 
 (function() {
   var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
     attrRecord = node.get(attr);
@@ -119,6 +120,21 @@
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
+  Array.prototype.flatten = function(xs) {
+    var x, _ref;
+    return (_ref = []).concat.apply(_ref, (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = xs.length; _i < _len; _i++) {
+        x = xs[_i];
+        _results.push(flatten(x(Array.isArray(x) ? void 0 : [x])));
+      }
+      return _results;
+    })());
+  };
+  Math.clamp = function(s, min, max) {
+    return Math.min(Math.max(s, min), max);
+  };
   compileCSM = function(source) {
     var postfix, prefix, requestId;
     prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  \n  /* BEGIN SOURCE */\n  return scene(\n';
@@ -136,9 +152,103 @@
     });
   };
   compileASM = function(concreteSolidModel) {
-    return {};
+    var asm, compileASMNode;
+    asm = {
+      union: function() {
+        var nodes;
+        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return {
+          type: 'union',
+          nodes: nodes.flatten()
+        };
+      },
+      intersect: function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'intersect',
+          attr: attr,
+          nodes: nodes.flatten()
+        };
+      },
+      invert: function() {
+        var nodes;
+        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return {
+          type: 'invert',
+          nodes: nodes.flatten()
+        };
+      },
+      halfplane: function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'halfplane',
+          attr: attr
+        };
+      }
+    };
+    compileASMNode = function(node) {
+      var n;
+      switch (typeof node) {
+        case 'object':
+          switch (node.type) {
+            case 'scene':
+              if (node.nodes.length > 1) {
+                return asm.union.apply(asm, (function() {
+                  var _i, _len, _ref, _results;
+                  _ref = node.nodes;
+                  _results = [];
+                  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                    n = _ref[_i];
+                    _results.push(compileASMNode(n));
+                  }
+                  return _results;
+                })());
+              } else if (node.nodes.length === 1) {
+                return compileASMNode(node.nodes[0]);
+              } else {
+                return {};
+              }
+              break;
+            case 'box':
+              return asm.intersect(({
+                symmetric: false
+              }, asm.halfplane({
+                val: -node.attr.dimensions[0],
+                axis: 0
+              }), asm.halfplane({
+                val: -node.attr.dimensions[1],
+                axis: 1
+              }), asm.halfplane({
+                val: -node.attr.dimensions[2],
+                axis: 2
+              }), asm.invert((asm.halfplane({
+                val: node.attr.dimensions[0],
+                axis: 0
+              }), asm.halfplane({
+                val: node.attr.dimensions[1],
+                axis: 1
+              }), asm.halfplane({
+                val: node.attr.dimensions[2],
+                axis: 2
+              })))));
+            case 'sphere':
+              return {};
+            case 'cylinder':
+              return {};
+          }
+      }
+    };
+    if (concreteSolidModel.type !== 'scene') {
+      mecha.log("Expected node of type 'scene' at the root of the solid model");
+      return;
+    }
+    return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
+    var glslFunctions;
+    glslFunctions = {};
     return '#ifdef GL_ES\n  precision highp float;\n#endif\n\n//attribute vec3 SCENEJS_aVertex;           // Model coordinates\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\n// attribute vec3 SCENEJS_aNormal;          // Normal vectors\n// uniform   mat4 SCENEJS_uMNMatrix;        // Model normal matrix\n// uniform   mat4 SCENEJS_uVNMatrix;        // View normal matrix\n// varying   vec3 SCENEJS_vWorldNormal;     // Output world-space vertex normal\n// varying   vec3 SCENEJS_vViewNormal;      // Output view-space vertex normal\n// uniform vec3 SCENEJS_uLightDir0;\n// uniform vec4 SCENEJS_uLightPos0;\n// uniform vec4 SCENEJS_uLightPos0;\n// varying vec4 SCENEJS_vLightVecAndDist0;  // varying for fragment lighting\n// attribute vec2 SCENEJS_aUVCoord;         // UV coords\n// attribute vec2 SCENEJS_aUVCoord2;        // UV2 coords\n// attribute vec4 SCENEJS_aVertexColor;     // UV2 coords\n// varying vec4 SCENEJS_vColor;             // Varying for fragment texturing\n// uniform mat4 SCENEJS_uMMatrix;           // Model matrix\n// uniform mat4 SCENEJS_uVMatrix;           // View matrix\n// uniform mat4 SCENEJS_uPMatrix;           // Projection matrix\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n// varying vec4 SCENEJS_vViewVertex;        // Varying for fragment view clip hook\n// varying vec2 SCENEJS_vUVCoord;\n// varying vec2 SCENEJS_vUVCoord2;\nuniform float radius;\n\nfloat sphereRayDist(in vec3 p, in float r, in vec3 d) {\n  return length(p)-r;\n}\nfloat sphereDist(in vec3 p, in float r) {\n  return length(p)-r;\n}\nfloat boxDist(in vec3 p, in vec3 c, in vec3 r) {\n  vec3 rel = abs(p - c);\n  if (all(lessThan(rel, r)))\n    return 0.0;\n  vec3 d = max(vec3(0.0), rel - r);\n  return max(max(d.x, d.y), d.z);\n}\nfloat box_chamferDist(in vec3 p, in vec3 c, in vec3 r, in float cr) {\n  vec3 rel = abs(p - c);\n  vec3 d = max(vec3(0.0), rel - r);\n\n  // Optimization: Approximation\n  if (any(greaterThan(rel, r + vec3(cr)))) { return max(max(d.x, d.y), d.z); }\n\n  // Quick inner box test (might not be necessary if we assume camera is outside bounding box)\n  vec3 cr_center = r - vec3(cr);\n  bvec3 gtCrCenter = greaterThan(rel, cr_center);\n  if (!any(gtCrCenter)) { return 0.0; }\n\n  // Distance to box sides (if at least two dimensions are inside the inner box)\n  vec3 dcr = rel - cr_center;\n  if (min(dcr.x, dcr.y) < 0.0 && min(dcr.x, dcr.z) < 0.0 && min(dcr.y, dcr.z) < 0.0) { return max(max(d.x, d.y), d.z); }\n\n  // Distance to corner chamfer\n  float dcr_length;\n  if (all(gtCrCenter)) {\n    dcr_length = length(dcr);\n  }\n  // Distance to edge chamfer\n  else if(dcr.x < 0.0) {\n    dcr_length = length(dcr.yz);\n  }\n  else if (dcr.y < 0.0) {\n    dcr_length = length(dcr.xz);\n  }\n  else { // dcr.z < 0.0\n    dcr_length = length(dcr.xy);\n  }\n  if (dcr_length < cr) { return 0.0; }\n  return dcr_length - cr;\n}\nfloat _intersect(in float a, in float b) {\n  return max(a,b);\n}\nfloat _difference(in float a, in float b) {\n  return max(a,-b);\n}\nfloat _union(in float a, in float b) {\n  return min(a,b);\n}\n\nfloat sceneDist(in vec3 rayOrigin){\n  /*return sphereDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99);*/\n  float b = box_chamferDist(rayOrigin, vec3(0.0), vec3(0.55), 0.1);\n  float s1 = sphereDist(rayOrigin - vec3(0.3,0.0,0.1), 0.59);\n  float s2 = sphereDist(rayOrigin - vec3(-0.3,0.0,-0.1), 0.59);\n  return _union(\n    _intersect(s1, b),\n    _intersect(s2, b));\n  /*return _union(\n    sphereDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49),\n    sphereDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49));*/\n  /*return _difference(sphereDist(vec3(0.5,0.0,0.0) - rayOrigin, 0.49), sphereDist(vec3(-0.5,0.0,0.0) - rayOrigin, 0.49));*/\n}\n\nfloat sceneRayDist(in vec3 rayOrigin, in vec3 rayDir) {\n  /*return sceneRayDist(vec3(0.0,0.0,0.0)-rayOrigin, 0.99, rayDir);*/\n  return _union(\n    _union(sphereRayDist(rayOrigin - vec3(0.5,0.0,0.0), 0.49, rayDir), boxDist(rayOrigin, vec3(0.0), vec3(0.3))),\n    sphereRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));\n  /*return _difference(rayOrigin - sceneRayDist(vec3(0.5,0.0,0.0), 0.49, rayDir), sceneRayDist(rayOrigin - vec3(-0.5,0.0,0.0), 0.49, rayDir));*/\n}\n\nvec3 sceneNormal( in vec3 pos )\n{\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(pos.x+eps, pos.yz) ) - sceneDist( vec3(pos.x-eps, pos.yz) );\n  n.y = sceneDist( vec3(pos.x, pos.y+eps, pos.z) ) - sceneDist( vec3(pos.x, pos.y-eps, pos.z) );\n  n.z = sceneDist( vec3(pos.xy, pos.z+eps) ) - sceneDist( vec3(pos.xy, pos.z-eps) );\n  return normalize(n);\n}\nvoid main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}';
   };
   /*
@@ -165,9 +275,6 @@
       orbitSpeedFactor: 0.02,
       zoomSpeedFactor: 0.5
     }
-  };
-  Math.clamp = function(s, min, max) {
-    return Math.min(Math.max(s, min), max);
   };
   state = {
     scene: SceneJS.scene('Scene'),
