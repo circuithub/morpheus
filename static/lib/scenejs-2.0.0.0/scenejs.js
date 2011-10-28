@@ -1739,7 +1739,13 @@ SceneJS.Services = new (function() {
      * Destroys the selected scene node
      */
     NodeSelector.prototype.destroy = function() {
-        this._targetNode.destroy();
+        // Scene nodes should be destroyed directly
+        if (this._targetNode.attr.type === "scene") {
+          this._targetNode._destroy();
+        }
+        else {
+          this._targetNode.destroy();
+        }
         return this;
     };
 
@@ -5652,11 +5658,17 @@ var SceneJS_compileCfg = new (function() {
             "start" : {
                 level: this.COMPILE_SCENE
             },
-            set: {
+            /*set: {
                 attr: {
                     "tagMask": {
                         level: this.REDRAW
                     }
+                }
+            }*/
+            // Temporary fix for issue #60 in BIMsurfer
+            set: {
+                "tagMask": {
+                    level: this.REDRAW
                 }
             }
         },
@@ -7115,6 +7127,10 @@ new (function() {
             scenes[sceneId] = null;
             nScenes--;
 
+            // TODO: Not sure whether this is supposed be done via some SCENE_DESTROYED event?
+            SceneJS._scenes[sceneId] = null;
+            ////
+
             SceneJS_eventModule.fireEvent(SceneJS_eventModule.SCENE_DESTROYED, {sceneId : sceneId });
             SceneJS_loggingModule.info("Scene destroyed: " + sceneId);
 
@@ -7568,7 +7584,11 @@ var SceneJS_DrawList = new (function() {
             SceneJS_eventModule.RESET,
             function() {
                 for (var programId in self._programs) {  // Just free allocated programs
-                    self._programs[programId].destroy();
+                    //self._programs[programId].destroy();
+                    if (self._programs[programId].pick != null)
+                      self._programs[programId].pick.destroy();
+                    if (self._programs[programId].render != null)
+                      self._programs[programId].render.destroy();
                 }
                 self._programs = {};
                 nextProgramId = 0;
@@ -10658,7 +10678,12 @@ new (function() {
                     a : (color.a == undefined || color.a == null) ? 1 : color.a
                 };
             }
-            context.clearColor(color.r, color.g, color.b, color.a);
+            if (color.a === 0) {
+              context.clearColor(0,0,0,0);
+            }
+            else {
+              context.clearColor(color.r, color.g, color.b, color.a);
+            }
         },
 
         clearDepth: function(context, depth) {
