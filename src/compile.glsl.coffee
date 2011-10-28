@@ -16,18 +16,16 @@ compileGLSL = (abstractSolidModel) ->
         ]
     boxDist:
       id: '__boxDist'
-      arguments: ['vec3', 'vec3', 'vec3']
+      arguments: ['vec3', 'vec3']
       code: do () ->
         position = 'a'
-        center = 'b'
-        radius = 'c'
+        radius = 'b'
         rel = 'r'
         dist = 's'
         [
-          "vec3 #{rel} = abs(#{position} - #{center});"
-          "if (all(lessThan(#{rel}, #{radius})))"
+          "if (all(lessThan(#{position}, #{radius})))"
           "  return 0.0;"
-          "vec3 #{dist} = max(vec3(0.0), #{rel} - #{center});"
+          "vec3 #{dist} = max(vec3(0.0), #{rel} - #{position});"
           "return max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
         ]
     boxChamferDist:
@@ -174,11 +172,13 @@ compileGLSL = (abstractSolidModel) ->
     #if subpattern?
     #  return match node, subpattern
   
-  compileIntersect = (nodes, flags, glslFunctions) ->
+  compileIntersect = (nodes, flags, glslFunctions, glslCodes) ->
+    rayPosition = 'rp'
+
     collectIntersectNodes = (nodes, flags, halfSpacesByType) ->
       for node in nodes
         switch node.type
-          when 'halfspace' then halfSpacesByType[node.attr.axis*2 + (flags.invert? 1 : 0)].push node.attr.val
+          when 'halfspace' then halfSpacesByType[node.attr.axis + (flags.invert? 3 : 0)].push node.attr.val
           when 'invert'
             flags.invert = not flags.invert
             collectIntersectNodes nodes, flags, halfSpacesByType
@@ -195,12 +195,21 @@ compileGLSL = (abstractSolidModel) ->
     #   |                ____|     
     #   |  +                   -
     
-    # A collection of bins for half-spaces by type [x+, x-, y+, y-, z+, z-]
+    # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
     halfSpacesByType = []
     collectIntersectNodes nodes, false, halfSpacesByType
-    #compileIntersect
+    if halfSpacesByType[0].length > 0 and halfSpacesByType[1].length > 0 and halfSpacesByType[2].length > 0
+      if halfSpacesByType[3].length > 0 and halfSpacesByType[4].length > 0 and halfSpacesByType[5].length > 0
+        glslFunctions.box = true
+        boundaries = spaces.reduce Math.max for spaces in halfSpacesByType[0..2]
+        boundaries.concat spaces.reduce Math.min for spaces in halfSpacesByType[3..5]
+        center = [boundaries[0] + boundaries[3], boundaries[2] + boundaries[4], boundaries[3] + boundaries[5]]
+        positionParam = "#{rayPosition}"
+        if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
+          positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
+        glslCode = "#{distanceFunctions.boxDist}(#{positionParam})"
 
-  compileNode = (node, flags, glslFunctions) ->
+  compileNode = (node, flags, glslFunctions, glslCode) ->
     switch node.type
       when 'union' 
         compileNode['unionDist'] = true
@@ -222,8 +231,9 @@ compileGLSL = (abstractSolidModel) ->
         compileIntersect node, flags, glslFunctions
         
   glslFunctions = {}
+  glslCode = ""
   flags = { invert: false }
-  compileNode abstractSolidModel, flags, glslFunctions
+  compileNode abstractSolidModel, flags, glslFunctions, glslCode
   return prefix + sceneDist + sceneNormal + main
 
 ###

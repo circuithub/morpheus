@@ -290,7 +290,7 @@
     return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
-    var compileIntersect, compileNode, distanceFunctions, flags, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var compileIntersect, compileNode, distanceFunctions, flags, glslCode, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
     distanceFunctions = {
       sphereDist: {
         id: '__sphereDist',
@@ -305,15 +305,14 @@
       },
       boxDist: {
         id: '__boxDist',
-        arguments: ['vec3', 'vec3', 'vec3'],
+        arguments: ['vec3', 'vec3'],
         code: (function() {
-          var center, dist, position, radius, rel;
+          var dist, position, radius, rel;
           position = 'a';
-          center = 'b';
-          radius = 'c';
+          radius = 'b';
           rel = 'r';
           dist = 's';
-          return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "if (all(lessThan(" + rel + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
+          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + position + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
         })()
       },
       boxChamferDist: {
@@ -360,16 +359,17 @@
       var subpattern;
       return subpattern = pattern[node.type];
     };
-    compileIntersect = function(nodes, flags, glslFunctions) {
-      var collectIntersectNodes, halfSpacesByType;
+    compileIntersect = function(nodes, flags, glslFunctions, glslCodes) {
+      var boundaries, center, collectIntersectNodes, glslCode, halfSpacesByType, positionParam, rayPosition, spaces, _i, _j, _len, _len2, _ref, _ref2;
+      rayPosition = 'rp';
       collectIntersectNodes = function(nodes, flags, halfSpacesByType) {
         var node, _i, _len;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
           switch (node.type) {
             case 'halfspace':
-              halfSpacesByType[node.attr.axis * 2 + (typeof flags.invert === "function" ? flags.invert({
-                1: 0
+              halfSpacesByType[node.attr.axis + (typeof flags.invert === "function" ? flags.invert({
+                3: 0
               }) : void 0)].push(node.attr.val);
               break;
             case 'invert':
@@ -383,9 +383,30 @@
         return;
       }
       halfSpacesByType = [];
-      return collectIntersectNodes(nodes, false, halfSpacesByType);
+      collectIntersectNodes(nodes, false, halfSpacesByType);
+      if (halfSpacesByType[0].length > 0 && halfSpacesByType[1].length > 0 && halfSpacesByType[2].length > 0) {
+        if (halfSpacesByType[3].length > 0 && halfSpacesByType[4].length > 0 && halfSpacesByType[5].length > 0) {
+          glslFunctions.box = true;
+          _ref = halfSpacesByType.slice(0, 3);
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            spaces = _ref[_i];
+            boundaries = spaces.reduce(Math.max);
+          }
+          _ref2 = halfSpacesByType.slice(3, 6);
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            spaces = _ref2[_j];
+            boundaries.concat(spaces.reduce(Math.min));
+          }
+          center = [boundaries[0] + boundaries[3], boundaries[2] + boundaries[4], boundaries[3] + boundaries[5]];
+          positionParam = "" + rayPosition;
+          if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
+            positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
+          }
+          return glslCode = "" + distanceFunctions.boxDist + "(" + positionParam + ")";
+        }
+      }
     };
-    compileNode = function(node, flags, glslFunctions) {
+    compileNode = function(node, flags, glslFunctions, glslCode) {
       var n, _i, _len, _ref, _results;
       switch (node.type) {
         case 'union':
@@ -403,10 +424,11 @@
       }
     };
     glslFunctions = {};
+    glslCode = "";
     flags = {
       invert: false
     };
-    compileNode(abstractSolidModel, flags, glslFunctions);
+    compileNode(abstractSolidModel, flags, glslFunctions, glslCode);
     return prefix + sceneDist + sceneNormal + main;
   };
   /*
