@@ -184,11 +184,11 @@
           nodes: nodes.flatten()
         };
       },
-      halfplane: function() {
+      halfspace: function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         return {
-          type: 'halfplane',
+          type: 'halfspace',
           attr: attr
         };
       }
@@ -214,24 +214,24 @@
         }
       },
       box: function(node) {
-        var ALL_EDGES, halfPlanes;
-        halfPlanes = [
-          asm.halfplane({
+        var ALL_EDGES, halfspaces;
+        halfspaces = [
+          asm.halfspace({
             val: -node.attr.dimensions[0],
             axis: 0
-          }), asm.halfplane({
+          }), asm.halfspace({
             val: -node.attr.dimensions[1],
             axis: 1
-          }), asm.halfplane({
+          }), asm.halfspace({
             val: -node.attr.dimensions[2],
             axis: 2
-          }), asm.halfplane({
+          }), asm.halfspace({
             val: node.attr.dimensions[0],
             axis: 0
-          }), asm.halfplane({
+          }), asm.halfspace({
             val: node.attr.dimensions[1],
             axis: 1
-          }), asm.halfplane({
+          }), asm.halfspace({
             val: node.attr.dimensions[2],
             axis: 2
           })
@@ -245,19 +245,19 @@
             if (node.attr.chamfer.corners) {
               return asm.intersect({
                 chamfer: true
-              }, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert.apply(asm, halfplanes.slice(3, 7)));
+              }, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
             } else {
               return asm.intersect(({
                 chamfer: true
               }, asm.intersect({
                 chamfer: true
-              }, halfplanes[0], halfplanes[1], asm.invert(halfplanes[3], halfplanes[4])), halfplanes[2], asm.invert(halfplanes[5])));
+              }, halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4])), halfspaces[2], asm.invert(halfspaces[5])));
             }
           } else {
-            return asm.intersect(({}, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert.apply(asm, halfplanes.slice(3, 7))));
+            return asm.intersect(({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7))));
           }
         } else {
-          return asm.intersect(({}, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert.apply(asm, halfplanes.slice(3, 7))));
+          return asm.intersect(({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7))));
         }
       },
       sphere: function(node) {
@@ -284,13 +284,13 @@
       }
     };
     if (concreteSolidModel.type !== 'scene') {
-      mecha.log("Expected node of type 'scene' at the root of the solid model");
+      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
       return;
     }
     return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
-    var distanceFunctions, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var compileIntersect, compileNode, distanceFunctions, flags, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
     distanceFunctions = {
       sphereDist: {
         id: '__sphereDist',
@@ -350,18 +350,63 @@
         }
       }
     };
-    glslFunctions = {};
-    console.log(distanceFunctions);
-    match = function(node, pattern) {
-      var subpattern;
-      return subpattern = pattern[node.type];
-    };
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
     sceneDist = 'float sceneDist(in vec3 ro){\n  return 0.0;\n}\n';
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    match = function(node, pattern) {
+      var subpattern;
+      return subpattern = pattern[node.type];
+    };
+    compileIntersect = function(nodes, flags, glslFunctions) {
+      var collectIntersectNodes, halfSpacesByType;
+      collectIntersectNodes = function(nodes, flags, halfSpacesByType) {
+        var node, _i, _len;
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          node = nodes[_i];
+          switch (node.type) {
+            case 'halfspace':
+              halfSpacesByType[node.attr.axis * 2 + (typeof flags.invert === "function" ? flags.invert({
+                1: 0
+              }) : void 0)].push(node.attr.val);
+              break;
+            case 'invert':
+              flags.invert = !flags.invert;
+              collectIntersectNodes(nodes, flags, halfSpacesByType);
+              flags.invert = !flags.invert;
+          }
+        }
+      };
+      if (nodes.length === 0) {
+        return;
+      }
+      halfSpacesByType = [];
+      return collectIntersectNodes(nodes, false, halfSpacesByType);
+    };
+    compileNode = function(node, flags, glslFunctions) {
+      var n, _i, _len, _ref, _results;
+      switch (node.type) {
+        case 'union':
+          compileNode['unionDist'] = true;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileNode(n));
+          }
+          return _results;
+          break;
+        case 'intersect':
+          return compileIntersect(node, flags, glslFunctions);
+      }
+    };
+    glslFunctions = {};
+    flags = {
+      invert: false
+    };
+    compileNode(abstractSolidModel, flags, glslFunctions);
     return prefix + sceneDist + sceneNormal + main;
   };
   /*
@@ -492,7 +537,9 @@
       shaders: [
         {
           stage: 'fragment',
-          code: compileGLSL(compileASM({}))
+          code: compileGLSL(compileASM({
+            type: 'scene'
+          }))
         }
       ],
       vars: {}

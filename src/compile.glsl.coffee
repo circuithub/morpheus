@@ -92,15 +92,6 @@ compileGLSL = (abstractSolidModel) ->
         arguments: ['float','float']
         code: ["return min(a,b);"]
 
-  glslFunctions = {}
-
-  console.log distanceFunctions
-  
-  match = (node, pattern) ->
-    subpattern = pattern[node.type]
-    #if subpattern?
-    #  return match node, subpattern
-  
   prefix = 
     '''
     #ifdef GL_ES
@@ -176,7 +167,63 @@ compileGLSL = (abstractSolidModel) ->
     }
     
     '''
+  
+  # Compile the ASM
+  match = (node, pattern) ->
+    subpattern = pattern[node.type]
+    #if subpattern?
+    #  return match node, subpattern
+  
+  compileIntersect = (nodes, flags, glslFunctions) ->
+    collectIntersectNodes = (nodes, flags, halfSpacesByType) ->
+      for node in nodes
+        switch node.type
+          when 'halfspace' then halfSpacesByType[node.attr.axis*2 + (flags.invert? 1 : 0)].push node.attr.val
+          when 'invert'
+            flags.invert = not flags.invert
+            collectIntersectNodes nodes, flags, halfSpacesByType
+            flags.invert = not flags.invert
+      return
 
+    if nodes.length == 0
+      return
+    # Try to find a half-space "corner" (three halfspaces on x,y,z axes that intersect
+    # Prefer a x+,y+,z+ corner first, then x-,y-,z- corner then all other corners
+    # I.e.
+    #
+    # -  ____     and     +  |       respectively
+    #   |                ____|     
+    #   |  +                   -
+    
+    # A collection of bins for half-spaces by type [x+, x-, y+, y-, z+, z-]
+    halfSpacesByType = []
+    collectIntersectNodes nodes, false, halfSpacesByType
+    #compileIntersect
+
+  compileNode = (node, flags, glslFunctions) ->
+    switch node.type
+      when 'union' 
+        compileNode['unionDist'] = true
+        compileNode n for n in node.nodes
+      when 'intersect'
+        #match node,
+        #  type: 'intersect'
+        #  nodes: [
+        #    type: 'halfspace'
+        #    attr: attr
+        #  ,
+        #    type: 'halfspace'
+        #    attr: attr
+        #  ,
+        #    type: 'halfspace'
+        #    attr: attr
+        #  ]
+        #compileNode['intersectDist'] = true
+        compileIntersect node, flags, glslFunctions
+        
+  glslFunctions = {}
+  flags = { invert: false }
+  compileNode abstractSolidModel, flags, glslFunctions
   return prefix + sceneDist + sceneNormal + main
 
 ###

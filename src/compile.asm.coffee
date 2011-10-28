@@ -16,8 +16,8 @@ compileASM = (concreteSolidModel) ->
     invert: (nodes...) ->
       type: 'invert'
       nodes: nodes.flatten()
-    halfplane: (attr, nodes...) ->
-      type: 'halfplane'
+    halfspace: (attr, nodes...) ->
+      type: 'halfspace'
       attr: attr
 
   dispatch = 
@@ -29,23 +29,23 @@ compileASM = (concreteSolidModel) ->
       else 
         {}
     box: (node) ->
-      halfPlanes = [
-        asm.halfplane 
+      halfspaces = [
+        asm.halfspace 
           val: -node.attr.dimensions[0]
           axis: 0
-        asm.halfplane
+        asm.halfspace
           val: -node.attr.dimensions[1]
           axis: 1
-        asm.halfplane
+        asm.halfspace
           val: -node.attr.dimensions[2]
           axis: 2
-        asm.halfplane 
+        asm.halfspace 
           val: node.attr.dimensions[0]
           axis: 0
-        asm.halfplane 
+        asm.halfspace 
           val: node.attr.dimensions[1]
           axis: 1
-        asm.halfplane 
+        asm.halfspace 
           val: node.attr.dimensions[2]
           axis: 2
       ]
@@ -55,30 +55,30 @@ compileASM = (concreteSolidModel) ->
         if chamferEdges == ALL_EDGES 
           if node.attr.chamfer.corners
             # Chamfer everything
-            asm.intersect { chamfer: true }, halfplanes[0], halfplanes[1], halfplanes[2], asm.invert halfplanes[3..6]...
+            asm.intersect { chamfer: true }, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
           else 
             # Chamfer only edges (TODO: is this going to work as expected?)
             asm.intersect (
               { chamfer: true }
-              asm.intersect { chamfer: true }, halfplanes[0], halfplanes[1], (asm.invert halfplanes[3], halfplanes[4])
-              halfplanes[2]
-              asm.invert halfplanes[5] )
+              asm.intersect { chamfer: true }, halfspaces[0], halfspaces[1], (asm.invert halfspaces[3], halfspaces[4])
+              halfspaces[2]
+              asm.invert halfspaces[5] )
         else
           # Group intersections according to the edges that are chamfered
           # TODO: This is not yet implemented, for now chamfer nothing...
           asm.intersect (
             {}
-            halfplanes[0]
-            halfplanes[1]
-            halfplanes[2]
-            asm.invert halfplanes[3..6]... )
+            halfspaces[0]
+            halfspaces[1]
+            halfspaces[2]
+            asm.invert halfspaces[3..6]... )
       else
         asm.intersect (
           {}
-          halfplanes[0]
-          halfplanes[1]
-          halfplanes[2]
-          asm.invert halfplanes[3..6]... )
+          halfspaces[0]
+          halfspaces[1]
+          halfspaces[2]
+          asm.invert halfspaces[3..6]... )
     sphere: (node) ->
       # TODO
       {}
@@ -98,7 +98,7 @@ compileASM = (concreteSolidModel) ->
         mecha.log "Unexpected node of type '#{typeof node}'."
         return {}
   if concreteSolidModel.type != 'scene'
-    mecha.log "Expected node of type 'scene' at the root of the solid model"
+    mecha.log "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
     return
   
   compileASMNode concreteSolidModel
