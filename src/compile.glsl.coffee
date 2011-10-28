@@ -109,6 +109,7 @@ compileGLSL = (abstractSolidModel) ->
     uniform vec3 SCENEJS_uEye;                  // World-space eye position
     varying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector
     varying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook
+    
     '''
 
   uniforms = "" # TODO
@@ -117,7 +118,9 @@ compileGLSL = (abstractSolidModel) ->
     # ro = ray origin
     '''
     float sceneDist(in vec3 ro){
+      return 0.0;
     }
+    
     '''
   
   sceneRayDist = 
@@ -125,7 +128,9 @@ compileGLSL = (abstractSolidModel) ->
     # rd = ray direction
     '''
     float sceneRayDist(in vec3 ro, in vec3 rd) {
+      return 0.0;
     }
+    
     '''
 
   sceneNormal =
@@ -139,6 +144,7 @@ compileGLSL = (abstractSolidModel) ->
       n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );
       return normalize(n);
     }
+    
     '''
 
   main = 
@@ -168,9 +174,10 @@ compileGLSL = (abstractSolidModel) ->
       vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);
       gl_FragColor = vec4(diffuse, 1.0);
     }
+    
     '''
 
-  return main
+  return prefix + sceneDist + sceneNormal + main
 
 ###
 # Compile the abstract solid model tree into a GLSL string

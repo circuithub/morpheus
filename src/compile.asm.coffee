@@ -63,6 +63,15 @@ compileASM = (concreteSolidModel) ->
               asm.intersect { chamfer: true }, halfplanes[0], halfplanes[1], (asm.invert halfplanes[3], halfplanes[4])
               halfplanes[2]
               asm.invert halfplanes[5] )
+        else
+          # Group intersections according to the edges that are chamfered
+          # TODO: This is not yet implemented, for now chamfer nothing...
+          asm.intersect (
+            {}
+            halfplanes[0]
+            halfplanes[1]
+            halfplanes[2]
+            asm.invert halfplanes[3..6]... )
       else
         asm.intersect (
           {}
