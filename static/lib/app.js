@@ -5,12 +5,7 @@
 
 (function() {
   var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
-  var __slice = Array.prototype.slice, __indexOf = Array.prototype.indexOf || function(item) {
-    for (var i = 0, l = this.length; i < l; i++) {
-      if (this[i] === item) return i;
-    }
-    return -1;
-  };
+  var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
     attrRecord = node.get(attr);
@@ -268,10 +263,9 @@
       }
     };
     compileASMNode = function(node) {
-      var _ref;
       switch (typeof node) {
         case 'object':
-          if (_ref = node.type, __indexOf.call(dispatch, _ref) >= 0) {
+          if (dispatch[node.type] != null) {
             return dispatch[node.type](node);
           } else {
             mecha.log("Unexpected node type '" + node.type + "'.");
@@ -351,7 +345,9 @@
     };
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
-    sceneDist = 'float sceneDist(in vec3 ro){\n  return 0.0;\n}\n';
+    sceneDist = function(code) {
+      return "\nfloat sceneDist(in vec3 ro){ return " + code + "; }\n\n";
+    };
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
@@ -406,8 +402,8 @@
         }
       }
     };
-    compileNode = function(node, flags, glslFunctions, glslCode) {
-      var n, _i, _len, _ref, _results;
+    compileNode = function(node, flags, glslFunctions) {
+      var glslINFINITY, n, _i, _len, _ref, _results;
       switch (node.type) {
         case 'union':
           compileNode['unionDist'] = true;
@@ -421,6 +417,9 @@
           break;
         case 'intersect':
           return compileIntersect(node, flags, glslFunctions);
+        default:
+          glslINFINITY = '1.0/0.0';
+          return "" + glslINFINITY;
       }
     };
     glslFunctions = {};
@@ -428,24 +427,9 @@
     flags = {
       invert: false
     };
-    compileNode(abstractSolidModel, flags, glslFunctions, glslCode);
-    return prefix + sceneDist + sceneNormal + main;
+    glslCode = compileNode(abstractSolidModel, flags, glslFunctions);
+    return prefix + (sceneDist(glslCode)) + sceneNormal + main;
   };
-  /*
-  # Compile the abstract solid model tree into a GLSL string
-  glslFunctions =
-    'b':
-      verbose: 'box'
-      arguments: ['in vec3 p', 'in vec3 c', 'in vec3 r', 'in cr']
-      code: 
-        '''
-        vec3 rel = abs(p - c);
-        if (any(lessThan(rel, r)))
-          return 0;
-        vec3 d = rel - r;
-        return min(d.x, d.y, d.z);
-        '''
-  */
   constants = {
     canvas: {
       defaultSize: [512, 512]
@@ -560,7 +544,8 @@
         {
           stage: 'fragment',
           code: compileGLSL(compileASM({
-            type: 'scene'
+            type: 'scene',
+            nodes: []
           }))
         }
       ],

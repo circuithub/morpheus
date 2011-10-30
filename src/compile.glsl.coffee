@@ -103,14 +103,9 @@ compileGLSL = (abstractSolidModel) ->
 
   uniforms = "" # TODO
   
-  sceneDist = 
+  sceneDist = (code) ->
     # ro = ray origin
-    '''
-    float sceneDist(in vec3 ro){
-      return 0.0;
-    }
-    
-    '''
+    "\nfloat sceneDist(in vec3 ro){ return #{code}; }\n\n"
   
   sceneRayDist = 
     # ro = ray origin
@@ -209,7 +204,7 @@ compileGLSL = (abstractSolidModel) ->
           positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
         glslCode = "#{distanceFunctions.boxDist}(#{positionParam})"
 
-  compileNode = (node, flags, glslFunctions, glslCode) ->
+  compileNode = (node, flags, glslFunctions) ->
     switch node.type
       when 'union' 
         compileNode['unionDist'] = true
@@ -229,26 +224,12 @@ compileGLSL = (abstractSolidModel) ->
         #  ]
         #compileNode['intersectDist'] = true
         compileIntersect node, flags, glslFunctions
-        
+      else
+        glslINFINITY = '1.0/0.0'
+        return "#{glslINFINITY}"
   glslFunctions = {}
   glslCode = ""
   flags = { invert: false }
-  compileNode abstractSolidModel, flags, glslFunctions, glslCode
-  return prefix + sceneDist + sceneNormal + main
-
-###
-# Compile the abstract solid model tree into a GLSL string
-glslFunctions =
-  'b':
-    verbose: 'box'
-    arguments: ['in vec3 p', 'in vec3 c', 'in vec3 r', 'in cr']
-    code: 
-      '''
-      vec3 rel = abs(p - c);
-      if (any(lessThan(rel, r)))
-        return 0;
-      vec3 d = rel - r;
-      return min(d.x, d.y, d.z);
-      '''
-###
+  glslCode = compileNode abstractSolidModel, flags, glslFunctions
+  return prefix + (sceneDist glslCode) + sceneNormal + main
 
