@@ -12,7 +12,7 @@ sceneInit = () ->
     id: 'main-shader',
     shaders: [
       stage: 'fragment',
-      code: compileGLSL compileASM { type: 'scene' }
+      code: compileGLSL compileASM { type: 'scene', nodes: [] }
     ]
     vars: {}
   (state.scene.findNode 'cube-mat').insert 'node', shaderDef
