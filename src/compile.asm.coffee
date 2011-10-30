@@ -89,7 +89,7 @@ compileASM = (concreteSolidModel) ->
   compileASMNode = (node) ->
     switch typeof node
       when 'object'
-        if node.type in dispatch
+        if dispatch[node.type]?
           return dispatch[node.type] node
         else
           mecha.log "Unexpected node type '#{node.type}'."
