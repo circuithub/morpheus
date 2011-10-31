@@ -280,7 +280,7 @@
     return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
-    var compileIntersect, compileNode, distanceFunctions, flags, glslCode, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var compileIntersect, compileNode, distanceFunctions, flags, glslCode, glslFunctions, glslLibrary, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
     distanceFunctions = {
       sphereDist: {
         id: '__sphereDist',
@@ -295,6 +295,7 @@
       },
       boxDist: {
         id: '__boxDist',
+        returnType: 'float',
         arguments: ['vec3', 'vec3'],
         code: (function() {
           var dist, position, radius, rel;
@@ -307,6 +308,7 @@
       },
       boxChamferDist: {
         id: '__boxChamferDist',
+        returnType: 'float',
         arguments: ['vec3', 'vec3', 'vec3', 'float'],
         code: (function() {
           var center, chamferCenter, chamferDist, chamferDistLength, chamferRadius, dist, gtChamferCenter, position, radius, rel;
@@ -421,13 +423,44 @@
           return "" + glslINFINITY;
       }
     };
+    glslLibrary = function(libraryFunctions, distanceFunctions) {
+      var argCharCode, argName, c, charCodeA, code, distanceFunction, f, i, v, _i, _len, _ref, _ref2;
+      code = "";
+      for (f in libraryFunctions) {
+        v = libraryFunctions[f];
+        distanceFunction = distanceFunctions[f + 'Dist'];
+        if (!distanceFunction) {
+          mecha.log("GLSL distance function '" + f + "Dist' could not be found.");
+          continue;
+        }
+        code += '\n';
+        code += "" + distanceFunction.returnType + " " + distanceFunction.id + "(";
+        charCodeA = 'a'.charCodeAt(0);
+        for (i = 0, _ref = distanceFunction.arguments.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+          argCharCode = charCodeA + i;
+          argName = String.fromCharCode(argCharCode);
+          code += "in " + distanceFunction.arguments[i] + " " + argName;
+          if (i < distanceFunction.arguments.length - 1) {
+            code += ',';
+          }
+        }
+        code += ") {\n";
+        _ref2 = distanceFunction.code;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          c = _ref2[_i];
+          code += c + '\n';
+        }
+        code += "}\n";
+      }
+      return code;
+    };
     glslFunctions = {};
     glslCode = "";
     flags = {
       invert: false
     };
     glslCode = compileNode(abstractSolidModel, flags, glslFunctions);
-    return prefix + (sceneDist(glslCode)) + sceneNormal + main;
+    return prefix + (glslLibrary(glslFunctions, distanceFunctions)) + (sceneDist(glslCode)) + sceneNormal + main;
   };
   constants = {
     canvas: {

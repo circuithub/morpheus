@@ -16,6 +16,7 @@ compileGLSL = (abstractSolidModel) ->
         ]
     boxDist:
       id: '__boxDist'
+      returnType: 'float'
       arguments: ['vec3', 'vec3']
       code: do () ->
         position = 'a'
@@ -30,6 +31,7 @@ compileGLSL = (abstractSolidModel) ->
         ]
     boxChamferDist:
       id: '__boxChamferDist'
+      returnType: 'float'
       arguments: ['vec3', 'vec3', 'vec3', 'float']
       code: do () ->
         position = 'a'
@@ -229,9 +231,31 @@ compileGLSL = (abstractSolidModel) ->
       else
         glslINFINITY = '1.0/0.0'
         return "#{glslINFINITY}"
+
+  glslLibrary = (libraryFunctions, distanceFunctions) ->
+    code = ""
+    for f,v of libraryFunctions
+      # if not v then continue
+      distanceFunction = distanceFunctions[f + 'Dist']
+      if not distanceFunction
+        mecha.log "GLSL distance function '#{f}Dist' could not be found."
+        continue
+      code += '\n'
+      code += "#{distanceFunction.returnType} #{distanceFunction.id}("
+      charCodeA = 'a'.charCodeAt 0
+      for i in [0...distanceFunction.arguments.length]
+        argCharCode = charCodeA + i
+        argName = String.fromCharCode argCharCode
+        code += "in #{distanceFunction.arguments[i]} #{argName}"
+        code += ',' if i < distanceFunction.arguments.length - 1
+      code += ") {\n"
+      code += c + '\n' for c in distanceFunction.code
+      code += "}\n"
+    return code
+
   glslFunctions = {}
   glslCode = ""
   flags = { invert: false }
   glslCode = compileNode abstractSolidModel, flags, glslFunctions
-  return prefix + (sceneDist glslCode) + sceneNormal + main
+  return prefix + (glslLibrary glslFunctions, distanceFunctions) + (sceneDist glslCode) + sceneNormal + main
 
