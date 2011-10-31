@@ -120,35 +120,31 @@
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
-  Array.prototype.flatten = function(xs) {
+  Array.prototype.flatten = function() {
     var x, _ref;
     return (_ref = []).concat.apply(_ref, (function() {
       var _i, _len, _results;
       _results = [];
-      for (_i = 0, _len = xs.length; _i < _len; _i++) {
-        x = xs[_i];
-        _results.push(flatten(x(Array.isArray(x) ? void 0 : [x])));
+      for (_i = 0, _len = this.length; _i < _len; _i++) {
+        x = this[_i];
+        _results.push((Array.isArray(x) ? flatten(x) : [x]));
       }
       return _results;
-    })());
+    }).call(this));
   };
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
-  compileCSM = function(source) {
+  compileCSM = function(source, callback) {
     var postfix, prefix, requestId;
     prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  \n  /* BEGIN SOURCE */\n  return scene(\n';
     postfix = '  \n  );\n})();';
     return requestId = JSandbox.eval({
       data: prefix + source + postfix,
       callback: function(result) {
-        console.log("Success");
-        return console.log(result);
+        return callback(result);
       },
-      onerror: function(data, request) {
-        console.log("Error");
-        return console.log(data);
-      }
+      onerror: function(data, request) {}
     });
   };
   compileASM = function(concreteSolidModel) {
@@ -242,17 +238,17 @@
                 chamfer: true
               }, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
             } else {
-              return asm.intersect(({
+              return asm.intersect({
                 chamfer: true
               }, asm.intersect({
                 chamfer: true
-              }, halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4])), halfspaces[2], asm.invert(halfspaces[5])));
+              }, halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4]), halfspaces[2], asm.invert(halfspaces[5])));
             }
           } else {
-            return asm.intersect(({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7))));
+            return asm.intersect({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
           }
         } else {
-          return asm.intersect(({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7))));
+          return asm.intersect({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
         }
       },
       sphere: function(node) {
@@ -355,8 +351,8 @@
       var subpattern;
       return subpattern = pattern[node.type];
     };
-    compileIntersect = function(nodes, flags, glslFunctions, glslCodes) {
-      var boundaries, center, collectIntersectNodes, glslCode, halfSpacesByType, positionParam, rayPosition, spaces, _i, _j, _len, _len2, _ref, _ref2;
+    compileIntersect = function(node, flags, glslFunctions, glslCodes) {
+      var boundaries, center, collectIntersectNodes, glslCode, halfSpacesByType, i, positionParam, rayPosition, spaces, _i, _j, _len, _len2, _ref, _ref2;
       rayPosition = 'rp';
       collectIntersectNodes = function(nodes, flags, halfSpacesByType) {
         var node, _i, _len;
@@ -364,22 +360,24 @@
           node = nodes[_i];
           switch (node.type) {
             case 'halfspace':
-              halfSpacesByType[node.attr.axis + (typeof flags.invert === "function" ? flags.invert({
-                3: 0
-              }) : void 0)].push(node.attr.val);
+              halfSpacesByType[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
               break;
             case 'invert':
               flags.invert = !flags.invert;
-              collectIntersectNodes(nodes, flags, halfSpacesByType);
+              halfSpacesByType = collectIntersectNodes(node.nodes, flags, halfSpacesByType);
               flags.invert = !flags.invert;
           }
         }
+        return halfSpacesByType;
       };
-      if (nodes.length === 0) {
+      if (node.nodes.length === 0) {
         return;
       }
       halfSpacesByType = [];
-      collectIntersectNodes(nodes, false, halfSpacesByType);
+      for (i = 0; i <= 5; i++) {
+        halfSpacesByType.push([]);
+      }
+      halfSpacesByType = collectIntersectNodes(node.nodes, false, halfSpacesByType);
       if (halfSpacesByType[0].length > 0 && halfSpacesByType[1].length > 0 && halfSpacesByType[2].length > 0) {
         if (halfSpacesByType[3].length > 0 && halfSpacesByType[4].length > 0 && halfSpacesByType[5].length > 0) {
           glslFunctions.box = true;
@@ -512,7 +510,9 @@
       return (state.scene.findNode('main-shader')).set('shaders', [
         {
           stage: 'fragment',
-          code: compileGLSL(compileASM(compileCSM(($('#source-code')).val())))
+          code: compileCSM(($('#source-code')).val(), function(result) {
+            return compileGLSL(compileASM(result));
+          })
         }
       ]);
     } catch (error) {

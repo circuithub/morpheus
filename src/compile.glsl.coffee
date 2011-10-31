@@ -167,20 +167,20 @@ compileGLSL = (abstractSolidModel) ->
     #if subpattern?
     #  return match node, subpattern
   
-  compileIntersect = (nodes, flags, glslFunctions, glslCodes) ->
+  compileIntersect = (node, flags, glslFunctions, glslCodes) ->
     rayPosition = 'rp'
 
     collectIntersectNodes = (nodes, flags, halfSpacesByType) ->
       for node in nodes
         switch node.type
-          when 'halfspace' then halfSpacesByType[node.attr.axis + (flags.invert? 3 : 0)].push node.attr.val
+          when 'halfspace' then halfSpacesByType[node.attr.axis + (if flags.invert then 3 else 0)].push node.attr.val
           when 'invert'
             flags.invert = not flags.invert
-            collectIntersectNodes nodes, flags, halfSpacesByType
+            halfSpacesByType = collectIntersectNodes node.nodes, flags, halfSpacesByType
             flags.invert = not flags.invert
-      return
+      return halfSpacesByType
 
-    if nodes.length == 0
+    if node.nodes.length == 0
       return
     # Try to find a half-space "corner" (three halfspaces on x,y,z axes that intersect
     # Prefer a x+,y+,z+ corner first, then x-,y-,z- corner then all other corners
@@ -192,7 +192,8 @@ compileGLSL = (abstractSolidModel) ->
     
     # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
     halfSpacesByType = []
-    collectIntersectNodes nodes, false, halfSpacesByType
+    halfSpacesByType.push [] for i in [0..5]
+    halfSpacesByType = collectIntersectNodes node.nodes, false, halfSpacesByType
     if halfSpacesByType[0].length > 0 and halfSpacesByType[1].length > 0 and halfSpacesByType[2].length > 0
       if halfSpacesByType[3].length > 0 and halfSpacesByType[4].length > 0 and halfSpacesByType[5].length > 0
         glslFunctions.box = true
