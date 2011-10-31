@@ -16,6 +16,7 @@ appFiles  = [
   'compile.csm'
   'compile.asm'
   'compile.glsl'
+  'compile.glsl.library'
   'constants'
   'state'
   'mouse'
