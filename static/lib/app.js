@@ -541,14 +541,14 @@
   keyDown = function(event) {};
   controlsSourceCompile = function() {
     try {
-      return (state.scene.findNode('main-shader')).set('shaders', [
-        {
-          stage: 'fragment',
-          code: compileCSM(($('#source-code')).val(), function(result) {
-            return compileGLSL(compileASM(result));
-          })
-        }
-      ]);
+      return compileCSM(($('#source-code')).val(), function(result) {
+        return (state.scene.findNode('main-shader')).set('shaders', [
+          {
+            stage: 'fragment',
+            code: compileGLSL(compileASM(result))
+          }
+        ]);
+      });
     } catch (error) {
       return mecha.log(error);
     }
