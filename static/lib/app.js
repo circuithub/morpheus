@@ -377,26 +377,27 @@
       for (i = 0; i <= 5; i++) {
         halfSpacesByType.push([]);
       }
-      halfSpacesByType = collectIntersectNodes(node.nodes, false, halfSpacesByType);
+      halfSpacesByType = collectIntersectNodes(node.nodes, flags, halfSpacesByType);
       if (halfSpacesByType[0].length > 0 && halfSpacesByType[1].length > 0 && halfSpacesByType[2].length > 0) {
         if (halfSpacesByType[3].length > 0 && halfSpacesByType[4].length > 0 && halfSpacesByType[5].length > 0) {
           glslFunctions.box = true;
+          boundaries = [];
           _ref = halfSpacesByType.slice(0, 3);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             spaces = _ref[_i];
-            boundaries = spaces.reduce(Math.max);
+            boundaries.push(spaces.reduce(Math.max));
           }
           _ref2 = halfSpacesByType.slice(3, 6);
           for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
             spaces = _ref2[_j];
-            boundaries.concat(spaces.reduce(Math.min));
+            boundaries.push(spaces.reduce(Math.min));
           }
-          center = [boundaries[0] + boundaries[3], boundaries[2] + boundaries[4], boundaries[3] + boundaries[5]];
+          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
           positionParam = "" + rayPosition;
           if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
             positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
           }
-          return glslCode = "" + distanceFunctions.boxDist + "(" + positionParam + ")";
+          return glslCode = "" + distanceFunctions.boxDist.id + "(" + positionParam + ")";
         }
       }
     };

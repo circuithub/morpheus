@@ -193,17 +193,18 @@ compileGLSL = (abstractSolidModel) ->
     # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
     halfSpacesByType = []
     halfSpacesByType.push [] for i in [0..5]
-    halfSpacesByType = collectIntersectNodes node.nodes, false, halfSpacesByType
+    halfSpacesByType = collectIntersectNodes node.nodes, flags, halfSpacesByType
     if halfSpacesByType[0].length > 0 and halfSpacesByType[1].length > 0 and halfSpacesByType[2].length > 0
       if halfSpacesByType[3].length > 0 and halfSpacesByType[4].length > 0 and halfSpacesByType[5].length > 0
         glslFunctions.box = true
-        boundaries = spaces.reduce Math.max for spaces in halfSpacesByType[0..2]
-        boundaries.concat spaces.reduce Math.min for spaces in halfSpacesByType[3..5]
-        center = [boundaries[0] + boundaries[3], boundaries[2] + boundaries[4], boundaries[3] + boundaries[5]]
+        boundaries = []
+        boundaries.push spaces.reduce Math.max for spaces in halfSpacesByType[0..2]
+        boundaries.push spaces.reduce Math.min for spaces in halfSpacesByType[3..5]
+        center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
         positionParam = "#{rayPosition}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
           positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
-        glslCode = "#{distanceFunctions.boxDist}(#{positionParam})"
+        glslCode = "#{distanceFunctions.boxDist.id}(#{positionParam})"
 
   compileNode = (node, flags, glslFunctions) ->
     switch node.type
