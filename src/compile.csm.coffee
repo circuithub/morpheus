@@ -1,5 +1,5 @@
 # Compile the source code into a concrete solid model
-compileCSM = (source) ->
+compileCSM = (source, callback) ->
   #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
   prefix = 
     '''
@@ -23,10 +23,10 @@ compileCSM = (source) ->
   requestId = JSandbox.eval 
     data: prefix + source + postfix
     callback: (result) ->
-      console.log "Success"
-      console.log result
+      #console.log "Success"
+      callback result
     onerror: (data,request) ->
       #console.log prefix + source + postfix
-      console.log "Error"
-      console.log data
+      #console.log "Error"
+      #console.log data
   

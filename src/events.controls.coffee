@@ -6,7 +6,7 @@ controlsSourceCompile = () ->
     # TODO: SceneJS does not yet support updating the shader like this
     (state.scene.findNode 'main-shader').set 'shaders', [
         stage: 'fragment',
-        code: compileGLSL compileASM compileCSM ($ '#source-code').val()
+        code: compileCSM(($ '#source-code').val(), (result) -> compileGLSL compileASM result)
       ]
   catch error
     mecha.log error
