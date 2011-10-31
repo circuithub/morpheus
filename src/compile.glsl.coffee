@@ -170,7 +170,7 @@ compileGLSL = (abstractSolidModel) ->
     #  return match node, subpattern
   
   compileIntersect = (node, flags, glslFunctions, glslCodes) ->
-    rayPosition = 'rp'
+    rayOrigin = 'ro'
 
     collectIntersectNodes = (nodes, flags, halfSpacesByType) ->
       for node in nodes
@@ -203,7 +203,7 @@ compileGLSL = (abstractSolidModel) ->
         boundaries.push spaces.reduce Math.max for spaces in halfSpacesByType[0..2]
         boundaries.push spaces.reduce Math.min for spaces in halfSpacesByType[3..5]
         center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
-        positionParam = "#{rayPosition}"
+        positionParam = "#{rayOrigin}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
           positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
         glslCode = "#{distanceFunctions.boxDist.id}(#{positionParam})"
