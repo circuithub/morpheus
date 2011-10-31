@@ -7,15 +7,17 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = () ->
-  shaderDef =
-    type: 'shader',
-    id: 'main-shader',
-    shaders: [
-      stage: 'fragment',
-      code: compileGLSL compileASM { type: 'scene', nodes: [] }
-    ]
-    vars: {}
-  (state.scene.findNode 'cube-mat').insert 'node', shaderDef
+  compileCSM ($ '#source-code').val(), 
+    (result) ->
+      shaderDef =
+        type: 'shader',
+        id: 'main-shader',
+        shaders: [
+          stage: 'fragment',
+          code: compileGLSL compileASM result
+        ]
+        vars: {}
+      (state.scene.findNode 'cube-mat').insert 'node', shaderDef
 
 # Initialize html controls for interacting with mecha
 controlsInit = () ->
