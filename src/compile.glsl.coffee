@@ -5,7 +5,7 @@
 compileGLSL = (abstractSolidModel) ->
   distanceFunctions = 
     sphereDist:
-      id: '__sphereDist'
+      id: '_sphereDist'
       returnType: 'float'
       arguments: ['vec3', 'float']
       code: do () ->
@@ -15,22 +15,21 @@ compileGLSL = (abstractSolidModel) ->
           "return length(#{position}) - #{radius};"
         ]
     boxDist:
-      id: '__boxDist'
+      id: '_boxDist'
       returnType: 'float'
       arguments: ['vec3', 'vec3']
       code: do () ->
         position = 'a'
         radius = 'b'
-        rel = 'r'
         dist = 's'
         [
           "if (all(lessThan(#{position}, #{radius})))"
           "  return 0.0;"
-          "vec3 #{dist} = max(vec3(0.0), #{rel} - #{position});"
+          "vec3 #{dist} = max(vec3(0.0), #{position} - #{radius});"
           "return max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
         ]
     boxChamferDist:
-      id: '__boxChamferDist'
+      id: '_boxChamferDist'
       returnType: 'float'
       arguments: ['vec3', 'vec3', 'vec3', 'float']
       code: do () ->
@@ -206,7 +205,7 @@ compileGLSL = (abstractSolidModel) ->
         positionParam = "#{rayOrigin}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
           positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
-        glslCode = "#{distanceFunctions.boxDist.id}(#{positionParam})"
+        glslCode = "#{distanceFunctions.boxDist.id}(#{positionParam}, vec3(#{boundaries[3] - center[0]}, #{boundaries[4] - center[1]}, #{boundaries[5] - center[2]}))"
 
   compileNode = (node, flags, glslFunctions) ->
     switch node.type
