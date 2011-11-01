@@ -83,17 +83,22 @@ compileGLSL = (abstractSolidModel) ->
   compileIntersect = (node, flags, glslFunctions, glslCodes) ->
     rayOrigin = 'ro'
 
-    collectIntersectNodes = (nodes, flags, halfSpacesByType) ->
+    collectIntersectNodes = (nodes, flags, halfSpaceBins) ->
       for node in nodes
         switch node.type
-          when 'halfspace' then halfSpacesByType[node.attr.axis + (if flags.invert then 3 else 0)].push node.attr.val
+          when 'halfspace' 
+            halfSpaceBins[node.attr.axis + (if flags.invert then 3 else 0)].push node.attr.val
+          when 'intersect' 
+            mecha.logInternalError "GLSL Compiler: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler."
           when 'invert'
             flags.invert = not flags.invert
-            halfSpacesByType = collectIntersectNodes node.nodes, flags, halfSpacesByType
+            collectIntersectNodes node.nodes, flags, halfSpaceBins
             flags.invert = not flags.invert
-      return halfSpacesByType
+          else
+            mecha.logInternalError "GLSL Compiler: Unsuppported node type, '#{node.type}', inside intersection."
 
     if node.nodes.length == 0
+      mecha.logInternalError 'GLSL Compiler: Intersect nodes should not be empty.'
       return
     # Try to find a half-space "corner" (three halfspaces on x,y,z axes that intersect
     # Prefer a x+,y+,z+ corner first, then x-,y-,z- corner then all other corners
@@ -104,15 +109,16 @@ compileGLSL = (abstractSolidModel) ->
     #   |  +                   -
     
     # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
-    halfSpacesByType = []
-    halfSpacesByType.push [] for i in [0..5]
-    halfSpacesByType = collectIntersectNodes node.nodes, flags, halfSpacesByType
-    if halfSpacesByType[0].length > 0 and halfSpacesByType[1].length > 0 and halfSpacesByType[2].length > 0
-      if halfSpacesByType[3].length > 0 and halfSpacesByType[4].length > 0 and halfSpacesByType[5].length > 0
+    # TODO: Possibly this code should be moved to the ASM compilation module...
+    halfSpaceBins = []
+    halfSpaceBins.push [] for i in [0..5]
+    collectIntersectNodes node.nodes, flags, halfSpaceBins
+    if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
+      if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
         glslFunctions.box = true
         boundaries = []
-        boundaries.push spaces.reduce Math.max for spaces in halfSpacesByType[0..2]
-        boundaries.push spaces.reduce Math.min for spaces in halfSpacesByType[3..5]
+        boundaries.push spaces.reduce Math.max for spaces in halfSpaceBins[0..2]
+        boundaries.push spaces.reduce Math.min for spaces in halfSpaceBins[3..5]
         center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
         positionParam = "#{rayOrigin}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
@@ -124,6 +130,7 @@ compileGLSL = (abstractSolidModel) ->
       when 'union' 
         compileNode['unionDist'] = true
         compileNode n for n in node.nodes
+        mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
       when 'intersect'
         #match node,
         #  type: 'intersect'

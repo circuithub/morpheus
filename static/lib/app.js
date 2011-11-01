@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -120,6 +120,12 @@
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
   Array.prototype.flatten = function() {
     var x, _ref;
     return (_ref = []).concat.apply(_ref, (function() {
@@ -144,27 +150,56 @@
       callback: function(result) {
         return callback(result);
       },
-      onerror: function(data, request) {}
+      onerror: function(data, request) {
+        return mecha.logInternalError("Error compiling the solid model.");
+      }
     });
   };
   compileASM = function(concreteSolidModel) {
     var asm, compileASMNode, dispatch;
     asm = {
       union: function() {
-        var nodes;
-        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         return {
           type: 'union',
           nodes: nodes.flatten()
         };
       },
       intersect: function() {
+        var attr, flattenedNodes, n, nodes, result, _i, _len;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        flattenedNodes = nodes.flatten();
+        result = {
+          type: 'intersect',
+          attr: attr,
+          nodes: (function() {
+            var _i, _len, _results;
+            _results = [];
+            for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
+              n = flattenedNodes[_i];
+              if (n.type !== 'intersect') {
+                _results.push(n);
+              }
+            }
+            return _results;
+          })()
+        };
+        for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
+          n = flattenedNodes[_i];
+          if (n.type === 'intersect') {
+            result.nodes = result.nodes.concat(n.nodes);
+          }
+        }
+        return result;
+      },
+      difference: function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         return {
-          type: 'intersect',
+          type: 'difference',
           attr: attr,
-          nodes: nodes.flatten()
+          nodes: nodes
         };
       },
       invert: function() {
@@ -256,6 +291,45 @@
       },
       cylinder: function(node) {
         return {};
+      },
+      intersect: function(node) {
+        var n;
+        return asm.intersect.apply(asm, [{}].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      union: function(node) {
+        var n;
+        return asm.union.apply(asm, [{}].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      difference: function(node) {
+        var n;
+        return asm.difference.apply(asm, [{}].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
       }
     };
     compileASMNode = function(node) {
@@ -280,10 +354,106 @@
     return compileASMNode(concreteSolidModel);
   };
   compileGLSL = function(abstractSolidModel) {
-    var compileIntersect, compileNode, distanceFunctions, flags, glslCode, glslFunctions, glslLibrary, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
-    distanceFunctions = {
+    var compileIntersect, compileNode, flags, glslCode, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
+    uniforms = "";
+    sceneDist = function(code) {
+      return "\nfloat sceneDist(in vec3 ro){ return " + code + "; }\n\n";
+    };
+    sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
+    sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
+    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    match = function(node, pattern) {
+      var subpattern;
+      return subpattern = pattern[node.type];
+    };
+    compileIntersect = function(node, flags, glslFunctions, glslCodes) {
+      var boundaries, center, collectIntersectNodes, glslCode, halfSpaceBins, i, positionParam, rayOrigin, spaces, _i, _j, _len, _len2, _ref, _ref2;
+      rayOrigin = 'ro';
+      collectIntersectNodes = function(nodes, flags, halfSpaceBins) {
+        var node, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          node = nodes[_i];
+          _results.push((function() {
+            switch (node.type) {
+              case 'halfspace':
+                return halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
+              case 'intersect':
+                return mecha.logInternalError("GLSL Compiler: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
+              case 'invert':
+                flags.invert = !flags.invert;
+                collectIntersectNodes(node.nodes, flags, halfSpaceBins);
+                return flags.invert = !flags.invert;
+              default:
+                return mecha.logInternalError("GLSL Compiler: Unsuppported node type, '" + node.type + "', inside intersection.");
+            }
+          })());
+        }
+        return _results;
+      };
+      if (node.nodes.length === 0) {
+        mecha.logInternalError('GLSL Compiler: Intersect nodes should not be empty.');
+        return;
+      }
+      halfSpaceBins = [];
+      for (i = 0; i <= 5; i++) {
+        halfSpaceBins.push([]);
+      }
+      collectIntersectNodes(node.nodes, flags, halfSpaceBins);
+      if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
+        if (halfSpaceBins[3].length > 0 && halfSpaceBins[4].length > 0 && halfSpaceBins[5].length > 0) {
+          glslFunctions.box = true;
+          boundaries = [];
+          _ref = halfSpaceBins.slice(0, 3);
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            spaces = _ref[_i];
+            boundaries.push(spaces.reduce(Math.max));
+          }
+          _ref2 = halfSpaceBins.slice(3, 6);
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            spaces = _ref2[_j];
+            boundaries.push(spaces.reduce(Math.min));
+          }
+          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
+          positionParam = "" + rayOrigin;
+          if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
+            positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
+          }
+          return glslCode = "" + glslLibrary.distanceFunctions.boxDist.id + "(" + positionParam + ", vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
+        }
+      }
+    };
+    compileNode = function(node, flags, glslFunctions) {
+      var glslINFINITY, n, _i, _len, _ref;
+      switch (node.type) {
+        case 'union':
+          compileNode['unionDist'] = true;
+          _ref = node.nodes;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            compileNode(n);
+          }
+          return mecha.logInternalError("GLSL Compiler: BUSY HERE... (compile union node)");
+        case 'intersect':
+          return compileIntersect(node, flags, glslFunctions);
+        default:
+          glslINFINITY = '1.0/0.0';
+          return "" + glslINFINITY;
+      }
+    };
+    glslFunctions = {};
+    glslCode = "";
+    flags = {
+      invert: false
+    };
+    glslCode = compileNode(abstractSolidModel, flags, glslFunctions);
+    return prefix + (glslLibrary.compile(glslFunctions)) + (sceneDist(glslCode)) + sceneNormal + main;
+  };
+  glslLibrary = {
+    distanceFunctions: {
       sphereDist: {
-        id: '__sphereDist',
+        id: '_sphereDist',
         returnType: 'float',
         arguments: ['vec3', 'float'],
         code: (function() {
@@ -294,20 +464,19 @@
         })()
       },
       boxDist: {
-        id: '__boxDist',
+        id: '_boxDist',
         returnType: 'float',
         arguments: ['vec3', 'vec3'],
         code: (function() {
-          var dist, position, radius, rel;
+          var dist, position, radius;
           position = 'a';
           radius = 'b';
-          rel = 'r';
           dist = 's';
-          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + position + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
+          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + position + " - " + radius + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
         })()
       },
       boxChamferDist: {
-        id: '__boxChamferDist',
+        id: '_boxChamferDist',
         returnType: 'float',
         arguments: ['vec3', 'vec3', 'vec3', 'float'],
         code: (function() {
@@ -340,95 +509,13 @@
           code: ["return min(a,b);"]
         }
       }
-    };
-    prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
-    uniforms = "";
-    sceneDist = function(code) {
-      return "\nfloat sceneDist(in vec3 ro){ return " + code + "; }\n\n";
-    };
-    sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
-    sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
-    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
-    match = function(node, pattern) {
-      var subpattern;
-      return subpattern = pattern[node.type];
-    };
-    compileIntersect = function(node, flags, glslFunctions, glslCodes) {
-      var boundaries, center, collectIntersectNodes, glslCode, halfSpacesByType, i, positionParam, rayPosition, spaces, _i, _j, _len, _len2, _ref, _ref2;
-      rayPosition = 'rp';
-      collectIntersectNodes = function(nodes, flags, halfSpacesByType) {
-        var node, _i, _len;
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          node = nodes[_i];
-          switch (node.type) {
-            case 'halfspace':
-              halfSpacesByType[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
-              break;
-            case 'invert':
-              flags.invert = !flags.invert;
-              halfSpacesByType = collectIntersectNodes(node.nodes, flags, halfSpacesByType);
-              flags.invert = !flags.invert;
-          }
-        }
-        return halfSpacesByType;
-      };
-      if (node.nodes.length === 0) {
-        return;
-      }
-      halfSpacesByType = [];
-      for (i = 0; i <= 5; i++) {
-        halfSpacesByType.push([]);
-      }
-      halfSpacesByType = collectIntersectNodes(node.nodes, flags, halfSpacesByType);
-      if (halfSpacesByType[0].length > 0 && halfSpacesByType[1].length > 0 && halfSpacesByType[2].length > 0) {
-        if (halfSpacesByType[3].length > 0 && halfSpacesByType[4].length > 0 && halfSpacesByType[5].length > 0) {
-          glslFunctions.box = true;
-          boundaries = [];
-          _ref = halfSpacesByType.slice(0, 3);
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            spaces = _ref[_i];
-            boundaries.push(spaces.reduce(Math.max));
-          }
-          _ref2 = halfSpacesByType.slice(3, 6);
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            spaces = _ref2[_j];
-            boundaries.push(spaces.reduce(Math.min));
-          }
-          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
-          positionParam = "" + rayPosition;
-          if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
-            positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
-          }
-          return glslCode = "" + distanceFunctions.boxDist.id + "(" + positionParam + ")";
-        }
-      }
-    };
-    compileNode = function(node, flags, glslFunctions) {
-      var glslINFINITY, n, _i, _len, _ref, _results;
-      switch (node.type) {
-        case 'union':
-          compileNode['unionDist'] = true;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileNode(n));
-          }
-          return _results;
-          break;
-        case 'intersect':
-          return compileIntersect(node, flags, glslFunctions);
-        default:
-          glslINFINITY = '1.0/0.0';
-          return "" + glslINFINITY;
-      }
-    };
-    glslLibrary = function(libraryFunctions, distanceFunctions) {
+    },
+    compile: function(libraryFunctions) {
       var argCharCode, argName, c, charCodeA, code, distanceFunction, f, i, v, _i, _len, _ref, _ref2;
       code = "";
       for (f in libraryFunctions) {
         v = libraryFunctions[f];
-        distanceFunction = distanceFunctions[f + 'Dist'];
+        distanceFunction = this.distanceFunctions[f + 'Dist'];
         if (!distanceFunction) {
           mecha.log("GLSL distance function '" + f + "Dist' could not be found.");
           continue;
@@ -453,14 +540,7 @@
         code += "}\n";
       }
       return code;
-    };
-    glslFunctions = {};
-    glslCode = "";
-    flags = {
-      invert: false
-    };
-    glslCode = compileNode(abstractSolidModel, flags, glslFunctions);
-    return prefix + (glslLibrary(glslFunctions, distanceFunctions)) + (sceneDist(glslCode)) + sceneNormal + main;
+    }
   };
   constants = {
     canvas: {
@@ -570,35 +650,34 @@
     return windowResize();
   };
   sceneInit = function() {
-    var shaderDef;
-    shaderDef = {
-      type: 'shader',
-      id: 'main-shader',
-      shaders: [
-        {
-          stage: 'fragment',
-          code: compileGLSL(compileASM({
-            type: 'scene',
-            nodes: []
-          }))
-        }
-      ],
-      vars: {}
-    };
-    return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+    return compileCSM(($('#source-code')).val(), function(result) {
+      var shaderDef;
+      shaderDef = {
+        type: 'shader',
+        id: 'main-shader',
+        shaders: [
+          {
+            stage: 'fragment',
+            code: compileGLSL(compileASM(result))
+          }
+        ],
+        vars: {}
+      };
+      return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+    });
   };
   controlsInit = function() {};
   apiInit = function() {
     state.api.url = ($("link[rel='api']")).attr('href');
     return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
-      return mecha.log("Loaded " + state.api.url);
+      mecha.log("Loaded " + state.api.url);
+      return sceneInit();
     }).error(function() {
       return mecha.log("Error loading API script");
     });
   };
   canvasInit();
-  sceneInit();
   state.scene.start({
     idleFunc: sceneIdle
   });

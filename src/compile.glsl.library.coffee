@@ -106,3 +106,4 @@ glslLibrary =
       code += c + '\n' for c in distanceFunction.code
       code += "}\n"
     return code
+
