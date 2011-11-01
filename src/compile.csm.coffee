@@ -27,6 +27,6 @@ compileCSM = (source, callback) ->
       callback result
     onerror: (data,request) ->
       #console.log prefix + source + postfix
-      #console.log "Error"
+      mecha.logInternalError "Error compiling the solid model."
       #console.log data
   
