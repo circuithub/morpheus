@@ -31,12 +31,14 @@ apiInit = () ->
     .success (data, textStatus, jqXHR) -> 
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
+      #TODO: This should probably be called elsewhere in the future!
+      sceneInit()
     .error () -> 
       mecha.log "Error loading API script"
 
 # Start rendering as soon as possible
 canvasInit()
-sceneInit()
+#TODO: sceneInit()
 state.scene.start
   idleFunc: sceneIdle
 
