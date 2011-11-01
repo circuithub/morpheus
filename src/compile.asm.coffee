@@ -4,15 +4,26 @@
 # asm.intersect halfplanes[0..2]..., asm.invert halfplanes[3..6]...
 # halfplanes[1,2,4,5]...
 
+# TODO: Some of these list comprehensions aren't as efficient as they could be, but for now we prefer clarity over speed
+#       We'll optimize if it turns out that there's bottleneck here
+
 compileASM = (concreteSolidModel) ->
   asm =
-    union: (nodes...) -> 
+    union: (attr, nodes...) -> 
       type: 'union'
       nodes: nodes.flatten()
     intersect: (attr, nodes...) -> 
-      type: 'intersect'
+      flattenedNodes = nodes.flatten()
+      result =
+        type: 'intersect'
+        attr: attr
+        nodes: (n for n in flattenedNodes when n.type != 'intersect')
+      result.nodes = result.nodes.concat n.nodes for n in flattenedNodes when n.type == 'intersect'
+      return result
+    difference: (attr, nodes...) -> 
+      type: 'difference'
       attr: attr
-      nodes: nodes.flatten()
+      nodes: nodes
     invert: (nodes...) ->
       type: 'invert'
       nodes: nodes.flatten()
@@ -82,6 +93,12 @@ compileASM = (concreteSolidModel) ->
     cylinder: (node) ->
       # TODO
       {}
+    intersect: (node) ->
+      asm.intersect {}, (compileASMNode n for n in node.nodes)...
+    union: (node) ->
+      asm.union {}, (compileASMNode n for n in node.nodes)...
+    difference: (node) ->
+      asm.difference {}, (compileASMNode n for n in node.nodes)...
 
   compileASMNode = (node) ->
     switch typeof node
