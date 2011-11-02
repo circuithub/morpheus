@@ -403,7 +403,7 @@
       collectIntersectNodes(node.nodes, flags, halfSpaceBins);
       if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
         if (halfSpaceBins[3].length > 0 && halfSpaceBins[4].length > 0 && halfSpaceBins[5].length > 0) {
-          glslFunctions.box = true;
+          glslFunctions.corner = true;
           boundaries = [];
           _ref = halfSpaceBins.slice(0, 3);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -420,7 +420,7 @@
           if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
             positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
           }
-          return glslCode = "" + glslLibrary.distanceFunctions.boxDist.id + "(" + positionParam + ", vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
+          return glslCode = "" + glslLibrary.distanceFunctions.cornerDist.id + "(abs(" + positionParam + "), vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
         }
       }
     };
@@ -463,8 +463,8 @@
           return ["return length(" + position + ") - " + radius + ";"];
         })()
       },
-      boxDist: {
-        id: '_boxDist',
+      cornerDist: {
+        id: '_cornerDist',
         returnType: 'float',
         arguments: ['vec3', 'vec3'],
         code: (function() {

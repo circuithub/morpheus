@@ -115,7 +115,7 @@ compileGLSL = (abstractSolidModel) ->
     collectIntersectNodes node.nodes, flags, halfSpaceBins
     if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
       if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
-        glslFunctions.box = true
+        glslFunctions.corner = true
         boundaries = []
         boundaries.push spaces.reduce Math.max for spaces in halfSpaceBins[0..2]
         boundaries.push spaces.reduce Math.min for spaces in halfSpaceBins[3..5]
@@ -123,7 +123,7 @@ compileGLSL = (abstractSolidModel) ->
         positionParam = "#{rayOrigin}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0
           positionParam += " - vec3(#{center[0]},#{center[1]},#{center[2]})"
-        glslCode = "#{glslLibrary.distanceFunctions.boxDist.id}(#{positionParam}, vec3(#{boundaries[3] - center[0]}, #{boundaries[4] - center[1]}, #{boundaries[5] - center[2]}))"
+        glslCode = "#{glslLibrary.distanceFunctions.cornerDist.id}(abs(#{positionParam}), vec3(#{boundaries[3] - center[0]}, #{boundaries[4] - center[1]}, #{boundaries[5] - center[2]}))"
 
   compileNode = (node, flags, glslFunctions) ->
     switch node.type

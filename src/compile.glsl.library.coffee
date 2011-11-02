@@ -10,8 +10,8 @@ glslLibrary =
         [
           "return length(#{position}) - #{radius};"
         ]
-    boxDist:
-      id: '_boxDist'
+    cornerDist:
+      id: '_cornerDist'
       returnType: 'float'
       arguments: ['vec3', 'vec3']
       code: do () ->
