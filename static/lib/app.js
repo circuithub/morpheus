@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -154,6 +154,11 @@
         return mecha.logInternalError("Error compiling the solid model.");
       }
     });
+  };
+  optimizeASM = {
+    intersect: function(node) {
+      return node;
+    }
   };
   compileASM = function(concreteSolidModel) {
     var asm, compileASMNode, dispatch;
@@ -353,6 +358,98 @@
     }
     return compileASMNode(concreteSolidModel);
   };
+  glslLibrary = {
+    distanceFunctions: {
+      sphereDist: {
+        id: '_sphereDist',
+        returnType: 'float',
+        arguments: ['vec3', 'float'],
+        code: (function() {
+          var position, radius;
+          position = 'a';
+          radius = 'b';
+          return ["return length(" + position + ") - " + radius + ";"];
+        })()
+      },
+      cornerDist: {
+        id: '_cornerDist',
+        returnType: 'float',
+        arguments: ['vec3', 'vec3'],
+        code: (function() {
+          var dist, position, radius;
+          position = 'a';
+          radius = 'b';
+          dist = 's';
+          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + position + " - " + radius + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
+        })()
+      },
+      boxChamferDist: {
+        id: '_boxChamferDist',
+        returnType: 'float',
+        arguments: ['vec3', 'vec3', 'vec3', 'float'],
+        code: (function() {
+          var center, chamferCenter, chamferDist, chamferDistLength, chamferRadius, dist, gtChamferCenter, position, radius, rel;
+          position = 'a';
+          center = 'b';
+          radius = 'c';
+          chamferRadius = 'd';
+          rel = 'r';
+          dist = 's';
+          chamferCenter = 'cc';
+          chamferDist = 'ccd';
+          chamferDistLength = 'ccdl';
+          gtChamferCenter = 'gtcc';
+          return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "if (any(greaterThan(" + rel + ", " + center + " + vec3(" + chamferRadius + ")))) { return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "vec3 " + chamferCenter + " = " + radius + " - vec3(" + chamferRadius + ");", "bvec3 " + gtChamferCenter + " = greaterThan(" + rel + ", " + chamferCenter + ");", "if (!any(" + gtChamferCenter + ")) { return 0.0; }", "vec3 " + chamferDist + " = " + rel + " - " + chamferCenter + ";", "if (min(" + chamferDist + ".x, " + chamferDist + ".y) < 0.0 && min(" + chamferDist + ".x, " + chamferDist + ".z) < 0.0 && min(" + chamferDist + ".y, " + chamferDist + ".z) < 0.0)", "{ return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "float " + chamferDistLength + ";", "if (all(" + gtChamferCenter + ")) {", "  " + chamferDistLength + " = length(" + chamferDist + ");", "}", "else if(" + chamferDist + ".x < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".yz);", "}", "else if (" + chamferDist + ".y < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".xz);", "}", "else { // " + chamferDist + ".z < 0.0", "  " + chamferDistLength + " = length(" + chamferDist + ".xy);", "}", "return min(" + chamferDistLength + " - " + chamferRadius + ", 0.0);"];
+        })(),
+        intersectDist: {
+          id: '__intersectDist',
+          arguments: ['float', 'float'],
+          code: ["return max(a,b);"]
+        },
+        differenceDist: {
+          id: '__differenceDist',
+          arguments: ['float', 'float'],
+          code: ["return max(a,-b);"]
+        },
+        unionDist: {
+          id: '__unionDist',
+          arguments: ['float', 'float'],
+          code: ["return min(a,b);"]
+        }
+      }
+    },
+    compile: function(libraryFunctions) {
+      var argCharCode, argName, c, charCodeA, code, distanceFunction, f, i, v, _i, _len, _ref, _ref2;
+      code = "";
+      for (f in libraryFunctions) {
+        v = libraryFunctions[f];
+        distanceFunction = this.distanceFunctions[f + 'Dist'];
+        if (!distanceFunction) {
+          mecha.log("GLSL distance function '" + f + "Dist' could not be found.");
+          continue;
+        }
+        code += '\n';
+        code += "" + distanceFunction.returnType + " " + distanceFunction.id + "(";
+        charCodeA = 'a'.charCodeAt(0);
+        for (i = 0, _ref = distanceFunction.arguments.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+          argCharCode = charCodeA + i;
+          argName = String.fromCharCode(argCharCode);
+          code += "in " + distanceFunction.arguments[i] + " " + argName;
+          if (i < distanceFunction.arguments.length - 1) {
+            code += ',';
+          }
+        }
+        code += ") {\n";
+        _ref2 = distanceFunction.code;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          c = _ref2[_i];
+          code += c + '\n';
+        }
+        code += "}\n";
+      }
+      return code;
+    }
+  };
   compileGLSL = function(abstractSolidModel) {
     var compileIntersect, compileNode, flags, glslCode, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
@@ -453,98 +550,6 @@
     };
     glslCode = compileNode(abstractSolidModel, flags, glslFunctions);
     return prefix + (glslLibrary.compile(glslFunctions)) + (sceneDist(glslCode)) + sceneNormal + main;
-  };
-  glslLibrary = {
-    distanceFunctions: {
-      sphereDist: {
-        id: '_sphereDist',
-        returnType: 'float',
-        arguments: ['vec3', 'float'],
-        code: (function() {
-          var position, radius;
-          position = 'a';
-          radius = 'b';
-          return ["return length(" + position + ") - " + radius + ";"];
-        })()
-      },
-      cornerDist: {
-        id: '_cornerDist',
-        returnType: 'float',
-        arguments: ['vec3', 'vec3'],
-        code: (function() {
-          var dist, position, radius;
-          position = 'a';
-          radius = 'b';
-          dist = 's';
-          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + position + " - " + radius + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
-        })()
-      },
-      boxChamferDist: {
-        id: '_boxChamferDist',
-        returnType: 'float',
-        arguments: ['vec3', 'vec3', 'vec3', 'float'],
-        code: (function() {
-          var center, chamferCenter, chamferDist, chamferDistLength, chamferRadius, dist, gtChamferCenter, position, radius, rel;
-          position = 'a';
-          center = 'b';
-          radius = 'c';
-          chamferRadius = 'd';
-          rel = 'r';
-          dist = 's';
-          chamferCenter = 'cc';
-          chamferDist = 'ccd';
-          chamferDistLength = 'ccdl';
-          gtChamferCenter = 'gtcc';
-          return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "if (any(greaterThan(" + rel + ", " + center + " + vec3(" + chamferRadius + ")))) { return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "vec3 " + chamferCenter + " = " + radius + " - vec3(" + chamferRadius + ");", "bvec3 " + gtChamferCenter + " = greaterThan(" + rel + ", " + chamferCenter + ");", "if (!any(" + gtChamferCenter + ")) { return 0.0; }", "vec3 " + chamferDist + " = " + rel + " - " + chamferCenter + ";", "if (min(" + chamferDist + ".x, " + chamferDist + ".y) < 0.0 && min(" + chamferDist + ".x, " + chamferDist + ".z) < 0.0 && min(" + chamferDist + ".y, " + chamferDist + ".z) < 0.0)", "{ return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "float " + chamferDistLength + ";", "if (all(" + gtChamferCenter + ")) {", "  " + chamferDistLength + " = length(" + chamferDist + ");", "}", "else if(" + chamferDist + ".x < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".yz);", "}", "else if (" + chamferDist + ".y < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".xz);", "}", "else { // " + chamferDist + ".z < 0.0", "  " + chamferDistLength + " = length(" + chamferDist + ".xy);", "}", "return min(" + chamferDistLength + " - " + chamferRadius + ", 0.0);"];
-        })(),
-        intersectDist: {
-          id: '__intersectDist',
-          arguments: ['float', 'float'],
-          code: ["return max(a,b);"]
-        },
-        differenceDist: {
-          id: '__differenceDist',
-          arguments: ['float', 'float'],
-          code: ["return max(a,-b);"]
-        },
-        unionDist: {
-          id: '__unionDist',
-          arguments: ['float', 'float'],
-          code: ["return min(a,b);"]
-        }
-      }
-    },
-    compile: function(libraryFunctions) {
-      var argCharCode, argName, c, charCodeA, code, distanceFunction, f, i, v, _i, _len, _ref, _ref2;
-      code = "";
-      for (f in libraryFunctions) {
-        v = libraryFunctions[f];
-        distanceFunction = this.distanceFunctions[f + 'Dist'];
-        if (!distanceFunction) {
-          mecha.log("GLSL distance function '" + f + "Dist' could not be found.");
-          continue;
-        }
-        code += '\n';
-        code += "" + distanceFunction.returnType + " " + distanceFunction.id + "(";
-        charCodeA = 'a'.charCodeAt(0);
-        for (i = 0, _ref = distanceFunction.arguments.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-          argCharCode = charCodeA + i;
-          argName = String.fromCharCode(argCharCode);
-          code += "in " + distanceFunction.arguments[i] + " " + argName;
-          if (i < distanceFunction.arguments.length - 1) {
-            code += ',';
-          }
-        }
-        code += ") {\n";
-        _ref2 = distanceFunction.code;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          c = _ref2[_i];
-          code += c + '\n';
-        }
-        code += "}\n";
-      }
-      return code;
-    }
   };
   constants = {
     canvas: {
