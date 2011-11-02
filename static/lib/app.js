@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -155,9 +155,64 @@
       }
     });
   };
+  collectASM = {
+    intersect: function(nodes, flags, halfSpaceBins) {
+      var node, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+        node = nodes[_i];
+        _results.push((function() {
+          switch (node.type) {
+            case 'halfspace':
+              return halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
+            case 'intersect':
+              return mecha.logInternalError("ASM Collect: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
+            case 'invert':
+              flags.invert = !flags.invert;
+              collectASM.intersect(node.nodes, flags, halfSpaceBins);
+              return flags.invert = !flags.invert;
+            default:
+              return mecha.logInternalError("ASM Collect: Unsuppported node type, '" + node.type + "', inside intersection.");
+          }
+        })());
+      }
+      return _results;
+    }
+  };
   optimizeASM = {
     intersect: function(node) {
-      return node;
+      var boundaries, center, glslCode, halfSpaceBins, i, positionParam, spaces, _i, _j, _len, _len2, _ref, _ref2;
+      halfSpaceBins = [];
+      for (i = 0; i <= 5; i++) {
+        halfSpaceBins.push([]);
+      }
+      collectIntersectNodes(node.nodes, flags, halfSpaceBins);
+      if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
+        if (halfSpaceBins[3].length > 0 && halfSpaceBins[4].length > 0 && halfSpaceBins[5].length > 0) {
+          glslFunctions.corner = true;
+          boundaries = [];
+          _ref = halfSpaceBins.slice(0, 3);
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            spaces = _ref[_i];
+            boundaries.push(spaces.reduce(function(a, b) {
+              return Math.max(a, b);
+            }));
+          }
+          _ref2 = halfSpaceBins.slice(3, 6);
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            spaces = _ref2[_j];
+            boundaries.push(spaces.reduce(function(a, b) {
+              return Math.min(a, b);
+            }));
+          }
+          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
+          positionParam = "" + rayOrigin;
+          if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
+            positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
+          }
+          return glslCode = "" + glslLibrary.distanceFunctions.cornerDist.id + "(abs(" + positionParam + "), vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
+        }
+      }
     }
   };
   compileASM = function(concreteSolidModel) {
@@ -465,30 +520,8 @@
       return subpattern = pattern[node.type];
     };
     compileIntersect = function(node, flags, glslFunctions, glslCodes) {
-      var boundaries, center, collectIntersectNodes, glslCode, halfSpaceBins, i, positionParam, rayOrigin, spaces, _i, _j, _len, _len2, _ref, _ref2;
+      var boundaries, center, glslCode, halfSpaceBins, i, positionParam, rayOrigin, spaces, _i, _j, _len, _len2, _ref, _ref2;
       rayOrigin = 'ro';
-      collectIntersectNodes = function(nodes, flags, halfSpaceBins) {
-        var node, _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          node = nodes[_i];
-          _results.push((function() {
-            switch (node.type) {
-              case 'halfspace':
-                return halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
-              case 'intersect':
-                return mecha.logInternalError("GLSL Compiler: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
-              case 'invert':
-                flags.invert = !flags.invert;
-                collectIntersectNodes(node.nodes, flags, halfSpaceBins);
-                return flags.invert = !flags.invert;
-              default:
-                return mecha.logInternalError("GLSL Compiler: Unsuppported node type, '" + node.type + "', inside intersection.");
-            }
-          })());
-        }
-        return _results;
-      };
       if (node.nodes.length === 0) {
         mecha.logInternalError('GLSL Compiler: Intersect nodes should not be empty.');
         return;
@@ -497,7 +530,7 @@
       for (i = 0; i <= 5; i++) {
         halfSpaceBins.push([]);
       }
-      collectIntersectNodes(node.nodes, flags, halfSpaceBins);
+      collectASM.intersect(node.nodes, flags, halfSpaceBins);
       if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
         if (halfSpaceBins[3].length > 0 && halfSpaceBins[4].length > 0 && halfSpaceBins[5].length > 0) {
           glslFunctions.corner = true;

@@ -14,6 +14,7 @@ appFiles  = [
   'math'
   #'api.csm'
   'compile.csm'
+  'compile.asm.collect'
   'compile.asm.optimize'
   'compile.asm'
   'compile.glsl.library'

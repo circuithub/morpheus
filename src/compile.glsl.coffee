@@ -83,20 +83,6 @@ compileGLSL = (abstractSolidModel) ->
   compileIntersect = (node, flags, glslFunctions, glslCodes) ->
     rayOrigin = 'ro'
 
-    collectIntersectNodes = (nodes, flags, halfSpaceBins) ->
-      for node in nodes
-        switch node.type
-          when 'halfspace' 
-            halfSpaceBins[node.attr.axis + (if flags.invert then 3 else 0)].push node.attr.val
-          when 'intersect' 
-            mecha.logInternalError "GLSL Compiler: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler."
-          when 'invert'
-            flags.invert = not flags.invert
-            collectIntersectNodes node.nodes, flags, halfSpaceBins
-            flags.invert = not flags.invert
-          else
-            mecha.logInternalError "GLSL Compiler: Unsuppported node type, '#{node.type}', inside intersection."
-
     if node.nodes.length == 0
       mecha.logInternalError 'GLSL Compiler: Intersect nodes should not be empty.'
       return
@@ -112,7 +98,7 @@ compileGLSL = (abstractSolidModel) ->
     # TODO: Possibly this code should be moved to the ASM compilation module...
     halfSpaceBins = []
     halfSpaceBins.push [] for i in [0..5]
-    collectIntersectNodes node.nodes, flags, halfSpaceBins
+    collectASM.intersect node.nodes, flags, halfSpaceBins
     if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
       if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
         glslFunctions.corner = true
@@ -132,19 +118,6 @@ compileGLSL = (abstractSolidModel) ->
         compileNode n for n in node.nodes
         mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
       when 'intersect'
-        #match node,
-        #  type: 'intersect'
-        #  nodes: [
-        #    type: 'halfspace'
-        #    attr: attr
-        #  ,
-        #    type: 'halfspace'
-        #    attr: attr
-        #  ,
-        #    type: 'halfspace'
-        #    attr: attr
-        #  ]
-        #compileNode['intersectDist'] = true
         compileIntersect node, flags, glslFunctions
       else
         glslINFINITY = '1.0/0.0'
