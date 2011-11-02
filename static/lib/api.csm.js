@@ -6,6 +6,37 @@
 (function() {
   var __slice = Array.prototype.slice;
   (function() {
+    var Chamferable, IntersectNode, extend;
+    extend = function(obj, mixin) {
+      var method, name, _results;
+      _results = [];
+      for (name in mixin) {
+        method = mixin[name];
+        _results.push(obj[name] = method);
+      }
+      return _results;
+    };
+    Chamferable = (function() {
+      function Chamferable() {}
+      Chamferable.prototype.chamfer = function(amount) {
+        return {
+          type: 'chamfer',
+          attr: {
+            amount: amount
+          },
+          nodes: [this]
+        };
+      };
+      return Chamferable;
+    })();
+    IntersectNode = (function() {
+      function IntersectNode(nodes) {
+        this.nodes = nodes;
+        this.type = 'intersect';
+      }
+      return IntersectNode;
+    })();
+    extend(IntersectNode.prototype, Chamferable);
     window.scene = function() {
       var nodes;
       nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
@@ -19,35 +50,19 @@
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       return {
         type: 'union',
-        attr: attr,
         nodes: nodes
       };
-    };
-    window.chamfer = function() {
-      var attr, node, nodes, _i, _len, _results;
-      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      _results = [];
-      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-        node = nodes[_i];
-        _results.push(node.attr.chamfer = attr);
-      }
-      return _results;
     };
     window.intersect = function() {
-      var attr, nodes;
-      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return {
-        type: 'intersect',
-        attr: attr,
-        nodes: nodes
-      };
+      var nodes;
+      nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return new IntersectNode(nodes);
     };
     window.difference = function() {
-      var attr, nodes;
-      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      var nodes;
+      nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       return {
         type: 'difference',
-        attr: attr,
         nodes: nodes
       };
     };

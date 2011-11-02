@@ -5,7 +5,28 @@
 
 
 do () ->
-  #_csmModel = []
+
+  # Internal utilities
+  extend = (obj, mixin) ->
+    for name, method of mixin
+      obj[name] = method
+
+  # API objects (fluent interface)
+  class Chamferable
+    chamfer: (amount) ->
+      type: 'chamfer'
+      attr:
+        amount: amount
+      nodes: [this]
+
+  class IntersectNode
+    constructor: (nodes) ->
+      @nodes = nodes
+      @type = 'intersect'
+
+  extend IntersectNode.prototype, Chamferable
+
+  # API functions
   window.scene = (nodes...) ->
     #_csmModel = arguments
     #clone = (obj) ->
@@ -21,21 +42,17 @@ do () ->
   
   window.union = (attr, nodes...) ->
     type: 'union'
-    attr: attr
     nodes: nodes
 
-  window.chamfer = (attr, nodes...) ->
-    for node in nodes
-      node.attr.chamfer = attr
-  
-  window.intersect = (attr, nodes...) ->
-    type: 'intersect'
-    attr: attr
-    nodes: nodes
+  #window.chamfer = (nodes...) ->
+  #  for node in nodes
+  #    node.attr.chamfer = attr
 
-  window.difference = (attr, nodes...) ->
+  window.intersect = (nodes...) ->
+    new IntersectNode nodes
+
+  window.difference = (nodes...) ->
     type: 'difference'
-    attr: attr
     nodes: nodes
 
   window.box = (attr, nodes...) ->

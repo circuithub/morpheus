@@ -117,8 +117,8 @@ compileGLSL = (abstractSolidModel) ->
       if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
         glslFunctions.corner = true
         boundaries = []
-        boundaries.push spaces.reduce Math.max for spaces in halfSpaceBins[0..2]
-        boundaries.push spaces.reduce Math.min for spaces in halfSpaceBins[3..5]
+        boundaries.push (spaces.reduce (a,b) -> Math.max(a,b)) for spaces in halfSpaceBins[0..2]
+        boundaries.push (spaces.reduce (a,b) -> Math.min(a,b)) for spaces in halfSpaceBins[3..5]
         center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
         positionParam = "#{rayOrigin}"
         if center[0] != 0.0 or center[1] != 0.0 or center[2] != 0.0

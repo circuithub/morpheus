@@ -408,12 +408,16 @@
           _ref = halfSpaceBins.slice(0, 3);
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             spaces = _ref[_i];
-            boundaries.push(spaces.reduce(Math.max));
+            boundaries.push(spaces.reduce(function(a, b) {
+              return Math.max(a, b);
+            }));
           }
           _ref2 = halfSpaceBins.slice(3, 6);
           for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
             spaces = _ref2[_j];
-            boundaries.push(spaces.reduce(Math.min));
+            boundaries.push(spaces.reduce(function(a, b) {
+              return Math.min(a, b);
+            }));
           }
           center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
           positionParam = "" + rayOrigin;
