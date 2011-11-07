@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -155,28 +155,45 @@
       }
     });
   };
+  mapASM = function(nodes, flags, params, dispatch) {
+    var node, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+      node = nodes[_i];
+      _results.push((function() {
+        switch (node.type) {
+          case 'invert':
+            flags.invert = !flags.invert;
+            if (dispatch[node.type] != null) {
+              dispatch[node.type](node, flags, params);
+            }
+            mapASM(node.nodes, flags, params, dispatch);
+            return flags.invert = !flags.invert;
+          default:
+            if (dispatch[node.type] != null) {
+              return dispatch[node.type](node, flags, params);
+            } else {
+              if (dispatch["default"] !== null) {
+                return dispatch["default"](node, flags, params);
+              }
+            }
+        }
+      })());
+    }
+    return _results;
+  };
   collectASM = {
     intersect: function(nodes, flags, halfSpaceBins) {
-      var node, _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-        node = nodes[_i];
-        _results.push((function() {
-          switch (node.type) {
-            case 'halfspace':
-              return halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
-            case 'intersect':
-              return mecha.logInternalError("ASM Collect: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
-            case 'invert':
-              flags.invert = !flags.invert;
-              collectASM.intersect(node.nodes, flags, halfSpaceBins);
-              return flags.invert = !flags.invert;
-            default:
-              return mecha.logInternalError("ASM Collect: Unsuppported node type, '" + node.type + "', inside intersection.");
-          }
-        })());
-      }
-      return _results;
+      return mapASM(nodes, flags, {
+        halfSpaceBins: halfSpaceBins
+      }, {
+        halfspace: function(node, flags, params) {
+          return params.halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
+        },
+        "default": function(node) {
+          return mecha.logInternalError("ASM Collect: Unsuppported node type, '" + node.type + "', inside intersection.");
+        }
+      });
     }
   };
   optimizeASM = (function() {
@@ -245,8 +262,8 @@
     var asm, compileASMNode, dispatch;
     asm = {
       union: function() {
-        var attr, nodes;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        var nodes;
+        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         return {
           type: 'union',
           nodes: nodes.flatten()
@@ -370,21 +387,15 @@
           ALL_EDGES = (Math.pow(2, 12)) - 1;
           if (chamferEdges === ALL_EDGES) {
             if (node.attr.chamfer.corners) {
-              return asm.intersect({
-                chamfer: true
-              }, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
+              return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
             } else {
-              return asm.intersect({
-                chamfer: true
-              }, asm.intersect({
-                chamfer: true
-              }, halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4]), halfspaces[2], asm.invert(halfspaces[5])));
+              return asm.intersect(asm.intersect(halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4]), halfspaces[2], asm.invert(halfspaces[5])));
             }
           } else {
-            return asm.intersect({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
+            return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
           }
         } else {
-          return asm.intersect({}, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
+          return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
         }
       },
       sphere: function(node) {
@@ -395,7 +406,7 @@
       },
       intersect: function(node) {
         var n;
-        return asm.intersect.apply(asm, [{}].concat(__slice.call((function() {
+        return asm.intersect.apply(asm, (function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -404,11 +415,11 @@
             _results.push(compileASMNode(n));
           }
           return _results;
-        })())));
+        })());
       },
       union: function(node) {
         var n;
-        return asm.union.apply(asm, [{}].concat(__slice.call((function() {
+        return asm.union.apply(asm, (function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -417,11 +428,11 @@
             _results.push(compileASMNode(n));
           }
           return _results;
-        })())));
+        })());
       },
       difference: function(node) {
         var n;
-        return asm.difference.apply(asm, [{}].concat(__slice.call((function() {
+        return asm.difference.apply(asm, (function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -430,7 +441,7 @@
             _results.push(compileASMNode(n));
           }
           return _results;
-        })())));
+        })());
       }
     };
     compileASMNode = function(node) {

@@ -9,7 +9,7 @@
 
 compileASM = (concreteSolidModel) ->
   asm =
-    union: (attr, nodes...) -> 
+    union: (nodes...) -> 
       type: 'union'
       nodes: nodes.flatten()
     intersect: (nodes...) -> 
@@ -73,27 +73,17 @@ compileASM = (concreteSolidModel) ->
         if chamferEdges == ALL_EDGES 
           if node.attr.chamfer.corners
             # Chamfer everything
-            asm.intersect { chamfer: true }, halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+            asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
           else 
             # Chamfer only edges (TODO: is this going to work as expected?)
-            asm.intersect { chamfer: true },
-              asm.intersect { chamfer: true }, halfspaces[0], halfspaces[1], (asm.invert halfspaces[3], halfspaces[4]),
-              halfspaces[2],
-              asm.invert halfspaces[5]
+            asm.intersect asm.intersect halfspaces[0], halfspaces[1], (asm.invert halfspaces[3], halfspaces[4]),
+              halfspaces[2], asm.invert halfspaces[5]
         else
           # Group intersections according to the edges that are chamfered
           # TODO: This is not yet implemented, for now chamfer nothing...
-          asm.intersect {},
-            halfspaces[0],
-            halfspaces[1],
-            halfspaces[2],
-            asm.invert halfspaces[3..6]...
+          asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
       else
-        asm.intersect {},
-          halfspaces[0],
-          halfspaces[1],
-          halfspaces[2],
-          asm.invert halfspaces[3..6]...
+        asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
     sphere: (node) ->
       # TODO
       {}
@@ -101,11 +91,11 @@ compileASM = (concreteSolidModel) ->
       # TODO
       {}
     intersect: (node) ->
-      asm.intersect {}, (compileASMNode n for n in node.nodes)...
+      asm.intersect (compileASMNode n for n in node.nodes)...
     union: (node) ->
-      asm.union {}, (compileASMNode n for n in node.nodes)...
+      asm.union (compileASMNode n for n in node.nodes)...
     difference: (node) ->
-      asm.difference {}, (compileASMNode n for n in node.nodes)...
+      asm.difference (compileASMNode n for n in node.nodes)...
 
   compileASMNode = (node) ->
     switch typeof node
