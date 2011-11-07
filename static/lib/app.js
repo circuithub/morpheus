@@ -197,7 +197,7 @@
     }
   };
   optimizeASM = function(node, flags) {
-    var boundaries, halfSpaceBins, i, resultNode, spaces, _i, _j, _len, _len2, _ref, _ref2;
+    var boundaries, filterHalfSpaces, halfSpaceBins, i, resultNode, spaces, _i, _j, _len, _len2, _ref, _ref2;
     resultNode = {};
     if (!(flags != null)) {
       flags = {
@@ -225,37 +225,42 @@
           return Math.min(a, b);
         }));
       }
-      /*
-          # Remove redundant half-spaces from the node
-          filterHalfSpaces = (nodes, flags, boundaries) ->
-            resultNodes = []
-            i = 0
-            while i < nodes.length
-              node = nodes[i]
-              switch node.type
-                when 'halfspace'
-                  if boundaries[node.attr.axis + (if flags.invert then 3 else 0)] != node.attr.val
-                    nodes.splice i, 1
-                    continue
-                when 'intersect' 
-                  mecha.logInternalError "ASM Optimize: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler."
-                when 'invert'
-                  flags.invert = not flags.invert
-                  filterHalfSpaces node.nodes, flags, boundaries
-                  flags.invert = not flags.invert
-                  if node.nodes.length == 0
-                    nodes.splice i, 1
-                    continue
-                else
-                  mecha.logInternalError "ASM Optimize: Unsuppported node type, '#{node.type}', inside intersection."
-              ++i
-          resultNode.nodes = filterHalfSpaces node.nodes, flags, boundaries
-      
-          # Detect symmetries in the scene definition (symmetrize)
-          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
-          */
+      filterHalfSpaces = function(nodes, flags, boundaries) {
+        var node, resultNodes, _k, _len3;
+        resultNodes = [];
+        for (_k = 0, _len3 = nodes.length; _k < _len3; _k++) {
+          node = nodes[_k];
+          switch (node.type) {
+            case 'halfspace':
+              if (boundaries[node.attr.axis + (flags.invert ? 3 : 0)] !== node.attr.val) {
+                continue;
+              }
+              break;
+            case 'intersect':
+              mecha.logInternalError("ASM Optimize: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
+              break;
+            case 'invert':
+              flags.invert = !flags.invert;
+              filterHalfSpaces(node.nodes, flags, boundaries);
+              flags.invert = !flags.invert;
+              if (node.nodes.length === 0) {
+                continue;
+              }
+              break;
+            default:
+              mecha.logInternalError("ASM Optimize: Unsuppported node type, '" + node.type + "', inside intersection.");
+          }
+          resultNodes.push(node);
+          ++i;
+        }
+        return resultNodes;
+      };
+      resultNode.nodes = filterHalfSpaces(node.nodes, flags, boundaries);
+      resultNode.type = 'intersect';
+    } else {
+      mecha.logInternalError("ASM Optimize: Optimizing unsuppported node type, '" + node.type + "'.");
     }
-    return resultNode = node;
+    return resultNode;
   };
   compileASM = function(concreteSolidModel) {
     var asm, compileASMNode, dispatch;
