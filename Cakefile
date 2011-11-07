@@ -14,6 +14,7 @@ appFiles  = [
   'math'
   #'api.csm'
   'compile.csm'
+  'compile.asm.api'
   'compile.asm.collect'
   'compile.asm.optimize'
   'compile.asm'

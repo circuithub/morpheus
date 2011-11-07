@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslLibrary, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -155,6 +155,83 @@
       }
     });
   };
+  asm = {
+    union: function() {
+      var nodes;
+      nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return {
+        type: 'union',
+        nodes: nodes.flatten()
+      };
+    },
+    intersect: function() {
+      var flattenedNodes, n, nodes, result, _i, _len;
+      nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      flattenedNodes = nodes.flatten();
+      result = {
+        type: 'intersect',
+        nodes: (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
+            n = flattenedNodes[_i];
+            if (n.type !== 'intersect') {
+              _results.push(n);
+            }
+          }
+          return _results;
+        })()
+      };
+      for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
+        n = flattenedNodes[_i];
+        if (n.type === 'intersect') {
+          result.nodes = result.nodes.concat(n.nodes);
+        }
+      }
+      return result;
+    },
+    difference: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'difference',
+        attr: attr,
+        nodes: nodes
+      };
+    },
+    invert: function() {
+      var nodes;
+      nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      return {
+        type: 'invert',
+        nodes: nodes.flatten()
+      };
+    },
+    mirror: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'mirror',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
+    translate: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'translate',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
+    halfspace: function(attr) {
+      return {
+        type: 'halfspace',
+        attr: attr
+      };
+    }
+  };
   mapASM = function(nodes, flags, params, dispatch) {
     var node, _i, _len, _results;
     _results = [];
@@ -197,7 +274,7 @@
     }
   };
   optimizeASM = function(node, flags) {
-    var boundaries, filterHalfSpaces, halfSpaceBins, i, resultNode, spaces, _i, _j, _len, _len2, _ref, _ref2;
+    var boundaries, center, halfSpaceBins, i, intersectNode, intersectNodes, mirrorAxes, mirrorHalfSpaces, mirrorNode, negHalfSpaces, negNode, posHalfSpaces, posNode, resultNode, spaces, _i, _j, _len, _len2, _ref, _ref2;
     resultNode = {};
     if (!(flags != null)) {
       flags = {
@@ -225,122 +302,95 @@
           return Math.min(a, b);
         }));
       }
-      filterHalfSpaces = function(nodes, flags, boundaries) {
-        var node, resultNodes, _k, _len3;
-        resultNodes = [];
-        for (_k = 0, _len3 = nodes.length; _k < _len3; _k++) {
-          node = nodes[_k];
-          switch (node.type) {
-            case 'halfspace':
-              if (boundaries[node.attr.axis + (flags.invert ? 3 : 0)] !== node.attr.val) {
-                continue;
-              }
-              break;
-            case 'intersect':
-              mecha.logInternalError("ASM Optimize: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
-              break;
-            case 'invert':
-              flags.invert = !flags.invert;
-              filterHalfSpaces(node.nodes, flags, boundaries);
-              flags.invert = !flags.invert;
-              if (node.nodes.length === 0) {
-                continue;
-              }
-              break;
-            default:
-              mecha.logInternalError("ASM Optimize: Unsuppported node type, '" + node.type + "', inside intersection.");
+      center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
+      mirrorAxes = (function() {
+        var _results;
+        _results = [];
+        for (i = 0; i <= 2; i++) {
+          if (halfSpaceBins[i].length > 0 && halfSpaceBins[i + 3].length > 0) {
+            _results.push(i);
           }
-          resultNodes.push(node);
-          ++i;
         }
-        return resultNodes;
-      };
-      resultNode.nodes = filterHalfSpaces(node.nodes, flags, boundaries);
-      resultNode.type = 'intersect';
+        return _results;
+      })();
+      mirrorHalfSpaces = (function() {
+        var _k, _len3, _results;
+        _results = [];
+        for (_k = 0, _len3 = mirrorAxes.length; _k < _len3; _k++) {
+          i = mirrorAxes[_k];
+          _results.push(asm.halfspace({
+            val: boundaries[i] - center[i],
+            axis: i
+          }));
+        }
+        return _results;
+      })();
+      posHalfSpaces = (function() {
+        var _results;
+        _results = [];
+        for (i = 0; i <= 2; i++) {
+          if (halfSpaceBins[i].length > 0 && halfSpaceBins[i + 3].length === 0) {
+            _results.push(asm.halfspace({
+              val: boundaries[i] - center[i],
+              axis: i
+            }));
+          }
+        }
+        return _results;
+      })();
+      negHalfSpaces = (function() {
+        var _results;
+        _results = [];
+        for (i = 3; i <= 5; i++) {
+          if (halfSpaceBins[i].length > 0 && halfSpaceBins[i - 3].length === 0) {
+            _results.push(asm.halfspace({
+              val: boundaries[i] - center[i - 3],
+              axis: i - 3
+            }));
+          }
+        }
+        return _results;
+      })();
+      if (mirrorHalfSpaces.length > 0) {
+        mirrorNode = asm.mirror.apply(asm, [{
+          axes: mirrorAxes,
+          duplicate: true
+        }].concat(__slice.call(mirrorHalfSpaces)));
+      }
+      if (posHalfSpaces.length > 0) {
+        posNode = asm.intersect.apply(asm, posHalfSpaces);
+      }
+      if (negHalfSpaces.length > 0) {
+        negNode = asm.invert.apply(asm, negHalfSpaces);
+      }
+      intersectNodes = [];
+      if (mirrorNode != null) {
+        intersectNodes.push(mirrorNode);
+      }
+      if (posNode != null) {
+        intersectNodes.push(posNode);
+      }
+      if (negNode != null) {
+        intersectNodes.push(negNode);
+      }
+      intersectNode = intersectNodes.length === 1 && intersectNodes[0].type === 'intersect' ? intersectNodes[0] : intersectNodes.length > 0 ? {
+        type: 'intersect',
+        nodes: intersectNodes
+      } : void 0;
+      resultNode = center[0] === 0 && center[1] === 0 && center[2] === 0 ? intersectNode : intersectNode != null ? {
+        type: 'translate',
+        attr: {
+          position: center
+        },
+        nodes: [intersectNode]
+      } : void 0;
     } else {
       mecha.logInternalError("ASM Optimize: Optimizing unsuppported node type, '" + node.type + "'.");
     }
     return resultNode;
   };
   compileASM = function(concreteSolidModel) {
-    var asm, compileASMNode, dispatch;
-    asm = {
-      union: function() {
-        var nodes;
-        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        return {
-          type: 'union',
-          nodes: nodes.flatten()
-        };
-      },
-      intersect: function() {
-        var flattenedNodes, n, nodes, result, _i, _len;
-        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        flattenedNodes = nodes.flatten();
-        result = {
-          type: 'intersect',
-          nodes: (function() {
-            var _i, _len, _results;
-            _results = [];
-            for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
-              n = flattenedNodes[_i];
-              if (n.type !== 'intersect') {
-                _results.push(n);
-              }
-            }
-            return _results;
-          })()
-        };
-        for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
-          n = flattenedNodes[_i];
-          if (n.type === 'intersect') {
-            result.nodes = result.nodes.concat(n.nodes);
-          }
-        }
-        return result;
-      },
-      difference: function() {
-        var attr, nodes;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        return {
-          type: 'difference',
-          attr: attr,
-          nodes: nodes
-        };
-      },
-      invert: function() {
-        var nodes;
-        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-        return {
-          type: 'invert',
-          nodes: nodes.flatten()
-        };
-      },
-      mirror: function() {
-        var attr, nodes;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        return {
-          type: 'mirror',
-          attr: attr,
-          nodes: nodes.flatten()
-        };
-      },
-      translate: function() {
-        var attr, nodes;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        return {
-          type: 'translate',
-          attr: attr,
-          nodes: nodes.flatten()
-        };
-      },
-      halfspace: function(attr) {
-        return {
-          type: 'halfspace',
-          attr: attr
-        };
-      }
-    };
+    var compileASMNode, dispatch;
     dispatch = {
       scene: function(node) {
         var n;
