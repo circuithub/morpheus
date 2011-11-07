@@ -1,7 +1,11 @@
 # Static analysis / optimization routines for reducing the abstract solid model
 
-optimizeASM = do () ->
-  intersect: (node, flags) ->
+optimizeASM = (node, flags) ->
+  resultNode = {}
+  if not flags?
+    flags = { invert: false }
+  
+  if node.type == 'intersect'
     # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
     halfSpaceBins = []
     halfSpaceBins.push [] for i in [0..5]
@@ -10,11 +14,10 @@ optimizeASM = do () ->
     boundaries.push (spaces.reduce (a,b) -> Math.max(a,b)) for spaces in halfSpaceBins[0..2]
     boundaries.push (spaces.reduce (a,b) -> Math.min(a,b)) for spaces in halfSpaceBins[3..5]
 
-    # The resulting node    
-    result = {}
-
+    ###
     # Remove redundant half-spaces from the node
-    filterHalfSpaces = (result, node, flags, boundaries) ->
+    filterHalfSpaces = (nodes, flags, boundaries) ->
+      resultNodes = []
       i = 0
       while i < nodes.length
         node = nodes[i]
@@ -35,8 +38,9 @@ optimizeASM = do () ->
           else
             mecha.logInternalError "ASM Optimize: Unsuppported node type, '#{node.type}', inside intersection."
         ++i
-    filterHalfSpaces result, node, flags, boundaries
+    resultNode.nodes = filterHalfSpaces node.nodes, flags, boundaries
 
     # Detect symmetries in the scene definition (symmetrize)
     center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
-    
+    ###
+  return resultNode = node

@@ -112,5 +112,5 @@ compileASM = (concreteSolidModel) ->
     mecha.log "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
     return
   
-  compileASMNode concreteSolidModel
+  optimizeASM compileASMNode concreteSolidModel
   
