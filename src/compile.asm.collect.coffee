@@ -16,3 +16,5 @@ collectASM =
           mecha.logInternalError "ASM Collect: Unsuppported node type, '#{node.type}', inside intersection."
 
 
+#mapASM = (nodes, flags, halfSpaceBins) ->
+

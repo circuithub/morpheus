@@ -179,42 +179,68 @@
       return _results;
     }
   };
-  optimizeASM = {
-    intersect: function(node) {
-      var boundaries, center, glslCode, halfSpaceBins, i, positionParam, spaces, _i, _j, _len, _len2, _ref, _ref2;
-      halfSpaceBins = [];
-      for (i = 0; i <= 5; i++) {
-        halfSpaceBins.push([]);
-      }
-      collectIntersectNodes(node.nodes, flags, halfSpaceBins);
-      if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
-        if (halfSpaceBins[3].length > 0 && halfSpaceBins[4].length > 0 && halfSpaceBins[5].length > 0) {
-          glslFunctions.corner = true;
-          boundaries = [];
-          _ref = halfSpaceBins.slice(0, 3);
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            spaces = _ref[_i];
-            boundaries.push(spaces.reduce(function(a, b) {
-              return Math.max(a, b);
-            }));
-          }
-          _ref2 = halfSpaceBins.slice(3, 6);
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            spaces = _ref2[_j];
-            boundaries.push(spaces.reduce(function(a, b) {
-              return Math.min(a, b);
-            }));
-          }
-          center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
-          positionParam = "" + rayOrigin;
-          if (center[0] !== 0.0 || center[1] !== 0.0 || center[2] !== 0.0) {
-            positionParam += " - vec3(" + center[0] + "," + center[1] + "," + center[2] + ")";
-          }
-          return glslCode = "" + glslLibrary.distanceFunctions.cornerDist.id + "(abs(" + positionParam + "), vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
+  optimizeASM = (function() {
+    return {
+      intersect: function(node, flags) {
+        var boundaries, center, filterHalfSpaces, halfSpaceBins, i, result, spaces, _i, _j, _len, _len2, _ref, _ref2;
+        halfSpaceBins = [];
+        for (i = 0; i <= 5; i++) {
+          halfSpaceBins.push([]);
         }
+        collectASM.intersect(node.nodes, flags, halfSpaceBins);
+        boundaries = [];
+        _ref = halfSpaceBins.slice(0, 3);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          spaces = _ref[_i];
+          boundaries.push(spaces.reduce(function(a, b) {
+            return Math.max(a, b);
+          }));
+        }
+        _ref2 = halfSpaceBins.slice(3, 6);
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          spaces = _ref2[_j];
+          boundaries.push(spaces.reduce(function(a, b) {
+            return Math.min(a, b);
+          }));
+        }
+        result = {};
+        filterHalfSpaces = function(result, node, flags, boundaries) {
+          var _results;
+          i = 0;
+          _results = [];
+          while (i < nodes.length) {
+            node = nodes[i];
+            switch (node.type) {
+              case 'halfspace':
+                if (boundaries[node.attr.axis + (flags.invert ? 3 : 0)] !== node.attr.val) {
+                  nodes.splice(i, 1);
+                  continue;
+                }
+                break;
+              case 'intersect':
+                mecha.logInternalError("ASM Optimize: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler.");
+                break;
+              case 'invert':
+                flags.invert = !flags.invert;
+                filterHalfSpaces(node.nodes, flags, boundaries);
+                flags.invert = !flags.invert;
+                if (node.nodes.length === 0) {
+                  nodes.splice(i, 1);
+                  continue;
+                }
+                break;
+              default:
+                mecha.logInternalError("ASM Optimize: Unsuppported node type, '" + node.type + "', inside intersection.");
+            }
+            _results.push(++i);
+          }
+          return _results;
+        };
+        filterHalfSpaces(result, node, flags, boundaries);
+        return center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]];
       }
-    }
-  };
+    };
+  })();
   compileASM = function(concreteSolidModel) {
     var asm, compileASMNode, dispatch;
     asm = {
@@ -227,12 +253,11 @@
         };
       },
       intersect: function() {
-        var attr, flattenedNodes, n, nodes, result, _i, _len;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        var flattenedNodes, n, nodes, result, _i, _len;
+        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         flattenedNodes = nodes.flatten();
         result = {
           type: 'intersect',
-          attr: attr,
           nodes: (function() {
             var _i, _len, _results;
             _results = [];
@@ -270,9 +295,25 @@
           nodes: nodes.flatten()
         };
       },
-      halfspace: function() {
+      mirror: function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'mirror',
+          attr: attr,
+          nodes: nodes.flatten()
+        };
+      },
+      translate: function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'translate',
+          attr: attr,
+          nodes: nodes.flatten()
+        };
+      },
+      halfspace: function(attr) {
         return {
           type: 'halfspace',
           attr: attr

@@ -12,11 +12,10 @@ compileASM = (concreteSolidModel) ->
     union: (attr, nodes...) -> 
       type: 'union'
       nodes: nodes.flatten()
-    intersect: (attr, nodes...) -> 
+    intersect: (nodes...) -> 
       flattenedNodes = nodes.flatten()
       result =
         type: 'intersect'
-        attr: attr
         nodes: (n for n in flattenedNodes when n.type != 'intersect')
       result.nodes = result.nodes.concat n.nodes for n in flattenedNodes when n.type == 'intersect'
       return result
@@ -27,7 +26,15 @@ compileASM = (concreteSolidModel) ->
     invert: (nodes...) ->
       type: 'invert'
       nodes: nodes.flatten()
-    halfspace: (attr, nodes...) ->
+    mirror: (attr, nodes...) ->
+      type: 'mirror'
+      attr: attr
+      nodes: nodes.flatten()
+    translate:  (attr, nodes...) ->
+      type: 'translate'
+      attr: attr
+      nodes: nodes.flatten()
+    halfspace: (attr) ->
       type: 'halfspace'
       attr: attr
 
