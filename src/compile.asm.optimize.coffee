@@ -25,7 +25,7 @@ optimizeASM = (node, flags) ->
     #       when 'halfspace'
     #         resultNode = node if boundaries[node.attr.axis + (if flags.invert then 3 else 0)] == node.attr.val
     #       when 'intersect' 
-    #         mecha.logInternalError "ASM Optimize: Intersect nodes should not be directly nested expected intersect nodes to be flattened ASM compiler."
+    #         mecha.logInternalError "ASM Optimize: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler."
     #       when 'invert'
     #         flags.invert = not flags.invert
     #         resultNode =
