@@ -612,98 +612,93 @@
     }
   };
   compileGLSL = function(abstractSolidModel) {
-    var compileIntersect, compileNode, flags, glslCode, glslFunctions, main, match, prefix, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var compileIntersect, compileNode, flags, glslCode, glslFunctions, glslPrelude, main, prefix, rayDirection, rayOrigin, sceneDist, sceneNormal, sceneRayDist, uniforms;
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
-    sceneDist = function(code) {
-      return "\nfloat sceneDist(in vec3 ro){ return " + code + "; }\n\n";
+    rayOrigin = 'ro';
+    rayDirection = 'rd';
+    sceneDist = function(prelude, code) {
+      return "\nfloat sceneDist(in vec3 " + rayOrigin + "){\n" + prelude + "  return " + code + ";\n}\n\n";
     };
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
-    match = function(node, pattern) {
-      var subpattern;
-      return subpattern = pattern[node.type];
-    };
-    compileIntersect = function(node, flags, glslFunctions, glslCode) {
-      var halfSpaceBins, i, oldFlags, positionParam, rayOrigin, _i, _len, _ref;
-      rayOrigin = 'ro';
+    compileIntersect = function(node, flags, glslFunctions, glslPrelude, glslCode) {
+      var currentRayOrigin, _i, _len, _ref, _results;
+      currentRayOrigin = glslPrelude[glslPrelude.length - 1][0];
       if (node.nodes.length === 0) {
         mecha.logInternalError('GLSL Compiler: Intersect nodes should not be empty.');
         return;
       }
       _ref = node.nodes;
+      _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         node = _ref[_i];
-        switch (node.type) {
-          case 'intersect':
-            mecha.logInternalError("GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler.");
-            break;
-          case 'mirror':
-            oldFlags = flags;
-            glslCode = (function() {
-              switch (node.args.axes.length) {
-                case 3:
-                  return glslCode = "abs(" + positionParam + ")";
-                case 1:
-                  switch (node.args.axes[0]) {
-                    case 0:
-                      return "vec3(abs(" + positionParam + ".x), " + positionParam + ".yz)";
+        _results.push((function() {
+          switch (node.type) {
+            case 'intersect':
+              return mecha.logInternalError("GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler.");
+            case 'mirror':
+              glslPrelude.push([
+                'r' + glslPrelude.length, (function() {
+                  switch (node.attr.axes.length) {
+                    case 3:
+                      return "abs(" + currentRayOrigin + ")";
                       break;
                     case 1:
-                      return "vec3(" + positionParam + ".x, abs(" + positionParam + ".y), " + positionParam + ".z)";
+                      switch (node.attr.axes[0]) {
+                        case 0:
+                          return "vec3(abs(" + currentRayOrigin + ".x), " + currentRayOrigin + ".yz)";
+                          break;
+                        case 1:
+                          return "vec3(" + currentRayOrigin + ".x, abs(" + currentRayOrigin + ".y), " + currentRayOrigin + ".z)";
+                          break;
+                        case 2:
+                          return "vec3(" + currentRayOrigin + ".xy, abs(" + currentRayOrigin + ".z))";
+                          break;
+                        default:
+                          mecha.logInternalError("GLSL Compiler: Unknown axis " + node.attr.axes[0] + " in mirror node.");
+                          return currentRayOrigin;
+                      }
                       break;
                     case 2:
-                      return "vec3(" + positionParam + ".xy, abs(" + positionParam + ".z))";
+                      if (node.attr.axes[0] !== 0 && node.attr.axes[1] !== 0) {
+                        return "vec3(" + currentRayOrigin + ".x, abs(" + currentRayOrigin + ".yz)";
+                      } else if (node.attr.axes[0] !== 1 && node.attr.axes[1] !== 1) {
+                        return "vec3(abs(" + currentRayOrigin + ".x), (" + currentRayOrigin + ".y, abs(" + currentRayOrigin + ".z))";
+                      } else {
+                        return "vec3(abs(" + currentRayOrigin + ".xy), " + currentRayOrigin + ".z)";
+                      }
                       break;
                     default:
-                      mecha.logInternalError("GLSL Compiler: Unknown axis " + node.args.axes[0] + " in mirror node.");
-                      return "" + positionParam;
+                      mecha.logInternalError("GLSL Compiler: Mirror node has " + node.attr.axes.length + " axes, expected between 1 and 3.");
+                      return currentRayOrigin;
                   }
-                  break;
-                case 2:
-                  if (node.args.axes[0] !== 0 && node.args.axes[1] !== 0) {
-                    return "vec3(" + positionParam + ".x, abs(" + positionParam + ".yz)";
-                  } else if (node.args.axes[0] !== 1 && node.args.axes[1] !== 1) {
-                    return "vec3(abs(" + positionParam + ".x), (" + positionParam + ".y, abs(" + positionParam + ".z))";
-                  } else {
-                    return "vec3(abs(" + positionParam + ".xy), " + positionParam + ".z)";
-                  }
-                  break;
-                default:
-                  mecha.logInternalError("GLSL Compiler: Mirror node has " + node.args.axes.length + " axes, expected between 1 and 3.");
-                  return "" + positionParam;
-              }
-            })();
-            break;
-          default:
-            mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
-        }
+                })()
+              ]);
+              glslPrelude.code += "  vec3 " + glslPrelude[glslPrelude.length - 1][0] + " = " + glslPrelude[glslPrelude.length - 1][1] + ";\n";
+              compileIntersect(node, flags, glslFunctions, glslPrelude, glslCode);
+              return glslPrelude.pop();
+            default:
+              return mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
+          }
+        })());
       }
-      halfSpaceBins = [];
-      for (i = 0; i <= 5; i++) {
-        halfSpaceBins.push([]);
-      }
-      collectASM.intersect(node.nodes, flags, halfSpaceBins);
-      if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
-        glslFunctions.corner = true;
-        positionParam = "" + rayOrigin;
-        return glslCode = "" + glslLibrary.distanceFunctions.cornerDist.id + "(" + positionParam + "), vec3(" + (boundaries[3] - center[0]) + ", " + (boundaries[4] - center[1]) + ", " + (boundaries[5] - center[2]) + "))";
-      }
+      return _results;
     };
-    compileNode = function(node, flags, glslFunctions, glslCode) {
+    compileNode = function(node, flags, glslFunctions, glslPrelude, glslCode) {
       var glslINFINITY, n, _i, _len, _ref;
       switch (node.type) {
         case 'union':
-          compileNode['unionDist'] = true;
+          glslFunctions.unionDist = true;
           _ref = node.nodes;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             n = _ref[_i];
-            compileNode(n);
+            compileNode(n, flags, glslFunctions, glslPrelude, glslCode);
           }
           return mecha.logInternalError("GLSL Compiler: BUSY HERE... (compile union node)");
         case 'intersect':
-          return compileIntersect(node, flags, glslFunctions);
+          return compileIntersect(node, flags, glslFunctions, glslPrelude, glslCode);
         default:
           mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
           glslINFINITY = '1.0/0.0';
@@ -711,13 +706,14 @@
       }
     };
     glslFunctions = {};
+    glslPrelude = [['ro', "" + rayOrigin]];
+    glslPrelude.code = "";
     glslCode = "";
     flags = {
-      invert: false,
-      mirror: []
+      invert: false
     };
-    compileNode(abstractSolidModel, flags, glslFunctions, glslCode);
-    return prefix + (glslLibrary.compile(glslFunctions)) + (sceneDist(glslCode)) + sceneNormal + main;
+    compileNode(abstractSolidModel, flags, glslFunctions, glslPrelude, glslCode);
+    return prefix + (glslLibrary.compile(glslFunctions)) + (sceneDist(glslPrelude.code, glslCode)) + sceneNormal + main;
   };
   constants = {
     canvas: {
