@@ -90,11 +90,20 @@
         nodes: nodes
       };
     };
-    return window.sphere = function() {
+    window.sphere = function() {
       var attr, nodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       return {
         type: 'sphere',
+        attr: attr,
+        nodes: nodes
+      };
+    };
+    return window.translate = function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'translate',
         attr: attr,
         nodes: nodes
       };

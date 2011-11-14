@@ -3,7 +3,6 @@
 # The result of any API operation is a Concrete Solid Model (CSM) passed along to a compiler (or to another API operation)
 # Every API function is a variadic function that takes some attributes as its first argument and (optionally) a tail list of nodes to compose
 
-
 do () ->
 
   # Internal utilities
@@ -74,6 +73,11 @@ do () ->
 
   window.sphere = (attr, nodes...) ->
     type: 'sphere'
+    attr: attr
+    nodes: nodes
+
+  window.translate = (attr, nodes...) ->
+    type: 'translate'
     attr: attr
     nodes: nodes
 
