@@ -20,5 +20,6 @@ collectASM =
     mapASM nodes, flags, {halfSpaceBins: halfSpaceBins},
       halfspace: (node, flags, params) -> 
         params.halfSpaceBins[node.attr.axis + (if flags.invert then 3 else 0)].push node.attr.val
+      mirror: () -> # ignore
       default: (node) ->
         mecha.logInternalError "ASM Collect: Unsuppported node type, '#{node.type}', inside intersection."

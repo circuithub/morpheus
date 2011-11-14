@@ -21,7 +21,7 @@ compileGLSL = (abstractSolidModel) ->
   
   sceneDist = (prelude, code) ->
     #preludeCode = ""
-    #for keyValue in glslPrelude
+    #for keyValue in glslParams.prelude
     #  preludeCode += "  vec3 #{keyValue[0]} = #{keyValue[1]};\n"
     "\nfloat sceneDist(in vec3 #{rayOrigin}){\n#{prelude}  return #{code};\n}\n\n"
   
@@ -86,13 +86,47 @@ compileGLSL = (abstractSolidModel) ->
   #  #  return match node, subpattern
   
   # Compile an ASM intersect node to GLSL
-  compileIntersect = (node, flags, glslFunctions, glslPrelude, glslCode) ->
-    currentRayOrigin = glslPrelude[glslPrelude.length - 1][0]
+  compileIntersect = (node, flags, glslParams) ->
+    currentRayOrigin = glslParams.prelude[glslParams.prelude.length - 1][0]
 
     if node.nodes.length == 0
       mecha.logInternalError 'GLSL Compiler: Intersect nodes should not be empty.'
       return
 
+    for childNode in node.nodes
+      switch childNode.type
+        when 'intersect'
+          mecha.logInternalError "GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler."
+        when 'mirror'
+          glslParams.prelude.push ['r' + glslParams.prelude.length,
+              switch childNode.attr.axes.length
+                when 3 then "abs(#{currentRayOrigin})"
+                when 1
+                  switch childNode.attr.axes[0]
+                    when 0 then "vec3(abs(#{currentRayOrigin}.x), #{currentRayOrigin}.yz)"
+                    when 1 then "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.y), #{currentRayOrigin}.z)"
+                    when 2 then "vec3(#{currentRayOrigin}.xy, abs(#{currentRayOrigin}.z))"
+                    else 
+                      mecha.logInternalError "GLSL Compiler: Unknown axis #{childNode.attr.axes[0]} in mirror node."
+                      currentRayOrigin
+                when 2
+                  if childNode.attr.axes[0] != 0 and childNode.attr.axes[1] != 0
+                    "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.yz)"
+                  else if childNode.attr.axes[0] != 1 and childNode.attr.axes[1] != 1
+                    "vec3(abs(#{currentRayOrigin}.x), (#{currentRayOrigin}.y, abs(#{currentRayOrigin}.z))"
+                  else
+                    "vec3(abs(#{currentRayOrigin}.xy), #{currentRayOrigin}.z)"
+                else 
+                  mecha.logInternalError "GLSL Compiler: Mirror node has #{childNode.attr.axes.length} axes, expected between 1 and 3."
+                  currentRayOrigin
+            ]
+          glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+          compileIntersect childNode, flags, glslParams
+          glslParams.prelude.pop()
+        when 'halfspace' # ignore
+        else
+          mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{childNode.type}."
+    
     # Try to find a half-space "corner" (three halfspaces on x,y,z axes that intersect
     # Prefer a x+,y+,z+ corner first, then x-,y-,z- corner then all other corners
     # I.e.
@@ -101,71 +135,38 @@ compileGLSL = (abstractSolidModel) ->
     #   |                ____|     
     #   |  +                   -
 
-    for node in node.nodes
-      switch node.type
-        when 'intersect'
-          mecha.logInternalError "GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler."
-        when 'mirror'
-          glslPrelude.push ['r' + glslPrelude.length,
-              switch node.attr.axes.length
-                when 3 then "abs(#{currentRayOrigin})"
-                when 1
-                  switch node.attr.axes[0]
-                    when 0 then "vec3(abs(#{currentRayOrigin}.x), #{currentRayOrigin}.yz)"
-                    when 1 then "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.y), #{currentRayOrigin}.z)"
-                    when 2 then "vec3(#{currentRayOrigin}.xy, abs(#{currentRayOrigin}.z))"
-                    else 
-                      mecha.logInternalError "GLSL Compiler: Unknown axis #{node.attr.axes[0]} in mirror node."
-                      currentRayOrigin
-                when 2
-                  if node.attr.axes[0] != 0 and node.attr.axes[1] != 0
-                    "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.yz)"
-                  else if node.attr.axes[0] != 1 and node.attr.axes[1] != 1
-                    "vec3(abs(#{currentRayOrigin}.x), (#{currentRayOrigin}.y, abs(#{currentRayOrigin}.z))"
-                  else
-                    "vec3(abs(#{currentRayOrigin}.xy), #{currentRayOrigin}.z)"
-                else 
-                  mecha.logInternalError "GLSL Compiler: Mirror node has #{node.attr.axes.length} axes, expected between 1 and 3."
-                  currentRayOrigin
-            ]
-          glslPrelude.code += "  vec3 #{glslPrelude[glslPrelude.length - 1][0]} = #{glslPrelude[glslPrelude.length - 1][1]};\n"
-          compileIntersect node, flags, glslFunctions, glslPrelude, glslCode
-          glslPrelude.pop()
-        else
-          mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
-    
     # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
     # TODO: Possibly this code should be moved to the ASM compilation module...
-    #halfSpaceBins = []
-    #halfSpaceBins.push [] for i in [0..5]
-    #collectASM.intersect node.nodes, flags, halfSpaceBins
-    #if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
-    #  glslFunctions.corner = true
-    #  positionParam = "#{rayOrigin}"
-    #  glslCode = "#{glslLibrary.distanceFunctions.cornerDist.id}(#{positionParam}), vec3(#{boundaries[3] - center[0]}, #{boundaries[4] - center[1]}, #{boundaries[5] - center[2]}))"
-    #
+    halfSpaceBins = []
+    halfSpaceBins.push [] for i in [0..5]
+    collectASM.intersect node.nodes, flags, halfSpaceBins
+    if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
+      glslParams.functions.corner = true
+      glslParams.code = "#{glslLibrary.distanceFunctions.cornerDist.id}(#{currentRayOrigin}, vec3(#{-halfSpaceBins[0]}, #{-halfSpaceBins[1]}, #{-halfSpaceBins[2]}))"
+    
     #TODO: if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
 
   # Compile an ASM node to GLSL
-  compileNode = (node, flags, glslFunctions, glslPrelude, glslCode) ->
+  compileNode = (node, flags, glslParams) ->
     switch node.type
       when 'union' 
-        glslFunctions.unionDist = true
-        compileNode n, flags, glslFunctions, glslPrelude, glslCode for n in node.nodes
+        glslParams.functions.unionDist = true
+        compileNode n, flags, glslParams for n in node.nodes
         mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
       when 'intersect'
-        compileIntersect node, flags, glslFunctions, glslPrelude, glslCode
+        compileIntersect node, flags, glslParams
       else
         mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
         glslINFINITY = '1.0/0.0'
-        glslCode = "#{glslINFINITY}"
+        glslParams.code = "#{glslINFINITY}"
 
   # Compile the tree
-  glslFunctions = {}
-  glslPrelude = [['ro', "#{rayOrigin}"]]
-  glslPrelude.code = ""
-  glslCode = ""
+  glslParams =
+    functions: {}
+    prelude:  [['ro', "#{rayOrigin}"]]
+    code: ""
+  glslParams.prelude.code = ""
   flags = { invert: false }
-  compileNode abstractSolidModel, flags, glslFunctions, glslPrelude, glslCode
-  return prefix + (glslLibrary.compile glslFunctions) + (sceneDist glslPrelude.code, glslCode) + sceneNormal + main
+  compileNode abstractSolidModel, flags, glslParams
+  return prefix + (glslLibrary.compile glslParams.functions) + (sceneDist glslParams.prelude.code, glslParams.code) + sceneNormal + main
 
