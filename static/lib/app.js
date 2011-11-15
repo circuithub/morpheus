@@ -271,10 +271,11 @@
     }
   };
   mapASM = function(dispatch, stack, node, flags) {
-    var dispatchMethod, n, nodes, prevFlags, returnNode, _i, _len, _ref;
+    var dispatchMethod, n, prevFlags, returnNode, _i, _len, _ref;
     stack.push({
       type: node.type,
-      attr: node.attr
+      attr: node.attr,
+      nodes: []
     });
     prevFlags = {
       invert: flags.invert
@@ -283,18 +284,18 @@
       case 'invert':
         flags.invert = !flags.invert;
     }
-    _ref = node.nodes;
+    _ref = node.nodes || [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       n = _ref[_i];
-      nodes = mapASM(dispatch, stack, n, flags);
+      mapASM(dispatch, stack, n, flags);
     }
     flags.invert = prevFlags.invert;
     returnNode = stack.pop();
-    dispatchMethod = node.type(dispatch[node.type] != null ? void 0 : 'default');
-    return dispatch[dispatchMethod](stack.reverse(), returnNode, nodes, flags);
+    dispatchMethod = dispatch[node.type] != null ? node.type : 'default';
+    return dispatch[dispatchMethod](stack.reverse(), returnNode, flags);
   };
   optimizeASM = function(node, flags) {
-    var dispatchCullSpaces, dispatchFlatten, dispatchTrim, resultNode;
+    var dispatchFlatten, dispatchTrim, resultNode, stack;
     resultNode = {};
     if (!(flags != null)) {
       flags = {
@@ -303,46 +304,35 @@
     }
     dispatchTrim = {};
     dispatchFlatten = {
-      union: function(stack, node, nodes, flags) {
-        var s, _i, _len, _ref, _ref2;
+      union: function(stack, node, flags) {
+        var s, _i, _len, _ref;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'union':
-              (_ref = s.nodes).concat.apply(_ref, nodes);
-              return [];
+              (_ref = s.nodes).concat.apply(_ref, node.nodes);
+              return;
           }
           break;
         }
-        (_ref2 = node.nodes).concat.apply(_ref2, nodes);
-        return [node];
+        return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, nodes, flags) {
-        var s, _i, _len, _ref, _ref2;
+        var s, _i, _len, _ref;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
               (_ref = s.nodes).concat.apply(_ref, nodes);
-              return [];
+              return;
           }
           break;
         }
-        (_ref2 = node.nodes).concat.apply(_ref2, nodes);
-        return [node];
+        return stack[0].nodes.push(node);
       },
       translate: function(stack, node, nodes, flags) {
-        var _ref;
-        (_ref = node.nodes).concat.apply(_ref, nodes);
-        return [node];
+        return stack[0].nodes.push(node);
       },
-      "default": function(stack, node, nodes, flags) {
-        var _ref;
-        (_ref = node.nodes).concat.apply(_ref, nodes);
-        return [node];
-      }
-    };
-    dispatchCullSpaces = {
       halfspace: function(stack, node, nodes, flags) {
         var n, s, _i, _j, _len, _len2, _ref;
         if (nodes.length > 0) {
@@ -359,66 +349,76 @@
                   if ((n.attr.val < node.attr.val && flags.invert) || (n.attr.val > node.attr.val && !flags.invert)) {
                     n.attr = node.attr;
                   }
-                  return [];
+                  return;
                 }
               }
           }
           break;
         }
-        return [node];
+        return stack[0].nodes.push(node);
+      },
+      "default": function(stack, node, nodes, flags) {
+        return stack[0].nodes.push(node);
       }
-      /*
-          intersect: (node, flags) ->
-            # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
-            halfSpaceBins = []
-            halfSpaceBins.push [] for i in [0..5]
-            collectASM.intersect node.nodes, flags, halfSpaceBins
-          
-            # Remove redundant half-spaces from the node
-            boundaries = []
-            boundaries.push (spaces.reduce (a,b) -> Math.max(a,b)) for spaces in halfSpaceBins[0..2]
-            boundaries.push (spaces.reduce (a,b) -> Math.min(a,b)) for spaces in halfSpaceBins[3..5]
-      
-            # Detect symmetries inside the intersection (symmetrize)
-            center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
-            mirrorAxes = (i for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length > 0)
-      
-            mirrorHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in mirrorAxes)
-            posHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length == 0)
-            negHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i-3], axis: i-3} for i in [3..5] when halfSpaceBins[i].length > 0 and halfSpaceBins[i-3].length == 0)
-      
-            mirrorNode = (asm.mirror {axes: mirrorAxes, duplicate: true}, mirrorHalfSpaces...) if mirrorHalfSpaces.length > 0
-            posNode = asm.intersect posHalfSpaces... if posHalfSpaces.length > 0
-            negNode = asm.invert negHalfSpaces... if negHalfSpaces.length > 0
-      
-            intersectNodes = []
-            intersectNodes.push mirrorNode if mirrorNode? 
-            intersectNodes.push posNode if posNode?
-            intersectNodes.push negNode if negNode?
-            #TODO: intersectNodes.push # other types of nodes... (cylinders, spheres etc)
-      
-            intersectNode = 
-              if intersectNodes.length == 1 and intersectNodes[0].type == 'intersect'
-                intersectNodes[0]
-              else if intersectNodes.length > 0
-                type: 'intersect'
-                nodes: intersectNodes
-              else
-                undefined
-      
-            resultNode = 
-              if center[0] == 0 and center[1] == 0 and center[2] == 0
-                intersectNode
-              else if intersectNode?
-                type: 'translate'
-                attr: 
-                  position: center
-                nodes: [intersectNode]
-              else
-                undefined
-          */
     };
-    return resultNode;
+    stack = [
+      {
+        type: 'union',
+        nodes: []
+      }
+    ];
+    mapASM(dispatchFlatten, stack, node, flags);
+    return stack[0];
+    /*
+      intersect: (node, flags) ->
+        # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
+        halfSpaceBins = []
+        halfSpaceBins.push [] for i in [0..5]
+        collectASM.intersect node.nodes, flags, halfSpaceBins
+      
+        # Remove redundant half-spaces from the node
+        boundaries = []
+        boundaries.push (spaces.reduce (a,b) -> Math.max(a,b)) for spaces in halfSpaceBins[0..2]
+        boundaries.push (spaces.reduce (a,b) -> Math.min(a,b)) for spaces in halfSpaceBins[3..5]
+    
+        # Detect symmetries inside the intersection (symmetrize)
+        center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
+        mirrorAxes = (i for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length > 0)
+    
+        mirrorHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in mirrorAxes)
+        posHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length == 0)
+        negHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i-3], axis: i-3} for i in [3..5] when halfSpaceBins[i].length > 0 and halfSpaceBins[i-3].length == 0)
+    
+        mirrorNode = (asm.mirror {axes: mirrorAxes, duplicate: true}, mirrorHalfSpaces...) if mirrorHalfSpaces.length > 0
+        posNode = asm.intersect posHalfSpaces... if posHalfSpaces.length > 0
+        negNode = asm.invert negHalfSpaces... if negHalfSpaces.length > 0
+    
+        intersectNodes = []
+        intersectNodes.push mirrorNode if mirrorNode? 
+        intersectNodes.push posNode if posNode?
+        intersectNodes.push negNode if negNode?
+        #TODO: intersectNodes.push # other types of nodes... (cylinders, spheres etc)
+    
+        intersectNode = 
+          if intersectNodes.length == 1 and intersectNodes[0].type == 'intersect'
+            intersectNodes[0]
+          else if intersectNodes.length > 0
+            type: 'intersect'
+            nodes: intersectNodes
+          else
+            undefined
+    
+        resultNode = 
+          if center[0] == 0 and center[1] == 0 and center[2] == 0
+            intersectNode
+          else if intersectNode?
+            type: 'translate'
+            attr: 
+              position: center
+            nodes: [intersectNode]
+          else
+            undefined
+      */
   };
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
