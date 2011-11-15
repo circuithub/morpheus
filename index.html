@@ -52,9 +52,15 @@
       <span><input id='source-autocompile' name='source-autocompile' type='checkbox' disabled='disabled'><label for='source-autocompile'>Auto-compile</label></span>
       <input id='source-compile' name='source-compile' type='button' value='Compile'>
       <textarea id='source-code' name='source-code'>
-intersect(
-  box({ dimensions: [0.2, 0.5, 0.2] }),
-  box({ dimensions: [0.5, 0.2, 0.2] }))
+translate(
+  { offset: [0.0, 0.4, 0.0] },
+  intersect(
+    box({ dimensions: [0.2, 0.5, 0.2] }),
+    translate({ offset: [0.3, 0.0, 0.0] },
+      box({ dimensions: [0.5, 0.2, 0.2] })
+    )
+  )
+)
       </textarea>
     </form>
     <div id='viewport'>
