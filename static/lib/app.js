@@ -312,10 +312,15 @@
           s = stack[_i];
           switch (s.type) {
             case 'union':
-              s.nodes.concat(node.nodes);
+              stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
+            case 'invert':
+            case 'mirror':
+            case 'translate':
+              continue;
+            default:
+              break;
           }
-          break;
         }
         return stack[0].nodes.push(node);
       },
@@ -325,10 +330,15 @@
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
-              s.nodes.concat(node.nodes);
+              stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
+            case 'invert':
+            case 'mirror':
+            case 'translate':
+              continue;
+            default:
+              break;
           }
-          break;
         }
         return stack[0].nodes.push(node);
       },
@@ -779,6 +789,7 @@
           return glslParams.code = "" + glslINFINITY;
       }
     };
+    console.log(abstractSolidModel);
     glslParams = {
       functions: {},
       prelude: [['ro', "" + rayOrigin]],

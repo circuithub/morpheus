@@ -33,17 +33,25 @@ optimizeASM = (node, flags) ->
       for s in stack
         switch s.type
           when 'union'
-            s.nodes.concat node.nodes
+            # The node at the top of the stack is either intersect or non-union (like mirror, invert or translate for example)
+            stack[0].nodes = stack[0].nodes.concat node.nodes
             return # Discard node
-        break # Only run to depth of one
+          when 'invert', 'mirror', 'translate'
+            continue # Search for preceding intersect node
+          else # when 'union' or 'halfspace' or 'sphere' or 'cylinder'
+            break # This type of node means the intersect node is needed
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       for s in stack
         switch s.type
           when 'intersect'
-            s.nodes.concat node.nodes
+            # The node at the top of the stack is either intersect or non-union (like mirror, invert or translate for example)
+            stack[0].nodes = stack[0].nodes.concat node.nodes
             return # Discard node
-        break # Only run to depth of one
+          when 'invert', 'mirror', 'translate'
+            continue # Search for preceding intersect node
+          else # when 'union' or 'halfspace' or 'sphere' or 'cylinder'
+            break # This type of node means the intersect node is needed
       stack[0].nodes.push node
     #difference: (stack, node, flags) ->
     #  for s in stack
@@ -51,14 +59,14 @@ optimizeASM = (node, flags) ->
     #      when 'difference'
     #        if node.nodes.length > 0
     #          if s.nodes.length == 0
-    #            s.nodes.concat node.nodes
+    #            s.nodes = s.nodes.concat node.nodes
     #          else
     #            if s.nodes[0].type == 'union'
-    #              s.nodes[0].nodes.concat node.nodes[0]
+    #              s.nodes[0].nodes = s.nodes[0].nodes.concat node.nodes[0]
     #            else
     #              s.nodes[0] = asm.union s.nodes[0], node.nodes[0]
     #            if node.nodes.length > 1
-    #              s.nodes.concat node.nodes[1..node.nodes.length]
+    #              s.nodes = s.nodes.concat node.nodes[1..node.nodes.length]
     #        return [] # Discard node
     #    break # Only run to depth of one
     #  stack[0].push node
@@ -67,7 +75,7 @@ optimizeASM = (node, flags) ->
       #for s in stack
       #  switch s.type
       #    when 'translate'
-      #      s.nodes.concat node.nodes
+      #      s.nodes = s.nodes.concat node.nodes
       #      return # Discard node
       #  break # Only run to depth of one
       stack[0].nodes.push node

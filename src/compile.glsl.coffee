@@ -171,6 +171,9 @@ compileGLSL = (abstractSolidModel) ->
         glslINFINITY = '1.0/0.0'
         glslParams.code = "#{glslINFINITY}"
 
+  # TEMPORARY
+  console.log abstractSolidModel
+
   # Compile the tree
   glslParams =
     functions: {}
