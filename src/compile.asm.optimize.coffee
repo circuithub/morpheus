@@ -29,7 +29,7 @@ optimizeASM = (node, flags) ->
       node.nodes.concat nodes...
       return [node]
     intersect: (stack, node, nodes, flags) ->
-      for s in stack.reverse()
+      for s in stack
         switch s.type
           when 'intersect'
             s.nodes.concat nodes...
@@ -37,28 +37,27 @@ optimizeASM = (node, flags) ->
         break # Only run to depth of one
       node.nodes.concat nodes...
       return [node]
-    difference: (stack, node, nodes, flags) ->
-      for s in stack.reverse()
-        switch s.type
-          when 'difference'
-            if nodes.length > 0
-              if s.nodes.length == 0
-                s.nodes.concat nodes...
-              else
-                if s.nodes[0].type == 'union'
-                  s.nodes[0].nodes.concat nodes[0]
-                else
-                  s.nodes[0] = asm.union s.nodes[0], nodes[0]...
-                if nodes.length > 1
-                  s.nodes.concat nodes[1..nodes.length]...
-            return [] # Discard node
-        break # Only run to depth of one
-      node.nodes.concat nodes...
-      return [node]
-    translate: (node, flags) ->
-      if node.attr.
+    #difference: (stack, node, nodes, flags) ->
+    #  for s in stack
+    #    switch s.type
+    #      when 'difference'
+    #        if nodes.length > 0
+    #          if s.nodes.length == 0
+    #            s.nodes.concat nodes...
+    #          else
+    #            if s.nodes[0].type == 'union'
+    #              s.nodes[0].nodes.concat nodes[0]
+    #            else
+    #              s.nodes[0] = asm.union s.nodes[0], nodes[0]...
+    #            if nodes.length > 1
+    #              s.nodes.concat nodes[1..nodes.length]...
+    #        return [] # Discard node
+    #    break # Only run to depth of one
+    #  node.nodes.concat nodes...
+    #  return [node]
+    translate: (stack, node, nodes, flags) ->
       # TODO
-      #for s in stack.reverse()
+      #for s in stack
       #  switch s.type
       #    when 'translate'
       #      s.nodes.concat nodes...
@@ -73,8 +72,21 @@ optimizeASM = (node, flags) ->
       return [node]
   
   dispatchCullSpaces =
+    halfspace: (stack, node, nodes, flags) ->
+      for s in stack
+        switch s.type
+          when 'intersect'
+            #for n in s.nodes
+              #if n.type == 'halfspace' and n.axis == node.axis
+                #TODO: check - are we inverted? n.val = Math.max(n.val) 
+            s.nodes.concat nodes...
+            return [] # Discard node
+        break # Only run to depth of one
+      node.nodes.concat nodes...
+      return [node]
+
+    ###
     intersect: (node, flags) ->
-      if node.flags 
       # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
       halfSpaceBins = []
       halfSpaceBins.push [] for i in [0..5]
@@ -122,8 +134,6 @@ optimizeASM = (node, flags) ->
           nodes: [intersectNode]
         else
           undefined
-    else
-      mecha.logInternalError "ASM Optimize: Optimizing unsuppported node type, '#{node.type}'."
-
+    ###
   return resultNode
 

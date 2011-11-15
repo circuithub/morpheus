@@ -11,10 +11,10 @@ asm =
       nodes: (n for n in flattenedNodes when n.type != 'intersect')
     result.nodes = result.nodes.concat n.nodes for n in flattenedNodes when n.type == 'intersect'
     return result
-  difference: (attr, nodes...) -> 
-    type: 'difference'
-    attr: attr
-    nodes: nodes
+  #difference: (attr, nodes...) -> 
+  #  type: 'difference'
+  #  attr: attr
+  #  nodes: nodes
   invert: (nodes...) ->
     type: 'invert'
     nodes: nodes.flatten()
