@@ -2,7 +2,15 @@
 
 mapASM = (dispatch, stack, node, flags) ->
   stack.push { type: node.type, attr: node.attr }
+  prevFlags = 
+    invert: flags.invert
+  
+  switch node.type
+    when 'invert'
+      flags.invert = not flags.invert
   nodes = mapASM dispatch, stack, n, flags for n in node.nodes
+
+  flags.invert = prevFlags.invert
   returnNode = stack.pop()
   dispatchMethod = node.type if dispatch[node.type]? else 'default'
   return dispatch[dispatchMethod] stack.reverse(), returnNode, nodes, flags
@@ -12,7 +20,7 @@ optimizeASM = (node, flags) ->
   if not flags?
     flags = 
       invert: false
-      translation: [0.0,0.0,0.0]
+      #translation: [0.0,0.0,0.0]
 
   # Optimization which trims empty nodes
   dispatchTrim = {}
@@ -73,16 +81,17 @@ optimizeASM = (node, flags) ->
   
   dispatchCullSpaces =
     halfspace: (stack, node, nodes, flags) ->
+      if nodes.length > 0
+        mecha.logInternalError "ASM Optimize: Unexpected child nodes found in halfspace node."
       for s in stack
         switch s.type
           when 'intersect'
-            #for n in s.nodes
-              #if n.type == 'halfspace' and n.axis == node.axis
-                #TODO: check - are we inverted? n.val = Math.max(n.val) 
-            s.nodes.concat nodes...
-            return [] # Discard node
+            for n in s.nodes
+              if n.type == 'halfspace' and n.attr.axis == node.attr.axis
+                if (n.attr.val < node.attr.val and flags.invert) or (n.attr.val > node.attr.val and not flags.invert)
+                  n.attr = node.attr
+                return [] # Discard node
         break # Only run to depth of one
-      node.nodes.concat nodes...
       return [node]
 
     ###

@@ -271,16 +271,24 @@
     }
   };
   mapASM = function(dispatch, stack, node, flags) {
-    var dispatchMethod, n, nodes, returnNode, _i, _len, _ref;
+    var dispatchMethod, n, nodes, prevFlags, returnNode, _i, _len, _ref;
     stack.push({
       type: node.type,
       attr: node.attr
     });
+    prevFlags = {
+      invert: flags.invert
+    };
+    switch (node.type) {
+      case 'invert':
+        flags.invert = !flags.invert;
+    }
     _ref = node.nodes;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       n = _ref[_i];
       nodes = mapASM(dispatch, stack, n, flags);
     }
+    flags.invert = prevFlags.invert;
     returnNode = stack.pop();
     dispatchMethod = node.type(dispatch[node.type] != null ? void 0 : 'default');
     return dispatch[dispatchMethod](stack.reverse(), returnNode, nodes, flags);
@@ -290,8 +298,7 @@
     resultNode = {};
     if (!(flags != null)) {
       flags = {
-        invert: false,
-        translation: [0.0, 0.0, 0.0]
+        invert: false
       };
     }
     dispatchTrim = {};
@@ -337,17 +344,27 @@
     };
     dispatchCullSpaces = {
       halfspace: function(stack, node, nodes, flags) {
-        var s, _i, _len, _ref, _ref2;
+        var n, s, _i, _j, _len, _len2, _ref;
+        if (nodes.length > 0) {
+          mecha.logInternalError("ASM Optimize: Unexpected child nodes found in halfspace node.");
+        }
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
-              (_ref = s.nodes).concat.apply(_ref, nodes);
-              return [];
+              _ref = s.nodes;
+              for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+                n = _ref[_j];
+                if (n.type === 'halfspace' && n.attr.axis === node.attr.axis) {
+                  if ((n.attr.val < node.attr.val && flags.invert) || (n.attr.val > node.attr.val && !flags.invert)) {
+                    n.attr = node.attr;
+                  }
+                  return [];
+                }
+              }
           }
           break;
         }
-        (_ref2 = node.nodes).concat.apply(_ref2, nodes);
         return [node];
       }
       /*
