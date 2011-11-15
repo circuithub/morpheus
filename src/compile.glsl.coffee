@@ -123,6 +123,11 @@ compileGLSL = (abstractSolidModel) ->
           glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
           compileIntersect childNode, flags, glslParams
           glslParams.prelude.pop()
+        when 'translate'
+          glslParams.prelude.push ['r' + glslParams.prelude.length, "vec3(#{childNode.attr.offset[0]}, #{childNode.attr.offset[1]}, #{childNode.attr.offset[2]})"]
+          glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+          compileIntersect childNode, flags, glslParams
+          glslParams.prelude.pop()
         when 'halfspace' # ignore
         else
           mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{childNode.type}."
@@ -155,6 +160,12 @@ compileGLSL = (abstractSolidModel) ->
         mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
       when 'intersect'
         compileIntersect node, flags, glslParams
+      when 'translate'
+        glslParams.prelude.push ['r' + glslParams.prelude.length, "vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"]
+        glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+        for childNode in node.nodes
+          compileNode childNode, flags, glslParams
+        glslParams.prelude.pop()
       else
         mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
         glslINFINITY = '1.0/0.0'

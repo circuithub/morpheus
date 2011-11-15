@@ -729,6 +729,12 @@
             compileIntersect(childNode, flags, glslParams);
             glslParams.prelude.pop();
             break;
+          case 'translate':
+            glslParams.prelude.push(['r' + glslParams.prelude.length, "vec3(" + childNode.attr.offset[0] + ", " + childNode.attr.offset[1] + ", " + childNode.attr.offset[2] + ")"]);
+            glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
+            compileIntersect(childNode, flags, glslParams);
+            glslParams.prelude.pop();
+            break;
           case 'halfspace':
             break;
           default:
@@ -746,7 +752,7 @@
       }
     };
     compileNode = function(node, flags, glslParams) {
-      var glslINFINITY, n, _i, _len, _ref;
+      var childNode, glslINFINITY, n, _i, _j, _len, _len2, _ref, _ref2;
       switch (node.type) {
         case 'union':
           glslParams.functions.unionDist = true;
@@ -758,6 +764,15 @@
           return mecha.logInternalError("GLSL Compiler: BUSY HERE... (compile union node)");
         case 'intersect':
           return compileIntersect(node, flags, glslParams);
+        case 'translate':
+          glslParams.prelude.push(['r' + glslParams.prelude.length, "vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")"]);
+          glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
+          _ref2 = node.nodes;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            childNode = _ref2[_j];
+            compileNode(childNode, flags, glslParams);
+          }
+          return glslParams.prelude.pop();
         default:
           mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
           glslINFINITY = '1.0/0.0';
