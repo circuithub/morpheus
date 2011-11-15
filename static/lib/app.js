@@ -292,7 +292,9 @@
     flags.invert = prevFlags.invert;
     returnNode = stack.pop();
     dispatchMethod = dispatch[node.type] != null ? node.type : 'default';
-    return dispatch[dispatchMethod](stack.reverse(), returnNode, flags);
+    stack.reverse();
+    dispatch[dispatchMethod](stack, returnNode, flags);
+    return stack.reverse();
   };
   optimizeASM = function(node, flags) {
     var dispatchFlatten, dispatchTrim, resultNode, stack;

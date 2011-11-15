@@ -13,7 +13,9 @@ mapASM = (dispatch, stack, node, flags) ->
   flags.invert = prevFlags.invert
   returnNode = stack.pop()
   dispatchMethod = if dispatch[node.type]? then node.type  else 'default'
-  dispatch[dispatchMethod] stack.reverse(), returnNode, flags
+  stack.reverse()
+  dispatch[dispatchMethod] stack, returnNode, flags
+  stack.reverse()
 
 optimizeASM = (node, flags) ->
   resultNode = {}
