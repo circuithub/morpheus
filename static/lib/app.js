@@ -305,37 +305,37 @@
     dispatchTrim = {};
     dispatchFlatten = {
       union: function(stack, node, flags) {
-        var s, _i, _len, _ref;
+        var s, _i, _len;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'union':
-              (_ref = s.nodes).concat.apply(_ref, node.nodes);
+              s.nodes.concat(node.nodes);
               return;
           }
           break;
         }
         return stack[0].nodes.push(node);
       },
-      intersect: function(stack, node, nodes, flags) {
-        var s, _i, _len, _ref;
+      intersect: function(stack, node, flags) {
+        var s, _i, _len;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
-              (_ref = s.nodes).concat.apply(_ref, nodes);
+              s.nodes.concat(node.nodes);
               return;
           }
           break;
         }
         return stack[0].nodes.push(node);
       },
-      translate: function(stack, node, nodes, flags) {
+      translate: function(stack, node, flags) {
         return stack[0].nodes.push(node);
       },
-      halfspace: function(stack, node, nodes, flags) {
+      halfspace: function(stack, node, flags) {
         var n, s, _i, _j, _len, _len2, _ref;
-        if (nodes.length > 0) {
+        if (node.nodes.length > 0) {
           mecha.logInternalError("ASM Optimize: Unexpected child nodes found in halfspace node.");
         }
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
@@ -357,7 +357,7 @@
         }
         return stack[0].nodes.push(node);
       },
-      "default": function(stack, node, nodes, flags) {
+      "default": function(stack, node, flags) {
         return stack[0].nodes.push(node);
       }
     };

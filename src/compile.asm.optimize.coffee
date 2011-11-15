@@ -31,49 +31,46 @@ optimizeASM = (node, flags) ->
       for s in stack
         switch s.type
           when 'union'
-            s.nodes.concat node.nodes...
+            s.nodes.concat node.nodes
             return # Discard node
         break # Only run to depth of one
       stack[0].nodes.push node
-    intersect: (stack, node, nodes, flags) ->
+    intersect: (stack, node, flags) ->
       for s in stack
         switch s.type
           when 'intersect'
-            s.nodes.concat nodes...
+            s.nodes.concat node.nodes
             return # Discard node
         break # Only run to depth of one
       stack[0].nodes.push node
-    #difference: (stack, node, nodes, flags) ->
+    #difference: (stack, node, flags) ->
     #  for s in stack
     #    switch s.type
     #      when 'difference'
-    #        if nodes.length > 0
+    #        if node.nodes.length > 0
     #          if s.nodes.length == 0
-    #            s.nodes.concat nodes...
+    #            s.nodes.concat node.nodes
     #          else
     #            if s.nodes[0].type == 'union'
-    #              s.nodes[0].nodes.concat nodes[0]
+    #              s.nodes[0].nodes.concat node.nodes[0]
     #            else
-    #              s.nodes[0] = asm.union s.nodes[0], nodes[0]...
-    #            if nodes.length > 1
-    #              s.nodes.concat nodes[1..nodes.length]...
+    #              s.nodes[0] = asm.union s.nodes[0], node.nodes[0]
+    #            if node.nodes.length > 1
+    #              s.nodes.concat node.nodes[1..node.nodes.length]
     #        return [] # Discard node
     #    break # Only run to depth of one
-    #  node.nodes.concat nodes...
-    #  return [node]
-    translate: (stack, node, nodes, flags) ->
+    #  stack[0].push node
+    translate: (stack, node, flags) ->
       # TODO
       #for s in stack
       #  switch s.type
       #    when 'translate'
-      #      s.nodes.concat nodes...
-      #      return [] # Discard node
+      #      s.nodes.concat node.nodes
+      #      return # Discard node
       #  break # Only run to depth of one
-      #node.nodes.concat nodes...
-      #return [node]
       stack[0].nodes.push node
-    halfspace: (stack, node, nodes, flags) ->
-      if nodes.length > 0
+    halfspace: (stack, node, flags) ->
+      if node.nodes.length > 0
         mecha.logInternalError "ASM Optimize: Unexpected child nodes found in halfspace node."
       for s in stack
         switch s.type
@@ -85,7 +82,7 @@ optimizeASM = (node, flags) ->
                 return # Discard node
         break # Only run to depth of one
       stack[0].nodes.push node
-    default: (stack, node, nodes, flags) ->
+    default: (stack, node, flags) ->
       stack[0].nodes.push node
 
   stack = [{type: 'union', nodes: []}]
