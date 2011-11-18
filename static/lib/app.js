@@ -745,6 +745,11 @@
             compileIntersect(childNode, flags, glslParams);
             glslParams.prelude.pop();
             break;
+          case 'invert':
+            flags.invert = !flags.invert;
+            compileIntersect(childNode, flags, glslParams);
+            flags.invert = !flags.invert;
+            break;
           case 'halfspace':
             break;
           default:

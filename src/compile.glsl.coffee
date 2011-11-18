@@ -128,6 +128,10 @@ compileGLSL = (abstractSolidModel) ->
           glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
           compileIntersect childNode, flags, glslParams
           glslParams.prelude.pop()
+        when 'invert'
+          flags.invert = not flags.invert
+          compileIntersect childNode, flags, glslParams
+          flags.invert = not flags.invert
         when 'halfspace' # ignore
         else
           mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{childNode.type}."
@@ -185,6 +189,10 @@ compileGLSL = (abstractSolidModel) ->
         for childNode in node.nodes
           compileNode childNode, flags, glslParams
         glslParams.prelude.pop()
+      when 'invert'
+        flags.invert = not flags.invert
+        compileNode n, flags, glslParams for n in node.nodes
+        flags.invert = not flags.invert
       else
         mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
         glslINFINITY = '1.0/0.0'
