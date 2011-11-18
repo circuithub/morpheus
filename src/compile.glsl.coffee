@@ -85,6 +85,7 @@ compileGLSL = (abstractSolidModel) ->
   #  #if subpattern?
   #  #  return match node, subpattern
   
+  ###
   # Compile an ASM intersect node to GLSL
   compileIntersect = (node, flags, glslParams) ->
     currentRayOrigin = glslParams.prelude[glslParams.prelude.length - 1][0]
@@ -158,24 +159,6 @@ compileGLSL = (abstractSolidModel) ->
   # Compile an ASM node to GLSL
   compileNode = (node, flags, glslParams) ->
     switch node.type
-      when 'union' 
-        # Check that composite node is not empty
-        if node.nodes.length == 0
-          mecha.logInternalError "GLSL Compiler: Union node is empty."
-          return
-        #compileNode n, flags, glslParams for n in node.nodes
-        #mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
-        code = ""
-        for i in [0...node.nodes.length-1]
-          code += "min("
-        for i in [0...node.nodes.length]
-          glslParams.code = ""
-          code += ", " if i > 0
-          compileNode node.nodes[i], flags, glslParams
-          code += glslParams.code
-        for i in [0...node.nodes.length-1]
-          code += ")"
-        glslParams.code = code
       when 'intersect'
         # Check that composite node is not empty
         if node.nodes.length == 0
@@ -196,17 +179,123 @@ compileGLSL = (abstractSolidModel) ->
         mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
         glslINFINITY = '1.0/0.0'
         glslParams.code = "#{glslINFINITY}"
+  ###
+  preludePush = (prelude, value) ->
+    name = 'r' + prelude.counter
+    prelude.push [name, value]
+    prelude.counter += 1
+    prelude.code += "  vec3 #{name} = #{value};\n"
+    return name
+
+  preludePop = (prelude) ->
+    return prelude.pop()[0]
+    
+  preDispatch = 
+    invert: (stack, node, flags) ->
+      flags.invert = not flags.invert
+    intersect: (stack, node, flags) ->
+      node.halfSpaces = []
+      node.halfSpaces.push null for i in [0..5]
+    union: (stack, node, flags) ->
+      node.halfSpaces = []
+      node.halfSpaces.push null for i in [0..5]
+    default: (stack, node, flags) ->
+      return
+  
+  postDispatch =
+    invert: (stack, node, flags) ->
+      flags.invert = not flags.invert
+    union: (stack, node, flags) ->
+      # Check that composite node is not empty
+      if node.nodes.length == 0
+        mecha.logInternalError "GLSL Compiler: Union node is empty."
+        return
+      node.code = ""
+      for i in [0...node.nodes.length-1]
+        node.code += "min("
+      for i in [0...node.nodes.length]
+        node.code += ", " if i > 0
+        node.code += node.nodes[i].code
+      for i in [0...node.nodes.length-1]
+        node.code += ")"
+      stack[0].nodes.push node
+    intersect: (stack, node, flags) ->
+      # Check that composite node is not empty
+      if node.nodes.length == 0
+        mecha.logInternalError "GLSL Compiler: Intersect node is empty."
+        return
+      node.code = ""
+      for childNode in node.nodes when childNode.code?
+        if node.code.length > 0
+          node.code = "max(#{childNode.code}, #{node.code})"
+        else
+          node.code = childNode.code
+
+      # Corner compilation
+      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]      
+      if (node.halfSpaces[0] != null or node.halfSpaces[3] != null) and
+          (node.halfSpaces[1] != null or node.halfSpaces[4] != null) and
+          (node.halfSpaces[2] != null or node.halfSpaces[5] != null)
+        cornerSize = [
+          if node.halfSpaces[0] != null then node.halfSpaces[0] else node.halfSpaces[3],
+          if node.halfSpaces[1] != null then node.halfSpaces[1] else node.halfSpaces[4],
+          if node.halfSpaces[2] != null then node.halfSpaces[2] else node.halfSpaces[5]]
+        preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+        dist = preludePop flags.glslPrelude
+        node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
+      stack[0].nodes.push node
+    translate: (stack, node, flags) ->
+      # Check that composite node is not empty
+      if node.nodes.length == 0
+        mecha.logInternalError "GLSL Compiler: Translate node is empty."
+        return
+      stack[0].nodes.push node
+    halfspace: (stack, node, flags) ->
+      # Check that geometry node is empty
+      if node.nodes.length != 0
+        mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
+        return
+      for s in stack
+        switch s.type
+          when 'intersect'
+            # Assign to the halfspace bins for corner compilation
+            index = node.attr.axis + (if flags.invert then 3 else 0)
+            if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] < node.attr.val else s.halfSpaces[index] > node.attr.val)
+              s.halfSpaces[index] = node.attr.val
+          when 'union'
+            # Assign to the halfspace bins for corner compilation
+            index = node.attr.axis + (if flags.invert then 3 else 0)
+            if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] > node.attr.val else s.halfSpaces[index] < node.attr.val)
+              s.halfSpaces[index] = node.attr.val
+          when 'invert', 'mirror', 'translate'
+            continue # Search for preceding intersect/union node
+          else 
+            node.code = "#{node.attr.val} - #{flags.glslPrelude}[#{node.attr.axis}]"
+      stack[0].nodes.push node
+    default: (stack, node, flags) ->
+      stack[0].nodes.push node
 
   # TEMPORARY
   console.log abstractSolidModel
 
   # Compile the tree
-  glslParams =
-    functions: {}
-    prelude:  [['ro', "#{rayOrigin}"]]
-    code: ""
-  glslParams.prelude.code = ""
-  flags = { invert: false }
-  compileNode abstractSolidModel, flags, glslParams
-  return prefix + (glslLibrary.compile glslParams.functions) + (sceneDist glslParams.prelude.code, glslParams.code) + sceneNormal + main
+  flags =
+    invert: false
+    glslFunctions: {}
+    glslPrelude: [['ro', "#{rayOrigin}"]]
+  flags.glslPrelude.code = ""
+  flags.glslPrelude.counter = ""
+
+  result = mapASM preDispatch, postDispatch, [{nodes: []}], abstractSolidModel, flags
+
+  # TEMPORARY
+  console.log result
+
+  if result.nodes.length == 1
+    result.nodes[0].code
+  else
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from compiler.'
+    return ""
+
+  return result.nodes[0].code
 

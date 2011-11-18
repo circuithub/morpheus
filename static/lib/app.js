@@ -270,42 +270,54 @@
       });
     }
   };
-  mapASM = function(dispatch, stack, node, flags) {
-    var dispatchMethod, n, prevFlags, returnNode, _i, _len, _ref;
-    stack.push({
+  mapASM = function(preDispatch, postDispatch, stack, node, flags) {
+    var n, resultNode, _i, _len, _ref;
+    stack.reverse();
+    resultNode = {
       type: node.type,
       attr: node.attr,
       nodes: []
-    });
-    prevFlags = {
-      invert: flags.invert
     };
-    switch (node.type) {
-      case 'invert':
-        flags.invert = !flags.invert;
+    if (preDispatch[node.type] != null) {
+      preDispatch[node.type](stack, resultNode, flags);
+    } else {
+      preDispatch['default'](stack, resultNode, flags);
     }
+    stack.reverse();
+    stack.push(resultNode);
     _ref = node.nodes || [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       n = _ref[_i];
-      mapASM(dispatch, stack, n, flags);
+      mapASM(preDispatch, postDispatch, stack, n, flags);
     }
-    flags.invert = prevFlags.invert;
-    returnNode = stack.pop();
-    dispatchMethod = dispatch[node.type] != null ? node.type : 'default';
+    stack.pop();
     stack.reverse();
-    dispatch[dispatchMethod](stack, returnNode, flags);
-    return stack.reverse();
+    if (postDispatch[node.type] != null) {
+      postDispatch[node.type](stack, resultNode, flags);
+    } else {
+      postDispatch['default'](stack, resultNode, flags);
+    }
+    stack.reverse();
+    return stack[0];
   };
   optimizeASM = function(node, flags) {
-    var dispatchFlatten, dispatchTrim, resultNode, stack;
+    var postDispatch, preDispatch, resultNode;
     resultNode = {};
     if (!(flags != null)) {
       flags = {
         invert: false
       };
     }
-    dispatchTrim = {};
-    dispatchFlatten = {
+    preDispatch = {
+      invert: function(stack, node, flags) {
+        return flags.invert = !flags.invert;
+      },
+      "default": function(stack, node, flags) {}
+    };
+    postDispatch = {
+      invert: function(stack, node, flags) {
+        return flags.invert = !flags.invert;
+      },
       union: function(stack, node, flags) {
         var s, _i, _len;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
@@ -373,64 +385,12 @@
         return stack[0].nodes.push(node);
       }
     };
-    stack = [
+    return mapASM(preDispatch, postDispatch, [
       {
         type: 'union',
         nodes: []
       }
-    ];
-    mapASM(dispatchFlatten, stack, node, flags);
-    return stack[0];
-    /*
-      intersect: (node, flags) ->
-        # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
-        halfSpaceBins = []
-        halfSpaceBins.push [] for i in [0..5]
-        collectASM.intersect node.nodes, flags, halfSpaceBins
-      
-        # Remove redundant half-spaces from the node
-        boundaries = []
-        boundaries.push (spaces.reduce (a,b) -> Math.max(a,b)) for spaces in halfSpaceBins[0..2]
-        boundaries.push (spaces.reduce (a,b) -> Math.min(a,b)) for spaces in halfSpaceBins[3..5]
-    
-        # Detect symmetries inside the intersection (symmetrize)
-        center = [boundaries[0] + boundaries[3], boundaries[1] + boundaries[4], boundaries[2] + boundaries[5]]
-        mirrorAxes = (i for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length > 0)
-    
-        mirrorHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in mirrorAxes)
-        posHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i], axis: i} for i in [0..2] when halfSpaceBins[i].length > 0 and halfSpaceBins[i + 3].length == 0)
-        negHalfSpaces = (asm.halfspace {val: boundaries[i] - center[i-3], axis: i-3} for i in [3..5] when halfSpaceBins[i].length > 0 and halfSpaceBins[i-3].length == 0)
-    
-        mirrorNode = (asm.mirror {axes: mirrorAxes, duplicate: true}, mirrorHalfSpaces...) if mirrorHalfSpaces.length > 0
-        posNode = asm.intersect posHalfSpaces... if posHalfSpaces.length > 0
-        negNode = asm.invert negHalfSpaces... if negHalfSpaces.length > 0
-    
-        intersectNodes = []
-        intersectNodes.push mirrorNode if mirrorNode? 
-        intersectNodes.push posNode if posNode?
-        intersectNodes.push negNode if negNode?
-        #TODO: intersectNodes.push # other types of nodes... (cylinders, spheres etc)
-    
-        intersectNode = 
-          if intersectNodes.length == 1 and intersectNodes[0].type == 'intersect'
-            intersectNodes[0]
-          else if intersectNodes.length > 0
-            type: 'intersect'
-            nodes: intersectNodes
-          else
-            undefined
-    
-        resultNode = 
-          if center[0] == 0 and center[1] == 0 and center[2] == 0
-            intersectNode
-          else if intersectNode?
-            type: 'translate'
-            attr: 
-              position: center
-            nodes: [intersectNode]
-          else
-            undefined
-      */
+    ], node, flags);
   };
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
@@ -592,18 +552,6 @@
           return ["return length(" + position + ") - " + radius + ";"];
         })()
       },
-      cornerDist: {
-        id: '_cornerDist',
-        returnType: 'float',
-        arguments: ['vec3', 'vec3'],
-        code: (function() {
-          var dist, position, radius;
-          position = 'a';
-          radius = 'b';
-          dist = 's';
-          return ["if (all(lessThan(" + position + ", " + radius + ")))", "  return 0.0;", "vec3 " + dist + " = max(vec3(0.0), " + position + " - " + radius + ");", "return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);"];
-        })()
-      },
       boxChamferDist: {
         id: '_boxChamferDist',
         returnType: 'float',
@@ -672,7 +620,7 @@
     }
   };
   compileGLSL = function(abstractSolidModel) {
-    var compileIntersect, compileNode, flags, glslParams, main, prefix, rayDirection, rayOrigin, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, rayDirection, rayOrigin, result, sceneDist, sceneNormal, sceneRayDist, uniforms;
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
     rayOrigin = 'ro';
@@ -683,154 +631,251 @@
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
-    compileIntersect = function(node, flags, glslParams) {
-      var childNode, currentRayOrigin, halfSpaceBins, i, _i, _len, _ref;
-      currentRayOrigin = glslParams.prelude[glslParams.prelude.length - 1][0];
-      if (node.nodes.length === 0) {
-        mecha.logInternalError('GLSL Compiler: Intersect nodes should not be empty.');
-        return;
-      }
-      _ref = node.nodes;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        childNode = _ref[_i];
-        switch (childNode.type) {
-          case 'intersect':
-            mecha.logInternalError("GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler.");
-            break;
-          case 'mirror':
-            glslParams.prelude.push([
-              'r' + glslParams.prelude.length, (function() {
-                switch (childNode.attr.axes.length) {
-                  case 3:
-                    return "abs(" + currentRayOrigin + ")";
-                    break;
-                  case 1:
-                    switch (childNode.attr.axes[0]) {
-                      case 0:
-                        return "vec3(abs(" + currentRayOrigin + ".x), " + currentRayOrigin + ".yz)";
-                        break;
-                      case 1:
-                        return "vec3(" + currentRayOrigin + ".x, abs(" + currentRayOrigin + ".y), " + currentRayOrigin + ".z)";
-                        break;
-                      case 2:
-                        return "vec3(" + currentRayOrigin + ".xy, abs(" + currentRayOrigin + ".z))";
-                        break;
-                      default:
-                        mecha.logInternalError("GLSL Compiler: Unknown axis " + childNode.attr.axes[0] + " in mirror node.");
-                        return currentRayOrigin;
-                    }
-                    break;
-                  case 2:
-                    if (childNode.attr.axes[0] !== 0 && childNode.attr.axes[1] !== 0) {
-                      return "vec3(" + currentRayOrigin + ".x, abs(" + currentRayOrigin + ".yz)";
-                    } else if (childNode.attr.axes[0] !== 1 && childNode.attr.axes[1] !== 1) {
-                      return "vec3(abs(" + currentRayOrigin + ".x), (" + currentRayOrigin + ".y, abs(" + currentRayOrigin + ".z))";
-                    } else {
-                      return "vec3(abs(" + currentRayOrigin + ".xy), " + currentRayOrigin + ".z)";
-                    }
-                    break;
-                  default:
-                    mecha.logInternalError("GLSL Compiler: Mirror node has " + childNode.attr.axes.length + " axes, expected between 1 and 3.");
-                    return currentRayOrigin;
-                }
-              })()
-            ]);
-            glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
-            compileIntersect(childNode, flags, glslParams);
-            glslParams.prelude.pop();
-            break;
-          case 'translate':
-            glslParams.prelude.push(['r' + glslParams.prelude.length, "vec3(" + childNode.attr.offset[0] + ", " + childNode.attr.offset[1] + ", " + childNode.attr.offset[2] + ")"]);
-            glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
-            compileIntersect(childNode, flags, glslParams);
-            glslParams.prelude.pop();
-            break;
-          case 'invert':
-            flags.invert = !flags.invert;
-            compileIntersect(childNode, flags, glslParams);
-            flags.invert = !flags.invert;
-            break;
-          case 'halfspace':
-            break;
-          default:
-            mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + childNode.type + ".");
-        }
-      }
-      halfSpaceBins = [];
-      for (i = 0; i <= 5; i++) {
-        halfSpaceBins.push([]);
-      }
-      collectASM.intersect(node.nodes, flags, halfSpaceBins);
-      if (halfSpaceBins[0].length > 0 && halfSpaceBins[1].length > 0 && halfSpaceBins[2].length > 0) {
-        glslParams.functions.corner = true;
-        return glslParams.code = "" + glslLibrary.distanceFunctions.cornerDist.id + "(" + currentRayOrigin + ", vec3(" + (-halfSpaceBins[0]) + ", " + (-halfSpaceBins[1]) + ", " + (-halfSpaceBins[2]) + "))";
-      }
+    /*
+      # Compile an ASM intersect node to GLSL
+      compileIntersect = (node, flags, glslParams) ->
+        currentRayOrigin = glslParams.prelude[glslParams.prelude.length - 1][0]
+    
+        if node.nodes.length == 0
+          mecha.logInternalError 'GLSL Compiler: Intersect nodes should not be empty.'
+          return
+    
+        for childNode in node.nodes
+          switch childNode.type
+            when 'intersect'
+              mecha.logInternalError "GLSL Compiler: Intersect nodes should not be directly nested, expected intersect nodes to be flattened by the ASM compiler."
+            when 'mirror'
+              glslParams.prelude.push ['r' + glslParams.prelude.length,
+                  switch childNode.attr.axes.length
+                    when 3 then "abs(#{currentRayOrigin})"
+                    when 1
+                      switch childNode.attr.axes[0]
+                        when 0 then "vec3(abs(#{currentRayOrigin}.x), #{currentRayOrigin}.yz)"
+                        when 1 then "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.y), #{currentRayOrigin}.z)"
+                        when 2 then "vec3(#{currentRayOrigin}.xy, abs(#{currentRayOrigin}.z))"
+                        else 
+                          mecha.logInternalError "GLSL Compiler: Unknown axis #{childNode.attr.axes[0]} in mirror node."
+                          currentRayOrigin
+                    when 2
+                      if childNode.attr.axes[0] != 0 and childNode.attr.axes[1] != 0
+                        "vec3(#{currentRayOrigin}.x, abs(#{currentRayOrigin}.yz)"
+                      else if childNode.attr.axes[0] != 1 and childNode.attr.axes[1] != 1
+                        "vec3(abs(#{currentRayOrigin}.x), (#{currentRayOrigin}.y, abs(#{currentRayOrigin}.z))"
+                      else
+                        "vec3(abs(#{currentRayOrigin}.xy), #{currentRayOrigin}.z)"
+                    else 
+                      mecha.logInternalError "GLSL Compiler: Mirror node has #{childNode.attr.axes.length} axes, expected between 1 and 3."
+                      currentRayOrigin
+                ]
+              glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+              compileIntersect childNode, flags, glslParams
+              glslParams.prelude.pop()
+            when 'translate'
+              glslParams.prelude.push ['r' + glslParams.prelude.length, "vec3(#{childNode.attr.offset[0]}, #{childNode.attr.offset[1]}, #{childNode.attr.offset[2]})"]
+              glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+              compileIntersect childNode, flags, glslParams
+              glslParams.prelude.pop()
+            when 'invert'
+              flags.invert = not flags.invert
+              compileIntersect childNode, flags, glslParams
+              flags.invert = not flags.invert
+            when 'halfspace' # ignore
+            else
+              mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{childNode.type}."
+        
+        # Try to find a half-space "corner" (three halfspaces on x,y,z axes that intersect
+        # Prefer a x+,y+,z+ corner first, then x-,y-,z- corner then all other corners
+        # I.e.
+        #
+        # -  ____     and     +  |       respectively
+        #   |                ____|     
+        #   |  +                   -
+    
+        # Collect half-spaces into bins by type [x+, x-, y+, y-, z+, z-]
+        # TODO: Possibly this code should be moved to the ASM compilation module...
+        halfSpaceBins = []
+        halfSpaceBins.push [] for i in [0..5]
+        collectASM.intersect node.nodes, flags, halfSpaceBins
+        if halfSpaceBins[0].length > 0 and halfSpaceBins[1].length > 0 and halfSpaceBins[2].length > 0
+          glslParams.functions.corner = true
+          glslParams.code = "#{glslLibrary.distanceFunctions.cornerDist.id}(#{currentRayOrigin}, vec3(#{-halfSpaceBins[0]}, #{-halfSpaceBins[1]}, #{-halfSpaceBins[2]}))"
+        
+        #TODO: if halfSpaceBins[3].length > 0 and halfSpaceBins[4].length > 0 and halfSpaceBins[5].length > 0
+    
+      # Compile an ASM node to GLSL
+      compileNode = (node, flags, glslParams) ->
+        switch node.type
+          when 'intersect'
+            # Check that composite node is not empty
+            if node.nodes.length == 0
+              mecha.logInternalError "GLSL Compiler: Intersect node is empty."
+              return
+            compileIntersect node, flags, glslParams
+          when 'translate'
+            glslParams.prelude.push ['r' + glslParams.prelude.length, "vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"]
+            glslParams.prelude.code += "  vec3 #{glslParams.prelude[glslParams.prelude.length - 1][0]} = #{glslParams.prelude[glslParams.prelude.length - 1][1]};\n"
+            for childNode in node.nodes
+              compileNode childNode, flags, glslParams
+            glslParams.prelude.pop()
+          when 'invert'
+            flags.invert = not flags.invert
+            compileNode n, flags, glslParams for n in node.nodes
+            flags.invert = not flags.invert
+          else
+            mecha.logInternalError "GLSL Compiler: Could not compile unknown node with type #{node.type}."
+            glslINFINITY = '1.0/0.0'
+            glslParams.code = "#{glslINFINITY}"
+      */
+    preludePush = function(prelude, value) {
+      var name;
+      name = 'r' + prelude.counter;
+      prelude.push([name, value]);
+      prelude.counter += 1;
+      prelude.code += "  vec3 " + name + " = " + value + ";\n";
+      return name;
     };
-    compileNode = function(node, flags, glslParams) {
-      var childNode, code, glslINFINITY, i, n, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _ref5;
-      switch (node.type) {
-        case 'union':
-          if (node.nodes.length === 0) {
-            mecha.logInternalError("GLSL Compiler: Union node is empty.");
-            return;
+    preludePop = function(prelude) {
+      return prelude.pop()[0];
+    };
+    preDispatch = {
+      invert: function(stack, node, flags) {
+        return flags.invert = !flags.invert;
+      },
+      intersect: function(stack, node, flags) {
+        var i, _results;
+        node.halfSpaces = [];
+        _results = [];
+        for (i = 0; i <= 5; i++) {
+          _results.push(node.halfSpaces.push(null));
+        }
+        return _results;
+      },
+      union: function(stack, node, flags) {
+        var i, _results;
+        node.halfSpaces = [];
+        _results = [];
+        for (i = 0; i <= 5; i++) {
+          _results.push(node.halfSpaces.push(null));
+        }
+        return _results;
+      },
+      "default": function(stack, node, flags) {}
+    };
+    postDispatch = {
+      invert: function(stack, node, flags) {
+        return flags.invert = !flags.invert;
+      },
+      union: function(stack, node, flags) {
+        var i, _ref, _ref2, _ref3;
+        if (node.nodes.length === 0) {
+          mecha.logInternalError("GLSL Compiler: Union node is empty.");
+          return;
+        }
+        node.code = "";
+        for (i = 0, _ref = node.nodes.length - 1; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+          node.code += "min(";
+        }
+        for (i = 0, _ref2 = node.nodes.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
+          if (i > 0) {
+            node.code += ", ";
           }
-          code = "";
-          for (i = 0, _ref = node.nodes.length - 1; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-            code += "min(";
-          }
-          for (i = 0, _ref2 = node.nodes.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
-            glslParams.code = "";
-            if (i > 0) {
-              code += ", ";
+          node.code += node.nodes[i].code;
+        }
+        for (i = 0, _ref3 = node.nodes.length - 1; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+          node.code += ")";
+        }
+        return stack[0].nodes.push(node);
+      },
+      intersect: function(stack, node, flags) {
+        var childNode, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
+        if (node.nodes.length === 0) {
+          mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
+          return;
+        }
+        node.code = "";
+        _ref = node.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          childNode = _ref[_i];
+          if (childNode.code != null) {
+            if (node.code.length > 0) {
+              node.code = "max(" + childNode.code + ", " + node.code + ")";
+            } else {
+              node.code = childNode.code;
             }
-            compileNode(node.nodes[i], flags, glslParams);
-            code += glslParams.code;
           }
-          for (i = 0, _ref3 = node.nodes.length - 1; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-            code += ")";
+        }
+        currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
+          cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
+          preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
+          dist = preludePop(flags.glslPrelude);
+          node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
+        }
+        return stack[0].nodes.push(node);
+      },
+      translate: function(stack, node, flags) {
+        if (node.nodes.length === 0) {
+          mecha.logInternalError("GLSL Compiler: Translate node is empty.");
+          return;
+        }
+        return stack[0].nodes.push(node);
+      },
+      halfspace: function(stack, node, flags) {
+        var index, s, _i, _len;
+        if (node.nodes.length !== 0) {
+          mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
+          return;
+        }
+        for (_i = 0, _len = stack.length; _i < _len; _i++) {
+          s = stack[_i];
+          switch (s.type) {
+            case 'intersect':
+              index = node.attr.axis + (flags.invert ? 3 : 0);
+              if (s.halfSpaces[index] === null || (flags.invert ? s.halfSpaces[index] < node.attr.val : s.halfSpaces[index] > node.attr.val)) {
+                s.halfSpaces[index] = node.attr.val;
+              }
+              break;
+            case 'union':
+              index = node.attr.axis + (flags.invert ? 3 : 0);
+              if (s.halfSpaces[index] === null || (flags.invert ? s.halfSpaces[index] > node.attr.val : s.halfSpaces[index] < node.attr.val)) {
+                s.halfSpaces[index] = node.attr.val;
+              }
+              break;
+            case 'invert':
+            case 'mirror':
+            case 'translate':
+              continue;
+            default:
+              node.code = "" + node.attr.val + " - " + flags.glslPrelude + "[" + node.attr.axis + "]";
           }
-          return glslParams.code = code;
-        case 'intersect':
-          if (node.nodes.length === 0) {
-            mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
-            return;
-          }
-          return compileIntersect(node, flags, glslParams);
-        case 'translate':
-          glslParams.prelude.push(['r' + glslParams.prelude.length, "vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")"]);
-          glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
-          _ref4 = node.nodes;
-          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
-            childNode = _ref4[_i];
-            compileNode(childNode, flags, glslParams);
-          }
-          return glslParams.prelude.pop();
-        case 'invert':
-          flags.invert = !flags.invert;
-          _ref5 = node.nodes;
-          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-            n = _ref5[_j];
-            compileNode(n, flags, glslParams);
-          }
-          return flags.invert = !flags.invert;
-        default:
-          mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
-          glslINFINITY = '1.0/0.0';
-          return glslParams.code = "" + glslINFINITY;
+        }
+        return stack[0].nodes.push(node);
+      },
+      "default": function(stack, node, flags) {
+        return stack[0].nodes.push(node);
       }
     };
     console.log(abstractSolidModel);
-    glslParams = {
-      functions: {},
-      prelude: [['ro', "" + rayOrigin]],
-      code: ""
-    };
-    glslParams.prelude.code = "";
     flags = {
-      invert: false
+      invert: false,
+      glslFunctions: {},
+      glslPrelude: [['ro', "" + rayOrigin]]
     };
-    compileNode(abstractSolidModel, flags, glslParams);
-    return prefix + (glslLibrary.compile(glslParams.functions)) + (sceneDist(glslParams.prelude.code, glslParams.code)) + sceneNormal + main;
+    flags.glslPrelude.code = "";
+    flags.glslPrelude.counter = "";
+    result = mapASM(preDispatch, postDispatch, [
+      {
+        nodes: []
+      }
+    ], abstractSolidModel, flags);
+    console.log(result);
+    if (result.nodes.length === 1) {
+      result.nodes[0].code;
+    } else {
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from compiler.');
+      return "";
+    }
+    return result.nodes[0].code;
   };
   constants = {
     canvas: {

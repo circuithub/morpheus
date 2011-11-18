@@ -10,20 +10,20 @@ glslLibrary =
         [
           "return length(#{position}) - #{radius};"
         ]
-    cornerDist:
-      id: '_cornerDist'
-      returnType: 'float'
-      arguments: ['vec3', 'vec3']
-      code: do () ->
-        position = 'a'
-        radius = 'b'
-        dist = 's'
-        [
-          "if (all(lessThan(#{position}, #{radius})))"
-          "  return 0.0;"
-          "vec3 #{dist} = max(vec3(0.0), #{position} - #{radius});"
-          "return max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
-        ]
+    #cornerDist:
+    #  id: '_cornerDist'
+    #  returnType: 'float'
+    #  arguments: ['vec3', 'vec3']
+    #  code: do () ->
+    #    position = 'a'
+    #    radius = 'b'
+    #    dist = 's'
+    #    [
+    #      "if (all(lessThan(#{position}, #{radius})))"
+    #      "  return 0.0;"
+    #      "vec3 #{dist} = max(vec3(0.0), #{position} - #{radius});"
+    #      "return max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
+    #    ]
     boxChamferDist:
       id: '_boxChamferDist'
       returnType: 'float'
