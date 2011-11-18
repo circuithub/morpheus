@@ -163,7 +163,6 @@ compileGLSL = (abstractSolidModel) ->
         if node.nodes.length == 0
           mecha.logInternalError "GLSL Compiler: Union node is empty."
           return
-        glslParams.functions.unionDist = true
         #compileNode n, flags, glslParams for n in node.nodes
         #mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
         code = ""

@@ -774,7 +774,6 @@
             mecha.logInternalError("GLSL Compiler: Union node is empty.");
             return;
           }
-          glslParams.functions.unionDist = true;
           code = "";
           for (i = 0, _ref = node.nodes.length - 1; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
             code += "min(";
