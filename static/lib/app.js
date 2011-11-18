@@ -762,27 +762,53 @@
       }
     };
     compileNode = function(node, flags, glslParams) {
-      var childNode, glslINFINITY, n, _i, _j, _len, _len2, _ref, _ref2;
+      var childNode, code, glslINFINITY, i, n, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _ref5;
       switch (node.type) {
         case 'union':
-          glslParams.functions.unionDist = true;
-          _ref = node.nodes;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            compileNode(n, flags, glslParams);
+          if (node.nodes.length === 0) {
+            mecha.logInternalError("GLSL Compiler: Union node is empty.");
+            return;
           }
-          return mecha.logInternalError("GLSL Compiler: BUSY HERE... (compile union node)");
+          glslParams.functions.unionDist = true;
+          code = "";
+          for (i = 0, _ref = node.nodes.length - 1; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            code += "min(";
+          }
+          for (i = 0, _ref2 = node.nodes.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
+            glslParams.code = "";
+            if (i > 0) {
+              code += ", ";
+            }
+            compileNode(node.nodes[i], flags, glslParams);
+            code += glslParams.code;
+          }
+          for (i = 0, _ref3 = node.nodes.length - 1; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+            code += ")";
+          }
+          return glslParams.code = code;
         case 'intersect':
+          if (node.nodes.length === 0) {
+            mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
+            return;
+          }
           return compileIntersect(node, flags, glslParams);
         case 'translate':
           glslParams.prelude.push(['r' + glslParams.prelude.length, "vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")"]);
           glslParams.prelude.code += "  vec3 " + glslParams.prelude[glslParams.prelude.length - 1][0] + " = " + glslParams.prelude[glslParams.prelude.length - 1][1] + ";\n";
-          _ref2 = node.nodes;
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            childNode = _ref2[_j];
+          _ref4 = node.nodes;
+          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+            childNode = _ref4[_i];
             compileNode(childNode, flags, glslParams);
           }
           return glslParams.prelude.pop();
+        case 'invert':
+          flags.invert = !flags.invert;
+          _ref5 = node.nodes;
+          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+            n = _ref5[_j];
+            compileNode(n, flags, glslParams);
+          }
+          return flags.invert = !flags.invert;
         default:
           mecha.logInternalError("GLSL Compiler: Could not compile unknown node with type " + node.type + ".");
           glslINFINITY = '1.0/0.0';

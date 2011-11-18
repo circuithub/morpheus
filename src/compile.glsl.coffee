@@ -155,10 +155,29 @@ compileGLSL = (abstractSolidModel) ->
   compileNode = (node, flags, glslParams) ->
     switch node.type
       when 'union' 
+        # Check that composite node is not empty
+        if node.nodes.length == 0
+          mecha.logInternalError "GLSL Compiler: Union node is empty."
+          return
         glslParams.functions.unionDist = true
-        compileNode n, flags, glslParams for n in node.nodes
-        mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
+        #compileNode n, flags, glslParams for n in node.nodes
+        #mecha.logInternalError "GLSL Compiler: BUSY HERE... (compile union node)"
+        code = ""
+        for i in [0...node.nodes.length-1]
+          code += "min("
+        for i in [0...node.nodes.length]
+          glslParams.code = ""
+          code += ", " if i > 0
+          compileNode node.nodes[i], flags, glslParams
+          code += glslParams.code
+        for i in [0...node.nodes.length-1]
+          code += ")"
+        glslParams.code = code
       when 'intersect'
+        # Check that composite node is not empty
+        if node.nodes.length == 0
+          mecha.logInternalError "GLSL Compiler: Intersect node is empty."
+          return
         compileIntersect node, flags, glslParams
       when 'translate'
         glslParams.prelude.push ['r' + glslParams.prelude.length, "vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"]
