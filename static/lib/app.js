@@ -807,7 +807,11 @@
           cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
           preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
           dist = preludePop(flags.glslPrelude);
-          node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
+          if (node.code.length > 0) {
+            node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
+          } else {
+            node.code = "max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);";
+          }
         }
         return stack[0].nodes.push(node);
       },
@@ -861,7 +865,7 @@
       glslPrelude: [['ro', "" + rayOrigin]]
     };
     flags.glslPrelude.code = "";
-    flags.glslPrelude.counter = "";
+    flags.glslPrelude.counter = 0;
     result = mapASM(preDispatch, postDispatch, [
       {
         nodes: []

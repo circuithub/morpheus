@@ -242,7 +242,10 @@ compileGLSL = (abstractSolidModel) ->
           if node.halfSpaces[2] != null then node.halfSpaces[2] else node.halfSpaces[5]]
         preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
         dist = preludePop flags.glslPrelude
-        node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
+        if node.code.length > 0
+          node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
+        else
+          node.code = "max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
       stack[0].nodes.push node
     translate: (stack, node, flags) ->
       # Check that composite node is not empty
@@ -285,7 +288,7 @@ compileGLSL = (abstractSolidModel) ->
     glslFunctions: {}
     glslPrelude: [['ro', "#{rayOrigin}"]]
   flags.glslPrelude.code = ""
-  flags.glslPrelude.counter = ""
+  flags.glslPrelude.counter = 0
 
   result = mapASM preDispatch, postDispatch, [{nodes: []}], abstractSolidModel, flags
 
