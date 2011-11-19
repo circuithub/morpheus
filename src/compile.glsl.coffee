@@ -199,6 +199,10 @@ compileGLSL = (abstractSolidModel) ->
     union: (stack, node, flags) ->
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
+    translate: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]
+      preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"
     default: (stack, node, flags) ->
       return
   
@@ -218,7 +222,7 @@ compileGLSL = (abstractSolidModel) ->
           node.code = childNode.code
 
       # Corner compilation
-      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]      
+      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]
       if (node.halfSpaces[0] != null or node.halfSpaces[3] != null) and
           (node.halfSpaces[1] != null or node.halfSpaces[4] != null) and
           (node.halfSpaces[2] != null or node.halfSpaces[5] != null)
@@ -261,7 +265,9 @@ compileGLSL = (abstractSolidModel) ->
         else
           node.code = "max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
       stack[0].nodes.push node
-    translate: (stack, node, flags) ->
+    translate: (stack, node, flags) ->  
+      # Remove the modified ray origin from the prelude stack
+      preludePop flags.glslPrelude
       # Check that composite node is not empty
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Translate node is empty."

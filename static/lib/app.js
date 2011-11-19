@@ -757,6 +757,11 @@
         }
         return _results;
       },
+      translate: function(stack, node, flags) {
+        var currentRayOrigin;
+        currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        return preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
+      },
       "default": function(stack, node, flags) {}
     };
     postDispatch = {
@@ -826,6 +831,7 @@
         return stack[0].nodes.push(node);
       },
       translate: function(stack, node, flags) {
+        preludePop(flags.glslPrelude);
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Translate node is empty.");
           return;
