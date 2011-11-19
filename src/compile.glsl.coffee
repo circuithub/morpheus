@@ -315,5 +315,5 @@ compileGLSL = (abstractSolidModel) ->
     mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from compiler.'
     return ""
 
-  return result.nodes[0].code
+  return prefix + (glslLibrary.compile flags.glslFunctions) + (sceneDist result.nodes[0].code) + sceneNormal + main
 
