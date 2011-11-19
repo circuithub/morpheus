@@ -50,8 +50,7 @@ optimizeASM = (node, flags) ->
             return # Discard node
           when 'invert', 'mirror', 'translate'
             continue # Search for preceding intersect node
-          else # when 'union' or 'halfspace' or 'sphere' or 'cylinder'
-            break # This type of node means the intersect node is needed
+        break # Any other type of node means the intersect node is needed
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       for s in stack
@@ -62,8 +61,7 @@ optimizeASM = (node, flags) ->
             return # Discard node
           when 'invert', 'mirror', 'translate'
             continue # Search for preceding intersect node
-          else # when 'union' or 'halfspace' or 'sphere' or 'cylinder'
-            break # This type of node means the intersect node is needed
+        break # Any other type of node means the intersect node is needed
       stack[0].nodes.push node
     translate: (stack, node, flags) ->
       # TODO

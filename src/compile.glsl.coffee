@@ -271,6 +271,7 @@ compileGLSL = (abstractSolidModel) ->
             continue # Search for preceding intersect/union node
           else 
             node.code = "#{node.attr.val} - #{flags.glslPrelude}[#{node.attr.axis}]"
+        break
       stack[0].nodes.push node
     default: (stack, node, flags) ->
       stack[0].nodes.push node

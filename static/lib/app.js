@@ -330,9 +330,8 @@
             case 'mirror':
             case 'translate':
               continue;
-            default:
-              break;
           }
+          break;
         }
         return stack[0].nodes.push(node);
       },
@@ -348,9 +347,8 @@
             case 'mirror':
             case 'translate':
               continue;
-            default:
-              break;
           }
+          break;
         }
         return stack[0].nodes.push(node);
       },
@@ -848,6 +846,7 @@
             default:
               node.code = "" + node.attr.val + " - " + flags.glslPrelude + "[" + node.attr.axis + "]";
           }
+          break;
         }
         return stack[0].nodes.push(node);
       },
