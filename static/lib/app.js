@@ -764,23 +764,33 @@
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var i, _ref, _ref2, _ref3;
+        var childNode, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Union node is empty.");
           return;
         }
         node.code = "";
-        for (i = 0, _ref = node.nodes.length - 1; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-          node.code += "min(";
-        }
-        for (i = 0, _ref2 = node.nodes.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
-          if (i > 0) {
-            node.code += ", ";
+        _ref = node.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          childNode = _ref[_i];
+          if (childNode.code != null) {
+            if (node.code.length > 0) {
+              node.code = "min(" + childNode.code + ", " + node.code + ")";
+            } else {
+              node.code = childNode.code;
+            }
           }
-          node.code += node.nodes[i].code;
         }
-        for (i = 0, _ref3 = node.nodes.length - 1; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-          node.code += ")";
+        currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
+          cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
+          preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
+          dist = preludePop(flags.glslPrelude);
+          if (node.code.length > 0) {
+            node.code = "min(min(min(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
+          } else {
+            node.code = "min(min(" + dist + ".x, " + dist + ".y), " + dist + ".z);";
+          }
         }
         return stack[0].nodes.push(node);
       },

@@ -211,13 +211,27 @@ compileGLSL = (abstractSolidModel) ->
         mecha.logInternalError "GLSL Compiler: Union node is empty."
         return
       node.code = ""
-      for i in [0...node.nodes.length-1]
-        node.code += "min("
-      for i in [0...node.nodes.length]
-        node.code += ", " if i > 0
-        node.code += node.nodes[i].code
-      for i in [0...node.nodes.length-1]
-        node.code += ")"
+      for childNode in node.nodes when childNode.code?
+        if node.code.length > 0
+          node.code = "min(#{childNode.code}, #{node.code})"
+        else
+          node.code = childNode.code
+
+      # Corner compilation
+      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]      
+      if (node.halfSpaces[0] != null or node.halfSpaces[3] != null) and
+          (node.halfSpaces[1] != null or node.halfSpaces[4] != null) and
+          (node.halfSpaces[2] != null or node.halfSpaces[5] != null)
+        cornerSize = [
+          if node.halfSpaces[0] != null then node.halfSpaces[0] else node.halfSpaces[3],
+          if node.halfSpaces[1] != null then node.halfSpaces[1] else node.halfSpaces[4],
+          if node.halfSpaces[2] != null then node.halfSpaces[2] else node.halfSpaces[5]]
+        preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+        dist = preludePop flags.glslPrelude
+        if node.code.length > 0
+          node.code = "min(min(min(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
+        else
+          node.code = "min(min(#{dist}.x, #{dist}.y), #{dist}.z);"
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       # Check that composite node is not empty
