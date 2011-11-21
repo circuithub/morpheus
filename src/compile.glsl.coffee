@@ -253,8 +253,9 @@ compileGLSL = (abstractSolidModel) ->
           when 'invert', 'mirror', 'translate'
             # TODO: modify the halfspace?
             continue # Search for preceding intersect/union node
-          else 
-            node.code = "#{node.attr.val} - #{flags.glslPrelude}[#{node.attr.axis}]"
+          else
+            ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+            node.code = "#{node.attr.val} - #{ro}[#{node.attr.axis}]"
         break
       stack[0].nodes.push node
     default: (stack, node, flags) ->

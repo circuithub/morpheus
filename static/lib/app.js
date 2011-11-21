@@ -842,7 +842,7 @@
         return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
-        var index, s, _i, _len;
+        var index, ro, s, _i, _len;
         if (node.nodes.length !== 0) {
           mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
           return;
@@ -867,7 +867,8 @@
             case 'translate':
               continue;
             default:
-              node.code = "" + node.attr.val + " - " + flags.glslPrelude + "[" + node.attr.axis + "]";
+              ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+              node.code = "" + node.attr.val + " - " + ro + "[" + node.attr.axis + "]";
           }
           break;
         }
