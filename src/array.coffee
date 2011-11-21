@@ -9,3 +9,5 @@ Array.prototype.flatten = () ->
 #Array.prototype.flatten = (xs) ->
 #  (x... if Array.isArray x else x) for x in xs
 
+Array.prototype.shallowClone = () ->
+  this.slice 0
