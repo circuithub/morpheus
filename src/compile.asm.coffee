@@ -37,23 +37,25 @@ compileASM = (concreteSolidModel) ->
           val: node.attr.dimensions[2]
           axis: 2
       ]
-      if node.attr.chamfer?
-        node.attr.chamfer.edges.reduce (result,current) -> result + Math.pow 2, current
-        ALL_EDGES = (Math.pow 2, 12) - 1
-        if chamferEdges == ALL_EDGES 
-          if node.attr.chamfer.corners
-            # Chamfer everything
-            asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
-          else 
-            # Chamfer only edges (TODO: is this going to work as expected?)
-            asm.intersect asm.intersect halfspaces[0], halfspaces[1], (asm.invert halfspaces[3], halfspaces[4]),
-              halfspaces[2], asm.invert halfspaces[5]
-        else
-          # Group intersections according to the edges that are chamfered
-          # TODO: This is not yet implemented, for now chamfer nothing...
-          asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
-      else
-        asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+      # TODO: Implement chamfer
+      #if node.attr.chamfer?
+      #  node.attr.chamfer.edges.reduce (result,current) -> result + Math.pow 2, current
+      #  ALL_EDGES = (Math.pow 2, 12) - 1
+      #  if chamferEdges == ALL_EDGES 
+      #    if node.attr.chamfer.corners
+      #      # Chamfer everything
+      #      asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+      #    else 
+      #      # Chamfer only edges (TODO: is this going to work as expected?)
+      #      asm.intersect asm.intersect halfspaces[0], halfspaces[1], (asm.invert halfspaces[3], halfspaces[4]),
+      #        halfspaces[2], asm.invert halfspaces[5]
+      #  else
+      #    # Group intersections according to the edges that are chamfered
+      #    # TODO: This is not yet implemented, for now chamfer nothing...
+      #    asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+      #else
+      #  asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+      asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
     sphere: (node) ->
       # TODO
       {}

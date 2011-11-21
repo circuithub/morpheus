@@ -416,7 +416,7 @@
         }
       },
       box: function(node) {
-        var ALL_EDGES, halfspaces;
+        var halfspaces;
         halfspaces = [
           asm.halfspace({
             val: -node.attr.dimensions[0],
@@ -438,23 +438,7 @@
             axis: 2
           })
         ];
-        if (node.attr.chamfer != null) {
-          node.attr.chamfer.edges.reduce(function(result, current) {
-            return result + Math.pow(2, current);
-          });
-          ALL_EDGES = (Math.pow(2, 12)) - 1;
-          if (chamferEdges === ALL_EDGES) {
-            if (node.attr.chamfer.corners) {
-              return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
-            } else {
-              return asm.intersect(asm.intersect(halfspaces[0], halfspaces[1], asm.invert(halfspaces[3], halfspaces[4]), halfspaces[2], asm.invert(halfspaces[5])));
-            }
-          } else {
-            return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
-          }
-        } else {
-          return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
-        }
+        return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
       },
       sphere: function(node) {
         return {};

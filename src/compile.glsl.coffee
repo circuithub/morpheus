@@ -254,6 +254,8 @@ compileGLSL = (abstractSolidModel) ->
             # TODO: modify the halfspace?
             continue # Search for preceding intersect/union node
           else
+            # This may occur in special cases where we cannot do normal corner compilation
+            # (Such as a separate transformations on the plane itself)
             ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
             node.code = "#{node.attr.val} - #{ro}[#{node.attr.axis}]"
         break
