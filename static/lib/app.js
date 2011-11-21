@@ -319,7 +319,8 @@
     };
     postDispatch = {
       invert: function(stack, node, flags) {
-        return flags.invert = !flags.invert;
+        flags.invert = !flags.invert;
+        return stack[0].nodes.push(node);
       },
       union: function(stack, node, flags) {
         var s, _i, _len;

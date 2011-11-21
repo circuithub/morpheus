@@ -42,6 +42,7 @@ optimizeASM = (node, flags) ->
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
       # TODO: if this node contains only half-spaces, then search for symmetry (try to convert this node into a mirror node)
+      stack[0].nodes.push node
     union: (stack, node, flags) ->
       for s in stack
         switch s.type
