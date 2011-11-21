@@ -933,7 +933,7 @@
       mecha.logInternalError('GLSL Compiler: Expected exactly one result node from compiler.');
       return "";
     }
-    return prefix + (glslLibrary.compile(flags.glslFunctions)) + (sceneDist(result.nodes[0].code)) + sceneNormal + main;
+    return prefix + (glslLibrary.compile(flags.glslFunctions)) + (sceneDist(flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + main;
   };
   constants = {
     canvas: {
