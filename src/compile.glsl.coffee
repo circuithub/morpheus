@@ -206,13 +206,24 @@ compileGLSL = (abstractSolidModel) ->
     default: (stack, node, flags) ->
       return
 
-  ### Compile a single corner
-  compileCorner = (ro, state) ->
-    state.remainingHalfSpaces = 0
-    state.remainingHalfSpaces += 1 for h in state.hs when h != null
-    if state.remainingHalfSpaces > 1
+  # Compile a single corner
+  compileCorner = (ro, flags, state) ->
+    remainingHalfSpaces = 0
+    remainingHalfSpaces += 1 for h in state.hs when h != null
+    if remainingHalfSpaces == 1
+      # Find the axis (from 0 to 5) for the halfSpace node
+      for index in [0..5] when state.hs[index] != null
+        state.codes.push (if index > 2 then "#{ro}[#{index}] - #{hs[index]}" else "-#{ro}[#{index - 3}] + #{state.hs[index]}")
+        state.hs[index] = null
+        break
+      remainingHalfSpaces -= 1
+    else if remainingHalfSpaces > 1
+      cornerSize = [
+        if state.hs[0] != null then state.hs[0] else if state.hs[3] != null then state.hs[3] else 0,
+        if state.hs[1] != null then state.hs[1] else if state.hs[4] != null then state.hs[4] else 0,
+        if state.hs[2] != null then state.hs[2] else if state.hs[5] != null then state.hs[5] else 0]
       signs = [
-        state.hs[0] == null andstate. hs[3] != null,
+        state.hs[0] == null and state.hs[3] != null,
         state.hs[1] == null and state.hs[4] != null,
         state.hs[2] == null and state.hs[5] != null]
       roWithSigns = 
@@ -228,18 +239,17 @@ compileGLSL = (abstractSolidModel) ->
       if state.hs[0] != null or state.hs[3] != null
         state.codes.push "#{dist}.x" 
         if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
-        state.remainingHalfSpaces -= 1
+        remainingHalfSpaces -= 1
       if state.hs[1] != null or state.hs[4] != null
         state.codes.push "#{dist}.y" 
         if state.hs[1] != null then state.hs[1] = null else state.hs[4] = null
-        state.remainingHalfSpaces -= 1
+        remainingHalfSpaces -= 1
       if state.hs[2] != null or state.hs[5] != null
         state.codes.push "#{dist}.z" 
         if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
-        state.remainingHalfSpaces -= 1
+        remainingHalfSpaces -= 1
     return
-  ###
-
+  
   postDispatch =
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
@@ -300,106 +310,19 @@ compileGLSL = (abstractSolidModel) ->
 
       # Corner compilation
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      hs = node.halfSpaces
-      remainingHalfSpaces = 0
-      remainingHalfSpaces += 1 for h in hs when h != null
+      cornersState = 
+        codes: []
+        hs: node.halfSpaces.shallowClone()
 
-      # Compile the first corners
-      if remainingHalfSpaces == 1
-        # Find the axis (from 0 to 5) for the halfSpace node
-        for index in [0..5] when hs[index] != null
-          codes.push (if index > 2 then "#{ro}[#{index}] - #{hs[index]}" else "-#{ro}[#{index - 3}] + #{hs[index]}")
-          hs[index] = null
-          break
-        remainingHalfSpaces -= 1
-      else if remainingHalfSpaces == 2 and ((hs[0] and hs[3]) or (hs[1] and hs[4]) or (hs[2] and hs[5]))
-        # Find the axis (from 0 to 5) for the halfSpace node
-        for index in [0..2] when hs[index] != null
-          codes.push "#{ro}[#{index}] - #{hs[index]}"
-          codes.push "-#{ro}[#{index}] + #{hs[index + 3]}"
-          hs[index] = hs[index + 3] = null
-          break
-        remainingHalfSpaces -= 2
-      else if remainingHalfSpaces > 1
-        # Compile prelude calculations
-        cornerSize = [
-          if hs[0] != null then hs[0] else if hs[3] != null then hs[3] else 0.0,
-          if hs[1] != null then hs[1] else if hs[4] != null then hs[4] else 0.0,
-          if hs[2] != null then hs[2] else if hs[5] != null then hs[5] else 0.0]
-        if hs[0] and hs[1] and hs[2]
-          preludePush flags.glslPrelude, "#{ro} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-          dist = preludePop flags.glslPrelude
-          codes = codes.concat ["#{dist}.x", "#{dist}.y", "#{dist}.z"]
-          hs[0] = hs[1] = hs[2] = null
-          remainingHalfSpaces -= 3
-        if hs[3] and hs[4] and hs[5]
-          preludePush flags.glslPrelude, "-#{ro} + vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-          dist = preludePop flags.glslPrelude
-          codes = codes.concat ["#{dist}.x", "#{dist}.y", "#{dist}.z"]
-          hs[3] = hs[4] = hs[5] = null
-          remainingHalfSpaces -= 3
-        if remainingHalfSpaces > 1
-          signs = [
-            hs[0] == null and hs[3] != null,
-            hs[1] == null and hs[4] != null,
-            hs[2] == null and hs[5] != null]
-          roWithSigns = 
-            if not (signs[0] or signs[1] or signs[2])
-              "#{ro}"
-            else if (signs[0] or hs[3] == null) and (signs[1] or hs[4] == null) and (signs[2] or hs[5] == null)
-              "-#{ro}"
-            else
-              "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{signs[1]}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
-          cornerWithSigns = "vec3(#{if signs[0] then -cornerSize[0] else cornerSize[0]}, #{if signs[1] then -cornerSize[1] else cornerSize[1]}, #{if signs[2] then -cornerSize[2] else cornerSize[2]})"
-          preludePush flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
-          dist = preludePop flags.glslPrelude
-          if hs[0] != null or hs[3] != null
-            codes.push "#{dist}.x" 
-            if hs[0] != null then hs[0] = null else hs[3] = null
-            remainingHalfSpaces -= 1
-          if hs[1] != null or hs[4] != null
-            codes.push "#{dist}.y" 
-            if hs[1] != null then hs[1] = null else hs[4] = null
-            remainingHalfSpaces -= 1
-          if hs[2] != null or hs[5] != null
-            codes.push "#{dist}.z" 
-            if hs[2] != null then hs[2] = null else hs[5] = null
-            remainingHalfSpaces -= 1
+      # Compile the first and a possible second corner
+      compileCorner ro, flags, cornersState
+      compileCorner ro, flags, cornersState
+      codes = codes.concat cornersState.codes
 
-
-
-        ###
-        # Compile another corner if any remain
-        # Pre-condition: remainingHalfSpaces < 3
-        if remainingHalfSpaces == 1
-          # Find the axis (from 0 to 5) for the halfSpace node
-          for index in [0..5] when hs[index] != null
-            codes.push (if ndex > 2 then "#{currentRayOrigin}[#{index}] - #{hs[index]}" else "-#{currentRayOrigin}[#{index - 3}] + #{hs[index]}")
-            hs[index] = null
-            break
-          remainingHalfSpaces -= 1
-        else if remainingHalfSpaces == 2
-          cornerSize = [
-            if hs[0] != null then hs[0] else if hs[3] != null then hs[3] else 0.0,
-            if hs[1] != null then hs[1] else if hs[4] != null then hs[4] else 0.0,
-            if hs[2] != null then hs[2] else if hs[5] != null then hs[5] else 0.0]
-          if hs[0] == hs[1] == hs[2] == null
-            preludePush flags.glslPrelude, "-#{currentRayOrigin} + vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-          else
-            signs = [
-              if hs[0] != null then '' else if hs[3] != null then '-' else '',
-              if hs[1] != null then '' else if hs[4] != null then '-' else '',
-              if hs[2] != null then '' else if hs[5] != null then '-' else '']
-            preludePush flags.glslPrelude, "vec3(#{signs[0]}#{currentRayOrigin.x}, #{signs[1]}#{currentRayOrigin.y}, #{signs[2]}#{currentRayOrigin.z}) - vec3(#{signs[0]}#{cornerSize[0]}, #{signs[1]}#{cornerSize[1]}, #{signs[2]}#{cornerSize[2]})"
-            
-          dist = preludePop flags.glslPrelude          
-          codes.push "#{dist}.x" if hs[0] or hs[3]
-          codes.push "#{dist}.y" if hs[1] or hs[4]
-          codes.push "#{dist}.z" if hs[2] or hs[5]
-        ###
       # Post-condition: All halfspaces must be accounted for
-      if remainingHalfSpaces != 0
-        mecha.logInternalError "GLSL Compiler: Post-condition failed, #{remainingHalfSpaces} halfspaces remain in corner compilation."
+      for h in cornersState.hs when h != null
+        mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
+        break
 
       # Calculate the maximum distances
       node.code = codes.shift()

@@ -138,6 +138,9 @@
       return _results;
     }).call(this));
   };
+  Array.prototype.shallowClone = function() {
+    return this.slice(0);
+  };
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
@@ -618,7 +621,7 @@
     }
   };
   compileGLSL = function(abstractSolidModel) {
-    var flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, program, rayDirection, rayOrigin, result, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var compileCorner, flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, program, rayDirection, rayOrigin, result, sceneDist, sceneNormal, sceneRayDist, uniforms;
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
     rayOrigin = 'ro';
@@ -764,39 +767,61 @@
       },
       "default": function(stack, node, flags) {}
     };
-    /* Compile a single corner
-    compileCorner = (ro, state) ->
-      state.remainingHalfSpaces = 0
-      state.remainingHalfSpaces += 1 for h in state.hs when h != null
-      if state.remainingHalfSpaces > 1
-        signs = [
-          state.hs[0] == null andstate. hs[3] != null,
-          state.hs[1] == null and state.hs[4] != null,
-          state.hs[2] == null and state.hs[5] != null]
-        roWithSigns = 
-          if not (signs[0] or signs[1] or signs[2])
-            "#{ro}"
-          else if (signs[0] or state.hs[3] == null) and (signs[1] or state.hs[4] == null) and (signs[2] or state.hs[5] == null)
-            "-#{ro}"
-          else
-            "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{signs[1]}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
-        cornerWithSigns = "vec3(#{if signs[0] then -cornerSize[0] else cornerSize[0]}, #{if signs[1] then -cornerSize[1] else cornerSize[1]}, #{if signs[2] then -cornerSize[2] else cornerSize[2]})"
-        preludePush flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
-        dist = preludePop flags.glslPrelude
-        if state.hs[0] != null or state.hs[3] != null
-          state.codes.push "#{dist}.x" 
-          if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
-          state.remainingHalfSpaces -= 1
-        if state.hs[1] != null or state.hs[4] != null
-          state.codes.push "#{dist}.y" 
-          if state.hs[1] != null then state.hs[1] = null else state.hs[4] = null
-          state.remainingHalfSpaces -= 1
-        if state.hs[2] != null or state.hs[5] != null
-          state.codes.push "#{dist}.z" 
-          if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
-          state.remainingHalfSpaces -= 1
-      return
-    */
+    compileCorner = function(ro, flags, state) {
+      var cornerSize, cornerWithSigns, dist, h, index, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
+      remainingHalfSpaces = 0;
+      _ref = state.hs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        h = _ref[_i];
+        if (h !== null) {
+          remainingHalfSpaces += 1;
+        }
+      }
+      if (remainingHalfSpaces === 1) {
+        for (index = 0; index <= 5; index++) {
+          if (state.hs[index] !== null) {
+            state.codes.push((index > 2 ? "" + ro + "[" + index + "] - " + hs[index] : "-" + ro + "[" + (index - 3) + "] + " + state.hs[index]));
+            state.hs[index] = null;
+            break;
+          }
+        }
+        remainingHalfSpaces -= 1;
+      } else if (remainingHalfSpaces > 1) {
+        cornerSize = [state.hs[0] !== null ? state.hs[0] : state.hs[3] !== null ? state.hs[3] : 0, state.hs[1] !== null ? state.hs[1] : state.hs[4] !== null ? state.hs[4] : 0, state.hs[2] !== null ? state.hs[2] : state.hs[5] !== null ? state.hs[5] : 0];
+        signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
+        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + signs[1] + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
+        cornerWithSigns = "vec3(" + (signs[0] ? -cornerSize[0] : cornerSize[0]) + ", " + (signs[1] ? -cornerSize[1] : cornerSize[1]) + ", " + (signs[2] ? -cornerSize[2] : cornerSize[2]) + ")";
+        preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
+        dist = preludePop(flags.glslPrelude);
+        if (state.hs[0] !== null || state.hs[3] !== null) {
+          state.codes.push("" + dist + ".x");
+          if (state.hs[0] !== null) {
+            state.hs[0] = null;
+          } else {
+            state.hs[3] = null;
+          }
+          remainingHalfSpaces -= 1;
+        }
+        if (state.hs[1] !== null || state.hs[4] !== null) {
+          state.codes.push("" + dist + ".y");
+          if (state.hs[1] !== null) {
+            state.hs[1] = null;
+          } else {
+            state.hs[4] = null;
+          }
+          remainingHalfSpaces -= 1;
+        }
+        if (state.hs[2] !== null || state.hs[5] !== null) {
+          state.codes.push("" + dist + ".z");
+          if (state.hs[2] !== null) {
+            state.hs[2] = null;
+          } else {
+            state.hs[5] = null;
+          }
+          remainingHalfSpaces -= 1;
+        }
+      }
+    };
     postDispatch = {
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
@@ -847,7 +872,7 @@
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
-        var c, childNode, codes, collectCode, cornerSize, cornerWithSigns, dist, h, hs, index, remainingHalfSpaces, ro, roWithSigns, signs, _i, _j, _k, _len, _len2, _len3, _ref;
+        var c, childNode, codes, collectCode, cornersState, h, ro, _i, _j, _k, _len, _len2, _len3, _ref, _ref2;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
           return;
@@ -881,115 +906,20 @@
         };
         collectCode(codes, node.nodes);
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        hs = node.halfSpaces;
-        remainingHalfSpaces = 0;
-        for (_j = 0, _len2 = hs.length; _j < _len2; _j++) {
-          h = hs[_j];
+        cornersState = {
+          codes: [],
+          hs: node.halfSpaces.shallowClone()
+        };
+        compileCorner(ro, flags, cornersState);
+        compileCorner(ro, flags, cornersState);
+        codes = codes.concat(cornersState.codes);
+        _ref2 = cornersState.hs;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          h = _ref2[_j];
           if (h !== null) {
-            remainingHalfSpaces += 1;
+            mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
+            break;
           }
-        }
-        if (remainingHalfSpaces === 1) {
-          for (index = 0; index <= 5; index++) {
-            if (hs[index] !== null) {
-              codes.push((index > 2 ? "" + ro + "[" + index + "] - " + hs[index] : "-" + ro + "[" + (index - 3) + "] + " + hs[index]));
-              hs[index] = null;
-              break;
-            }
-          }
-          remainingHalfSpaces -= 1;
-        } else if (remainingHalfSpaces === 2 && ((hs[0] && hs[3]) || (hs[1] && hs[4]) || (hs[2] && hs[5]))) {
-          for (index = 0; index <= 2; index++) {
-            if (hs[index] !== null) {
-              codes.push("" + ro + "[" + index + "] - " + hs[index]);
-              codes.push("-" + ro + "[" + index + "] + " + hs[index + 3]);
-              hs[index] = hs[index + 3] = null;
-              break;
-            }
-          }
-          remainingHalfSpaces -= 2;
-        } else if (remainingHalfSpaces > 1) {
-          cornerSize = [hs[0] !== null ? hs[0] : hs[3] !== null ? hs[3] : 0.0, hs[1] !== null ? hs[1] : hs[4] !== null ? hs[4] : 0.0, hs[2] !== null ? hs[2] : hs[5] !== null ? hs[5] : 0.0];
-          if (hs[0] && hs[1] && hs[2]) {
-            preludePush(flags.glslPrelude, "" + ro + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
-            dist = preludePop(flags.glslPrelude);
-            codes = codes.concat(["" + dist + ".x", "" + dist + ".y", "" + dist + ".z"]);
-            hs[0] = hs[1] = hs[2] = null;
-            remainingHalfSpaces -= 3;
-          }
-          if (hs[3] && hs[4] && hs[5]) {
-            preludePush(flags.glslPrelude, "-" + ro + " + vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
-            dist = preludePop(flags.glslPrelude);
-            codes = codes.concat(["" + dist + ".x", "" + dist + ".y", "" + dist + ".z"]);
-            hs[3] = hs[4] = hs[5] = null;
-            remainingHalfSpaces -= 3;
-          }
-          if (remainingHalfSpaces > 1) {
-            signs = [hs[0] === null && hs[3] !== null, hs[1] === null && hs[4] !== null, hs[2] === null && hs[5] !== null];
-            roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || hs[3] === null) && (signs[1] || hs[4] === null) && (signs[2] || hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + signs[1] + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
-            cornerWithSigns = "vec3(" + (signs[0] ? -cornerSize[0] : cornerSize[0]) + ", " + (signs[1] ? -cornerSize[1] : cornerSize[1]) + ", " + (signs[2] ? -cornerSize[2] : cornerSize[2]) + ")";
-            preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
-            dist = preludePop(flags.glslPrelude);
-            if (hs[0] !== null || hs[3] !== null) {
-              codes.push("" + dist + ".x");
-              if (hs[0] !== null) {
-                hs[0] = null;
-              } else {
-                hs[3] = null;
-              }
-              remainingHalfSpaces -= 1;
-            }
-            if (hs[1] !== null || hs[4] !== null) {
-              codes.push("" + dist + ".y");
-              if (hs[1] !== null) {
-                hs[1] = null;
-              } else {
-                hs[4] = null;
-              }
-              remainingHalfSpaces -= 1;
-            }
-            if (hs[2] !== null || hs[5] !== null) {
-              codes.push("" + dist + ".z");
-              if (hs[2] !== null) {
-                hs[2] = null;
-              } else {
-                hs[5] = null;
-              }
-              remainingHalfSpaces -= 1;
-            }
-          }
-          /*
-                  # Compile another corner if any remain
-                  # Pre-condition: remainingHalfSpaces < 3
-                  if remainingHalfSpaces == 1
-                    # Find the axis (from 0 to 5) for the halfSpace node
-                    for index in [0..5] when hs[index] != null
-                      codes.push (if ndex > 2 then "#{currentRayOrigin}[#{index}] - #{hs[index]}" else "-#{currentRayOrigin}[#{index - 3}] + #{hs[index]}")
-                      hs[index] = null
-                      break
-                    remainingHalfSpaces -= 1
-                  else if remainingHalfSpaces == 2
-                    cornerSize = [
-                      if hs[0] != null then hs[0] else if hs[3] != null then hs[3] else 0.0,
-                      if hs[1] != null then hs[1] else if hs[4] != null then hs[4] else 0.0,
-                      if hs[2] != null then hs[2] else if hs[5] != null then hs[5] else 0.0]
-                    if hs[0] == hs[1] == hs[2] == null
-                      preludePush flags.glslPrelude, "-#{currentRayOrigin} + vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-                    else
-                      signs = [
-                        if hs[0] != null then '' else if hs[3] != null then '-' else '',
-                        if hs[1] != null then '' else if hs[4] != null then '-' else '',
-                        if hs[2] != null then '' else if hs[5] != null then '-' else '']
-                      preludePush flags.glslPrelude, "vec3(#{signs[0]}#{currentRayOrigin.x}, #{signs[1]}#{currentRayOrigin.y}, #{signs[2]}#{currentRayOrigin.z}) - vec3(#{signs[0]}#{cornerSize[0]}, #{signs[1]}#{cornerSize[1]}, #{signs[2]}#{cornerSize[2]})"
-                      
-                    dist = preludePop flags.glslPrelude          
-                    codes.push "#{dist}.x" if hs[0] or hs[3]
-                    codes.push "#{dist}.y" if hs[1] or hs[4]
-                    codes.push "#{dist}.z" if hs[2] or hs[5]
-                  */
-        }
-        if (remainingHalfSpaces !== 0) {
-          mecha.logInternalError("GLSL Compiler: Post-condition failed, " + remainingHalfSpaces + " halfspaces remain in corner compilation.");
         }
         node.code = codes.shift();
         for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
