@@ -251,52 +251,78 @@ compileGLSL = (abstractSolidModel) ->
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Intersect node is empty."
         return
-      node.code = ""
-      for childNode in node.nodes when childNode.code?
-        if node.code.length > 0
-          node.code = "max(#{childNode.code}, #{node.code})"
-        else
-          node.code = childNode.code
+      codes = []
+      codes.push childNode.code for childNode in node.nodes when childNode.code?
 
       # Some nodes are only modifiers, so it's necessary to collect their children 
       # to apply the correct composite operation
-      collectChildren = (node, children) -> 
-        for child in children
-          if child.code?
-            if node.code.length > 0
-              node.code = "min(#{childNode.code}, #{node.code})"
-            else
-              node.code = child.code
-          else switch child.type
+      collectCode = (codes, nodes) -> 
+        for node in nodes
+          codes.push node.code if node.code?
+          switch node.type
             when 'translate','mirror','invert'
-              collectChildren node, child.nodes
-      collectChildren node, node.nodes
+              collectCode codes, node.nodes
+      collectCode codes, node.nodes
 
       # Corner compilation
       currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]
-      numHalfSpaces = 0
-      numHalfSpaces += 1 for h in node.halfSpaces when h != null
-      if numHalfSpaces > 0
-        hs = node.halfSpaces
+      hs = node.halfSpaces
+      remainingHalfSpaces = 0
+      remainingHalfSpaces += 1 for h in hs when h != null
+
+      # Compile the first corners
+      if remainingHalfSpaces == 1
+        # Find the axis (from 0 to 5) for the halfSpace node
+        for index in [0..5] when hs[index] != null
+          codes.push (if index > 2 then "#{currentRayOrigin}[#{index}] - #{hs[index]}" else "-#{currentRayOrigin}[#{index - 3}] + #{hs[index]}")
+          break
+        remainingHalfSpaces -= 1
+      else if remainingHalfSpaces == 2 and ((hs[0] and hs[3]) or (hs[1] and hs[4]) or (hs[2] and hs[5]))
+        # Find the axis (from 0 to 5) for the halfSpace node
+        for index in [0..2] when hs[index] != null
+          codes.push "#{currentRayOrigin}[#{index}] - #{hs[index]}"
+          codes.push "-#{currentRayOrigin}[#{index}] + #{hs[index+3]}"
+          break
+        remainingHalfSpaces -= 2
+      else if remainingHalfSpaces > 1
+        # Compile prelude calculations
         cornerSize = [
           if hs[0] != null then hs[0] else if hs[3] then hs[3] else 0.0,
           if hs[1] != null then hs[1] else if hs[4] then hs[4] else 0.0,
           if hs[2] != null then hs[2] else if hs[5] then hs[5] else 0.0]
         if hs[0] and hs[1] and hs[2]
           preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-        else if hs[3] and hs[4] and hs[5]
+          dist = preludePop flags.glslPrelude
+          codes = codes.concat ["#{dist}.x", "#{dist}.y", "#{dist}.z"]
+          remainingHalfSpaces -= 3
+        if hs[3] and hs[4] and hs[5]
           preludePush flags.glslPrelude, "-#{currentRayOrigin} + vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-        else
+          dist = preludePop flags.glslPrelude
+          codes = codes.concat ["#{dist}.x", "#{dist}.y", "#{dist}.z"]
+          remainingHalfSpaces -= 3
+        if remainingHalfSpaces > 0
           signs = [
             if hs[3] then '-' else '',
             if hs[4] then '-' else '',
             if hs[5] then '-' else '']
           preludePush flags.glslPrelude, "vec3(#{signs[0]}#{currentRayOrigin.x}, #{signs[1]}#{currentRayOrigin.y}, #{signs[2]}#{currentRayOrigin.z}) - vec3(#{signs[0]}#{cornerSize[0]}, #{signs[1]}#{cornerSize[1]}, #{signs[2]}#{cornerSize[2]})"
-        dist = preludePop flags.glslPrelude
-        if node.code.length > 0
-          node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code})"
-        else
-          node.code = "max(max(#{dist}.x, #{dist}.y), #{dist}.z)"
+          codes.push preludePop flags.glslPrelude
+
+      # Compile another corner if necessary
+      # Pre-condition: remainingHalfSpaces < 3
+      if remainingHalfSpaces == 1
+        # TODO...
+        #for index in [0..2] when hs[index] != null and hs[index + 3] != null
+        #  
+      else if remainingHalfSpaces == 2
+        # TODO...
+      else
+        mecha.logInternalError "GLSL Compiler: Wrong number of halfspaces remain in corner compilation: #{remainingHalfSpaces}."
+
+      # Calculate the maximum distances
+      node.code = codes.shift()
+      for c in codes
+        node.code = "max(#{c}, #{node.code})"
       stack[0].nodes.push node
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack

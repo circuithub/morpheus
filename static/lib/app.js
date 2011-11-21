@@ -814,74 +814,92 @@
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
-        var childNode, collectChildren, cornerSize, currentRayOrigin, dist, h, hs, numHalfSpaces, signs, _i, _j, _len, _len2, _ref, _ref2;
+        var c, childNode, codes, collectCode, cornerSize, currentRayOrigin, dist, h, hs, index, remainingHalfSpaces, signs, _i, _j, _k, _len, _len2, _len3, _ref;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
           return;
         }
-        node.code = "";
+        codes = [];
         _ref = node.nodes;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           childNode = _ref[_i];
           if (childNode.code != null) {
-            if (node.code.length > 0) {
-              node.code = "max(" + childNode.code + ", " + node.code + ")";
-            } else {
-              node.code = childNode.code;
-            }
+            codes.push(childNode.code);
           }
         }
-        collectChildren = function(node, children) {
-          var child, _j, _len2, _results;
+        collectCode = function(codes, nodes) {
+          var node, _j, _len2, _results;
           _results = [];
-          for (_j = 0, _len2 = children.length; _j < _len2; _j++) {
-            child = children[_j];
+          for (_j = 0, _len2 = nodes.length; _j < _len2; _j++) {
+            node = nodes[_j];
+            if (node.code != null) {
+              codes.push(node.code);
+            }
             _results.push((function() {
-              if (child.code != null) {
-                if (node.code.length > 0) {
-                  return node.code = "min(" + childNode.code + ", " + node.code + ")";
-                } else {
-                  return node.code = child.code;
-                }
-              } else {
-                switch (child.type) {
-                  case 'translate':
-                  case 'mirror':
-                  case 'invert':
-                    return collectChildren(node, child.nodes);
-                }
+              switch (node.type) {
+                case 'translate':
+                case 'mirror':
+                case 'invert':
+                  return collectCode(codes, node.nodes);
               }
             })());
           }
           return _results;
         };
-        collectChildren(node, node.nodes);
+        collectCode(codes, node.nodes);
         currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        numHalfSpaces = 0;
-        _ref2 = node.halfSpaces;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          h = _ref2[_j];
+        hs = node.halfSpaces;
+        remainingHalfSpaces = 0;
+        for (_j = 0, _len2 = hs.length; _j < _len2; _j++) {
+          h = hs[_j];
           if (h !== null) {
-            numHalfSpaces += 1;
+            remainingHalfSpaces += 1;
           }
         }
-        if (numHalfSpaces > 0) {
-          hs = node.halfSpaces;
+        if (remainingHalfSpaces === 1) {
+          for (index = 0; index <= 5; index++) {
+            if (hs[index] !== null) {
+              codes.push((index > 2 ? "" + currentRayOrigin + "[" + index + "] - " + hs[index] : "-" + currentRayOrigin + "[" + (index - 3) + "] + " + hs[index]));
+              break;
+            }
+          }
+          remainingHalfSpaces -= 1;
+        } else if (remainingHalfSpaces === 2 && ((hs[0] && hs[3]) || (hs[1] && hs[4]) || (hs[2] && hs[5]))) {
+          for (index = 0; index <= 2; index++) {
+            if (hs[index] !== null) {
+              codes.push("" + currentRayOrigin + "[" + index + "] - " + hs[index]);
+              codes.push("-" + currentRayOrigin + "[" + index + "] + " + hs[index + 3]);
+              break;
+            }
+          }
+          remainingHalfSpaces -= 2;
+        } else if (remainingHalfSpaces > 1) {
           cornerSize = [hs[0] !== null ? hs[0] : hs[3] ? hs[3] : 0.0, hs[1] !== null ? hs[1] : hs[4] ? hs[4] : 0.0, hs[2] !== null ? hs[2] : hs[5] ? hs[5] : 0.0];
           if (hs[0] && hs[1] && hs[2]) {
             preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
-          } else if (hs[3] && hs[4] && hs[5]) {
+            dist = preludePop(flags.glslPrelude);
+            codes = codes.concat(["" + dist + ".x", "" + dist + ".y", "" + dist + ".z"]);
+            remainingHalfSpaces -= 3;
+          }
+          if (hs[3] && hs[4] && hs[5]) {
             preludePush(flags.glslPrelude, "-" + currentRayOrigin + " + vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
-          } else {
+            dist = preludePop(flags.glslPrelude);
+            codes = codes.concat(["" + dist + ".x", "" + dist + ".y", "" + dist + ".z"]);
+            remainingHalfSpaces -= 3;
+          }
+          if (remainingHalfSpaces > 0) {
             signs = [hs[3] ? '-' : '', hs[4] ? '-' : '', hs[5] ? '-' : ''];
             preludePush(flags.glslPrelude, "vec3(" + signs[0] + currentRayOrigin.x + ", " + signs[1] + currentRayOrigin.y + ", " + signs[2] + currentRayOrigin.z + ") - vec3(" + signs[0] + cornerSize[0] + ", " + signs[1] + cornerSize[1] + ", " + signs[2] + cornerSize[2] + ")");
+            codes.push(preludePop(flags.glslPrelude));
           }
-          dist = preludePop(flags.glslPrelude);
-          if (node.code.length > 0) {
-            node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ")";
-          } else {
-            node.code = "max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z)";
-          }
+        }
+        if (remainingHalfSpaces === 1) {} else if (remainingHalfSpaces === 2) {} else {
+          mecha.logInternalError("GLSL Compiler: Wrong number of halfspaces remain in corner compilation: " + remainingHalfSpaces + ".");
+        }
+        node.code = codes.shift();
+        for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
+          c = codes[_k];
+          node.code = "max(" + c + ", " + node.code + ")";
         }
         return stack[0].nodes.push(node);
       },
