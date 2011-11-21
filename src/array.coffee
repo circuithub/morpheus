@@ -1,4 +1,6 @@
-# Additional math routines not found in standard JavaScript or SceneJS
+# Additional array routines not found in standard JavaScript or SceneJS
+
+# TODO: These modifications polute the global Array object, we need to limit this to a local copy of Array.
 
 #Array.prototype.flatten = (a) ->
 #	a.reduce ((xs, x) -> xs.concat flatten x if Array.isArray x else xs.concat [x]), []
