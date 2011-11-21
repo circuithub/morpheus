@@ -618,7 +618,7 @@
     }
   };
   compileGLSL = function(abstractSolidModel) {
-    var flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, rayDirection, rayOrigin, result, sceneDist, sceneNormal, sceneRayDist, uniforms;
+    var flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, program, rayDirection, rayOrigin, result, sceneDist, sceneNormal, sceneRayDist, uniforms;
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
     uniforms = "";
     rayOrigin = 'ro';
@@ -814,7 +814,7 @@
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
-        var childNode, collectChildren, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
+        var childNode, collectChildren, cornerSize, currentRayOrigin, dist, h, hs, numHalfSpaces, signs, _i, _j, _len, _len2, _ref, _ref2;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
           return;
@@ -857,14 +857,30 @@
         };
         collectChildren(node, node.nodes);
         currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
-          cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
-          preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
+        numHalfSpaces = 0;
+        _ref2 = node.halfSpaces;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          h = _ref2[_j];
+          if (h !== null) {
+            numHalfSpaces += 1;
+          }
+        }
+        if (numHalfSpaces > 0) {
+          hs = node.halfSpaces;
+          cornerSize = [hs[0] !== null ? hs[0] : hs[3] ? hs[3] : 0.0, hs[1] !== null ? hs[1] : hs[4] ? hs[4] : 0.0, hs[2] !== null ? hs[2] : hs[5] ? hs[5] : 0.0];
+          if (hs[0] && hs[1] && hs[2]) {
+            preludePush(flags.glslPrelude, "" + currentRayOrigin + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
+          } else if (hs[3] && hs[4] && hs[5]) {
+            preludePush(flags.glslPrelude, "-" + currentRayOrigin + " + vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
+          } else {
+            signs = [hs[3] ? '-' : '', hs[4] ? '-' : '', hs[5] ? '-' : ''];
+            preludePush(flags.glslPrelude, "vec3(" + signs[0] + currentRayOrigin.x + ", " + signs[1] + currentRayOrigin.y + ", " + signs[2] + currentRayOrigin.z + ") - vec3(" + signs[0] + cornerSize[0] + ", " + signs[1] + cornerSize[1] + ", " + signs[2] + cornerSize[2] + ")");
+          }
           dist = preludePop(flags.glslPrelude);
           if (node.code.length > 0) {
-            node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
+            node.code = "max(max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ")";
           } else {
-            node.code = "max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z);";
+            node.code = "max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z)";
           }
         }
         return stack[0].nodes.push(node);
@@ -933,7 +949,9 @@
       mecha.logInternalError('GLSL Compiler: Expected exactly one result node from compiler.');
       return "";
     }
-    return prefix + (glslLibrary.compile(flags.glslFunctions)) + (sceneDist(flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + main;
+    program = prefix + (glslLibrary.compile(flags.glslFunctions)) + (sceneDist(flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + main;
+    console.log(program);
+    return program;
   };
   constants = {
     canvas: {

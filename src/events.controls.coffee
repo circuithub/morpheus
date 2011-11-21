@@ -9,7 +9,7 @@ controlsSourceCompile = () ->
         #console.log compileGLSL compileASM result
         (state.scene.findNode 'main-shader').set 'shaders', [
             stage: 'fragment',
-            code:  compileGLSL compileASM result
+            code: compileGLSL compileASM result
           ]
   catch error
     mecha.log error

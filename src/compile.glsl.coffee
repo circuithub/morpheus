@@ -273,20 +273,30 @@ compileGLSL = (abstractSolidModel) ->
       collectChildren node, node.nodes
 
       # Corner compilation
-      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]      
-      if (node.halfSpaces[0] != null or node.halfSpaces[3] != null) and
-          (node.halfSpaces[1] != null or node.halfSpaces[4] != null) and
-          (node.halfSpaces[2] != null or node.halfSpaces[5] != null)
+      currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]
+      numHalfSpaces = 0
+      numHalfSpaces += 1 for h in node.halfSpaces when h != null
+      if numHalfSpaces > 0
+        hs = node.halfSpaces
         cornerSize = [
-          if node.halfSpaces[0] != null then node.halfSpaces[0] else node.halfSpaces[3],
-          if node.halfSpaces[1] != null then node.halfSpaces[1] else node.halfSpaces[4],
-          if node.halfSpaces[2] != null then node.halfSpaces[2] else node.halfSpaces[5]]
-        preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+          if hs[0] != null then hs[0] else if hs[3] then hs[3] else 0.0,
+          if hs[1] != null then hs[1] else if hs[4] then hs[4] else 0.0,
+          if hs[2] != null then hs[2] else if hs[5] then hs[5] else 0.0]
+        if hs[0] and hs[1] and hs[2]
+          preludePush flags.glslPrelude, "#{currentRayOrigin} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+        else if hs[3] and hs[4] and hs[5]
+          preludePush flags.glslPrelude, "-#{currentRayOrigin} + vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+        else
+          signs = [
+            if hs[3] then '-' else '',
+            if hs[4] then '-' else '',
+            if hs[5] then '-' else '']
+          preludePush flags.glslPrelude, "vec3(#{signs[0]}#{currentRayOrigin.x}, #{signs[1]}#{currentRayOrigin.y}, #{signs[2]}#{currentRayOrigin.z}) - vec3(#{signs[0]}#{cornerSize[0]}, #{signs[1]}#{cornerSize[1]}, #{signs[2]}#{cornerSize[2]})"
         dist = preludePop flags.glslPrelude
         if node.code.length > 0
-          node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
+          node.code = "max(max(max(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code})"
         else
-          node.code = "max(max(#{dist}.x, #{dist}.y), #{dist}.z);"
+          node.code = "max(max(#{dist}.x, #{dist}.y), #{dist}.z)"
       stack[0].nodes.push node
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
@@ -345,5 +355,7 @@ compileGLSL = (abstractSolidModel) ->
     mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from compiler.'
     return ""
 
-  return prefix + (glslLibrary.compile flags.glslFunctions) + (sceneDist flags.glslPrelude.code, result.nodes[0].code) + sceneNormal + main
+  program = prefix + (glslLibrary.compile flags.glslFunctions) + (sceneDist flags.glslPrelude.code, result.nodes[0].code) + sceneNormal + main
+  console.log program
+  return program
 

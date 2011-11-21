@@ -41,6 +41,7 @@ optimizeASM = (node, flags) ->
   postDispatch =
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
+      # TODO: if this node contains only half-spaces, then search for symmetry (try to convert this node into a mirror node)
     union: (stack, node, flags) ->
       for s in stack
         switch s.type
@@ -49,8 +50,8 @@ optimizeASM = (node, flags) ->
             stack[0].nodes = stack[0].nodes.concat node.nodes
             return # Discard node
           when 'invert', 'mirror', 'translate'
-            continue # Search for preceding intersect node
-        break # Any other type of node means the intersect node is needed
+            continue # Search for preceding union node
+        break # Any other type of node means the union node is needed
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       for s in stack
