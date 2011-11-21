@@ -215,11 +215,20 @@ compileGLSL = (abstractSolidModel) ->
         mecha.logInternalError "GLSL Compiler: Union node is empty."
         return
       node.code = ""
-      for childNode in node.nodes when childNode.code?
-        if node.code.length > 0
-          node.code = "min(#{childNode.code}, #{node.code})"
-        else
-          node.code = childNode.code
+
+      # Some nodes are only modifiers, so it's necessary to collect their children 
+      # to apply the correct composite operation
+      collectChildren = (node, children) -> 
+        for child in children
+          if child.code?
+            if node.code.length > 0
+              node.code = "min(#{childNode.code}, #{node.code})"
+            else
+              node.code = child.code
+          else switch child.type
+            when 'translate','mirror','invert'
+              collectChildren node, child.nodes
+      collectChildren node, node.nodes
 
       # Corner compilation
       currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]
@@ -248,6 +257,20 @@ compileGLSL = (abstractSolidModel) ->
           node.code = "max(#{childNode.code}, #{node.code})"
         else
           node.code = childNode.code
+
+      # Some nodes are only modifiers, so it's necessary to collect their children 
+      # to apply the correct composite operation
+      collectChildren = (node, children) -> 
+        for child in children
+          if child.code?
+            if node.code.length > 0
+              node.code = "min(#{childNode.code}, #{node.code})"
+            else
+              node.code = child.code
+          else switch child.type
+            when 'translate','mirror','invert'
+              collectChildren node, child.nodes
+      collectChildren node, node.nodes
 
       # Corner compilation
       currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length-1][0]      
@@ -291,6 +314,7 @@ compileGLSL = (abstractSolidModel) ->
             if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] > node.attr.val else s.halfSpaces[index] < node.attr.val)
               s.halfSpaces[index] = node.attr.val
           when 'invert', 'mirror', 'translate'
+            # TODO: modify the halfspace?
             continue # Search for preceding intersect/union node
           else 
             node.code = "#{node.attr.val} - #{flags.glslPrelude}[#{node.attr.axis}]"

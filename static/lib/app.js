@@ -769,23 +769,37 @@
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var childNode, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
+        var collectChildren, cornerSize, currentRayOrigin, dist;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Union node is empty.");
           return;
         }
         node.code = "";
-        _ref = node.nodes;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          childNode = _ref[_i];
-          if (childNode.code != null) {
-            if (node.code.length > 0) {
-              node.code = "min(" + childNode.code + ", " + node.code + ")";
-            } else {
-              node.code = childNode.code;
-            }
+        collectChildren = function(node, children) {
+          var child, _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = children.length; _i < _len; _i++) {
+            child = children[_i];
+            _results.push((function() {
+              if (child.code != null) {
+                if (node.code.length > 0) {
+                  return node.code = "min(" + childNode.code + ", " + node.code + ")";
+                } else {
+                  return node.code = child.code;
+                }
+              } else {
+                switch (child.type) {
+                  case 'translate':
+                  case 'mirror':
+                  case 'invert':
+                    return collectChildren(node, child.nodes);
+                }
+              }
+            })());
           }
-        }
+          return _results;
+        };
+        collectChildren(node, node.nodes);
         currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
           cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
@@ -800,7 +814,7 @@
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
-        var childNode, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
+        var childNode, collectChildren, cornerSize, currentRayOrigin, dist, _i, _len, _ref;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
           return;
@@ -817,6 +831,31 @@
             }
           }
         }
+        collectChildren = function(node, children) {
+          var child, _j, _len2, _results;
+          _results = [];
+          for (_j = 0, _len2 = children.length; _j < _len2; _j++) {
+            child = children[_j];
+            _results.push((function() {
+              if (child.code != null) {
+                if (node.code.length > 0) {
+                  return node.code = "min(" + childNode.code + ", " + node.code + ")";
+                } else {
+                  return node.code = child.code;
+                }
+              } else {
+                switch (child.type) {
+                  case 'translate':
+                  case 'mirror':
+                  case 'invert':
+                    return collectChildren(node, child.nodes);
+                }
+              }
+            })());
+          }
+          return _results;
+        };
+        collectChildren(node, node.nodes);
         currentRayOrigin = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
           cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
