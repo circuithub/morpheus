@@ -827,29 +827,32 @@
         return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
-        var index, ro, s, _i, _len;
+        var index, ro, s, translateOffset, _i, _len;
         if (node.nodes.length !== 0) {
           mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
           return;
         }
+        translateOffset = 0.0;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
               index = node.attr.axis + (flags.invert ? 3 : 0);
               if (s.halfSpaces[index] === null || (flags.invert ? s.halfSpaces[index] < node.attr.val : s.halfSpaces[index] > node.attr.val)) {
-                s.halfSpaces[index] = node.attr.val;
+                s.halfSpaces[index] = node.attr.val + translateOffset;
               }
               break;
             case 'union':
               index = node.attr.axis + (flags.invert ? 3 : 0);
               if (s.halfSpaces[index] === null || (flags.invert ? s.halfSpaces[index] > node.attr.val : s.halfSpaces[index] < node.attr.val)) {
-                s.halfSpaces[index] = node.attr.val;
+                s.halfSpaces[index] = node.attr.val + translateOffset;
               }
               break;
+            case 'translate':
+              translateOffset += s.attr.offset[node.attr.axis];
+              continue;
             case 'invert':
             case 'mirror':
-            case 'translate':
               continue;
             default:
               ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];

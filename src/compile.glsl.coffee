@@ -238,20 +238,25 @@ compileGLSL = (abstractSolidModel) ->
       if node.nodes.length != 0
         mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
         return
+      translateOffset = 0.0
       for s in stack
         switch s.type
           when 'intersect'
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
+            # TODO: this test is wrong - the lessThan should be flipped depending on whether the index is < 3 or > 2
             if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] < node.attr.val else s.halfSpaces[index] > node.attr.val)
-              s.halfSpaces[index] = node.attr.val
+              s.halfSpaces[index] = node.attr.val + translateOffset
           when 'union'
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
+            # TODO: this test is wrong - the lessThan should be flipped depending on whether the index is < 3 or > 2
             if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] > node.attr.val else s.halfSpaces[index] < node.attr.val)
-              s.halfSpaces[index] = node.attr.val
-          when 'invert', 'mirror', 'translate'
-            # TODO: modify the halfspace?
+              s.halfSpaces[index] = node.attr.val + translateOffset
+          when 'translate'
+            translateOffset += s.attr.offset[node.attr.axis]
+            continue # Search for preceding intersect/union node 
+          when 'invert', 'mirror'            
             continue # Search for preceding intersect/union node
           else
             # This may occur in special cases where we cannot do normal corner compilation
