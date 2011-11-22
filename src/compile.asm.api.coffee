@@ -29,4 +29,10 @@ asm =
   halfspace: (attr) ->
     type: 'halfspace'
     attr: attr
+  cylinder: (attr) ->
+    type: 'cylinder'
+    attr: attr
+  sphere: (attr) ->
+    type: 'sphere'
+    attr: attr
 
