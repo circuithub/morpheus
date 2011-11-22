@@ -155,8 +155,8 @@ compileGLSL = (abstractSolidModel) ->
         mecha.logInternalError "GLSL Compiler: Union node is empty."
         return
       codes = []
-      codes.push childNode.code for childNode in node.nodes when childNode.code?
 
+      # Collect the source code for all the child nodes
       # Some nodes are only modifiers, so it's necessary to collect their children 
       # to apply the correct composite operation
       collectCode = (codes, nodes) -> 
@@ -193,11 +193,11 @@ compileGLSL = (abstractSolidModel) ->
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Intersect node is empty."
         return
-      codes = []
-      codes.push childNode.code for childNode in node.nodes when childNode.code?
-
+      
+      # Collect the source code for all the child nodes
       # Some nodes are only modifiers, so it's necessary to collect their children 
       # to apply the correct composite operation
+      codes = []
       collectCode = (codes, nodes) -> 
         for node in nodes
           codes.push node.code if node.code?

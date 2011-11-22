@@ -743,24 +743,17 @@
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var c, childNode, codes, collectCode, cornersState, h, ro, _i, _j, _k, _len, _len2, _len3, _ref, _ref2;
+        var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Union node is empty.");
           return;
         }
         codes = [];
-        _ref = node.nodes;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          childNode = _ref[_i];
-          if (childNode.code != null) {
-            codes.push(childNode.code);
-          }
-        }
         collectCode = function(codes, nodes) {
-          var node, _j, _len2, _results;
+          var node, _i, _len, _results;
           _results = [];
-          for (_j = 0, _len2 = nodes.length; _j < _len2; _j++) {
-            node = nodes[_j];
+          for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+            node = nodes[_i];
             if (node.code != null) {
               codes.push(node.code);
             }
@@ -784,40 +777,33 @@
         compileCorner(ro, flags, cornersState);
         compileCorner(ro, flags, cornersState);
         codes = codes.concat(cornersState.codes);
-        _ref2 = cornersState.hs;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          h = _ref2[_j];
+        _ref = cornersState.hs;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          h = _ref[_i];
           if (h !== null) {
             mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
             break;
           }
         }
         node.code = codes.shift();
-        for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
-          c = codes[_k];
+        for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
+          c = codes[_j];
           node.code = "min(" + c + ", " + node.code + ")";
         }
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
-        var c, childNode, codes, collectCode, cornersState, h, ro, _i, _j, _k, _len, _len2, _len3, _ref, _ref2;
+        var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
           return;
         }
         codes = [];
-        _ref = node.nodes;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          childNode = _ref[_i];
-          if (childNode.code != null) {
-            codes.push(childNode.code);
-          }
-        }
         collectCode = function(codes, nodes) {
-          var node, _j, _len2, _results;
+          var node, _i, _len, _results;
           _results = [];
-          for (_j = 0, _len2 = nodes.length; _j < _len2; _j++) {
-            node = nodes[_j];
+          for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+            node = nodes[_i];
             if (node.code != null) {
               codes.push(node.code);
             }
@@ -841,17 +827,17 @@
         compileCorner(ro, flags, cornersState);
         compileCorner(ro, flags, cornersState);
         codes = codes.concat(cornersState.codes);
-        _ref2 = cornersState.hs;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          h = _ref2[_j];
+        _ref = cornersState.hs;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          h = _ref[_i];
           if (h !== null) {
             mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
             break;
           }
         }
         node.code = codes.shift();
-        for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
-          c = codes[_k];
+        for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
+          c = codes[_j];
           node.code = "max(" + c + ", " + node.code + ")";
         }
         return stack[0].nodes.push(node);
