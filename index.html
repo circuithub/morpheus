@@ -52,20 +52,16 @@
       <span><input id='source-autocompile' name='source-autocompile' type='checkbox' disabled='disabled'><label for='source-autocompile'>Auto-compile</label></span>
       <input id='source-compile' name='source-compile' type='button' value='Compile'>
       <textarea id='source-code' name='source-code'>
-translate(
-  { offset: [0.0, 0.4, 0.0] },
+translate({ offset: [0.0, 0.4, 0.0] },
   intersect(
     box({ dimensions: [0.2, 0.5, 0.2] }),
-    translate({ offset: [0.3, 0.0, 0.0] },
-      box({ dimensions: [0.5, 0.2, 0.2] })
-    )
+    box({ dimensions: [0.5, 0.2, 0.2] })
+    .translate({ offset: [0.3, 0.0, 0.0] })
   )
 ),
 cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
-translate(
-  { offset: [0.0, -0.2, 0.0] },
-  sphere({ radius: 0.3 })
-)
+sphere({ radius: 0.3 })
+.translate({ offset: [0.0, -0.2, 0.0] })
       </textarea>
     </form>
     <div id='viewport'>

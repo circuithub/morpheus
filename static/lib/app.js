@@ -146,11 +146,12 @@
   };
   compileCSM = function(source, callback) {
     var postfix, prefix, requestId;
-    prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  \n  /* BEGIN SOURCE */\n  return scene(\n';
-    postfix = '  \n  );\n})();';
+    prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  try {\n  /* BEGIN SOURCE */\n  return scene(\n';
+    postfix = '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
     return requestId = JSandbox.eval({
       data: prefix + source + postfix,
       callback: function(result) {
+        console.log(result);
         return callback(result);
       },
       onerror: function(data, request) {

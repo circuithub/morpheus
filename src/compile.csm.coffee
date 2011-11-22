@@ -8,7 +8,7 @@ compileCSM = (source, callback) ->
       
     ''' + state.api.sourceCode +
     '''
-      
+      try {
       /* BEGIN SOURCE */
       return scene(
     
@@ -17,12 +17,17 @@ compileCSM = (source, callback) ->
     '''
       
       );
+      } catch(err) {
+        return String(err);
+      }
     })();
     '''
   #mecha.log prefix + source + postfix
   requestId = JSandbox.eval 
     data: prefix + source + postfix
     callback: (result) ->
+      # TEMPORARY
+      console.log result
       #console.log "Success"
       callback result
     onerror: (data,request) ->

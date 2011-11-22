@@ -9,75 +9,68 @@ do () ->
   extend = (obj, mixin) ->
     for name, method of mixin
       obj[name] = method
+    return obj
 
-  # API objects (fluent interface)
-  class Chamferable
-    chamfer: (amount) ->
-      type: 'chamfer'
-      attr:
-        amount: amount
-      nodes: [this]
+  # Fluid API builder
+  dispatch = {}
+  Api = (f) ->
+    ff = (args) -> extend this, f args...
+    f.prototype = ff.prototype = dispatch
+    return () -> 
+      obj = new ff arguments
+      obj.nodes.unshift this if this?
+      return obj
 
-  class IntersectNode
-    constructor: (nodes) ->
-      @nodes = nodes
-      @type = 'intersect'
+  # API dispatcher
+  extend dispatch,
+    union: Api (attr, nodes...) ->
+      type: 'union'
+      nodes: nodes
+    intersect: Api (nodes...) ->
+      type: 'intersect'
+      nodes: nodes
+    difference: Api (nodes...) ->
+      type: 'difference'
+      nodes: nodes
+    box: Api (attr, nodes...) ->
+      # Apply defaults
+      if attr.chamfer?
+        # Chamfer corners is on by default
+        if not attr.chamfer.corners?
+          attr.chamfer.corners = true
+        # Chamfer all edges by default
+        node.chamfer.edges = [0..11]
+      type: 'box'
+      attr: attr
+      nodes: nodes
+    cylinder: Api (attr, nodes...) ->
+      type: 'cylinder'
+      attr: attr
+      nodes: nodes
+    sphere: Api (attr, nodes...) ->
+      type: 'sphere'
+      attr: attr
+      nodes: nodes
+    translate: Api (attr, nodes...) ->
+      type: 'translate'
+      attr: attr
+      nodes: nodes
 
-  extend IntersectNode.prototype, Chamferable
-
-  # API functions
+  # Put API functions into the global namespace
   window.scene = (nodes...) ->
-    #_csmModel = arguments
-    #clone = (obj) ->
-    #  if obj == null || typeof obj != 'object'
-    #    return obj
-    #  temp = new obj.constructor()
-    #  for key in obj
-    #    temp[key] = clone obj[key]
-    #  return temp
-    #clone _csmModel
-    type: 'scene'
-    nodes: nodes
-  
-  window.union = (attr, nodes...) ->
-    type: 'union'
-    nodes: nodes
+    # Strip extra API 
+    #strip = (nodes) ->
+    #  for n in nodes
+    #    for key, val of n
+    #      if key == 'prototype'
+    #        delete n[key]
+    #    strip n.nodes
+    #strip nodes
+    strip = (nodes) ->
+      { type: n.type, attr: n.attr, nodes: strip n.nodes } for n in nodes
+    return {
+      type: 'scene'
+      nodes: strip nodes }
 
-  #window.chamfer = (nodes...) ->
-  #  for node in nodes
-  #    node.attr.chamfer = attr
-
-  window.intersect = (nodes...) ->
-    new IntersectNode nodes
-
-  window.difference = (nodes...) ->
-    type: 'difference'
-    nodes: nodes
-
-  window.box = (attr, nodes...) ->
-    # Apply defaults
-    if attr.chamfer?
-      # Chamfer corners is on by default
-      if not attr.chamfer.corners?
-        attr.chamfer.corners = true
-      # Chamfer all edges by default
-      node.chamfer.edges = [0..11]
-    type: 'box'
-    attr: attr
-    nodes: nodes
-
-  window.cylinder = (attr, nodes...) ->
-    type: 'cylinder'
-    attr: attr
-    nodes: nodes
-
-  window.sphere = (attr, nodes...) ->
-    type: 'sphere'
-    attr: attr
-    nodes: nodes
-
-  window.translate = (attr, nodes...) ->
-    type: 'translate'
-    attr: attr
-    nodes: nodes
+  extend window, dispatch
 
