@@ -267,6 +267,15 @@ compileGLSL = (abstractSolidModel) ->
             node.code = "#{node.attr.val} - #{ro}[#{node.attr.axis}]"
         break
       stack[0].nodes.push node
+    cylinder: (stack, node, flags) ->
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      planeCoords = ['yz','xz','xy'][node.attr.axis]
+      node.code = "length(#{ro}.#{planeCoords}) - #{node.attr.radius}"
+      stack[0].nodes.push node
+    sphere: (stack, node, flags) ->
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      node.code = "length(#{ro}) - #{node.attr.radius}"
+      stack[0].nodes.push node
     default: (stack, node, flags) ->
       stack[0].nodes.push node
 

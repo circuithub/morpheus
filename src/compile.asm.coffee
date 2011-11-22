@@ -67,7 +67,7 @@ compileASM = (concreteSolidModel) ->
           val: node.attr.length * 0.5
           axis: node.attr.axis
       ]
-      asm.intersect (asm.cylinder { radius: node.attr.radius }), halfspaces[0], halfspaces[1]
+      asm.intersect (asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }), halfspaces[0], halfspaces[1]
     intersect: (node) ->
       asm.intersect (compileASMNode n for n in node.nodes)...
     union: (node) ->

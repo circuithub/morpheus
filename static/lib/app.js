@@ -470,7 +470,8 @@
           }))
         ];
         return asm.intersect(asm.cylinder({
-          radius: node.attr.radius
+          radius: node.attr.radius,
+          axis: node.attr.axis
         }), halfspaces[0], halfspaces[1]);
       },
       intersect: function(node) {
@@ -886,6 +887,19 @@
           }
           break;
         }
+        return stack[0].nodes.push(node);
+      },
+      cylinder: function(stack, node, flags) {
+        var planeCoords, ro;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        planeCoords = ['yz', 'xz', 'xy'][node.attr.axis];
+        node.code = "length(" + ro + "." + planeCoords + ") - " + node.attr.radius;
+        return stack[0].nodes.push(node);
+      },
+      sphere: function(stack, node, flags) {
+        var ro;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        node.code = "length(" + ro + ") - " + node.attr.radius;
         return stack[0].nodes.push(node);
       },
       "default": function(stack, node, flags) {
