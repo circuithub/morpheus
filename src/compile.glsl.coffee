@@ -109,7 +109,7 @@ compileGLSL = (abstractSolidModel) ->
     if remainingHalfSpaces == 1
       # Find the axis (from 0 to 5) for the halfSpace node
       for index in [0..5] when state.hs[index] != null
-        state.codes.push (if index > 2 then "#{ro}[#{index}] - #{hs[index]}" else "-#{ro}[#{index - 3}] + #{state.hs[index]}")
+        state.codes.push (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}")
         state.hs[index] = null
         break
       remainingHalfSpaces -= 1
@@ -154,37 +154,39 @@ compileGLSL = (abstractSolidModel) ->
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Union node is empty."
         return
-      node.code = ""
+      codes = []
+      codes.push childNode.code for childNode in node.nodes when childNode.code?
 
       # Some nodes are only modifiers, so it's necessary to collect their children 
       # to apply the correct composite operation
-      collectChildren = (node, children) -> 
-        for child in children
-          if child.code?
-            if node.code.length > 0
-              node.code = "min(#{childNode.code}, #{node.code})"
-            else
-              node.code = child.code
-          else switch child.type
+      collectCode = (codes, nodes) -> 
+        for node in nodes
+          codes.push node.code if node.code?
+          switch node.type
             when 'translate','mirror','invert'
-              collectChildren node, child.nodes
-      collectChildren node, node.nodes
+              collectCode codes, node.nodes
+      collectCode codes, node.nodes
 
       # Corner compilation
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      if (node.halfSpaces[0] != null or node.halfSpaces[3] != null) and
-          (node.halfSpaces[1] != null or node.halfSpaces[4] != null) and
-          (node.halfSpaces[2] != null or node.halfSpaces[5] != null)
-        cornerSize = [
-          if node.halfSpaces[0] != null then node.halfSpaces[0] else node.halfSpaces[3],
-          if node.halfSpaces[1] != null then node.halfSpaces[1] else node.halfSpaces[4],
-          if node.halfSpaces[2] != null then node.halfSpaces[2] else node.halfSpaces[5]]
-        preludePush flags.glslPrelude, "#{ro} - vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-        dist = preludePop flags.glslPrelude
-        if node.code.length > 0
-          node.code = "min(min(min(#{dist}.x, #{dist}.y), #{dist}.z), #{node.code});"
-        else
-          node.code = "min(min(#{dist}.x, #{dist}.y), #{dist}.z);"
+      cornersState = 
+        codes: []
+        hs: node.halfSpaces.shallowClone()
+
+      # Compile the first and a possible second corner
+      compileCorner ro, flags, cornersState
+      compileCorner ro, flags, cornersState
+      codes = codes.concat cornersState.codes
+
+      # Post-condition: All halfspaces must be accounted for
+      for h in cornersState.hs when h != null
+        mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
+        break
+
+      # Calculate the maximum distances
+      node.code = codes.shift()
+      for c in codes
+        node.code = "min(#{c}, #{node.code})"
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       # Check that composite node is not empty
