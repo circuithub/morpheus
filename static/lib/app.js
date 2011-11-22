@@ -224,6 +224,18 @@
         type: 'halfspace',
         attr: attr
       };
+    },
+    cylinder: function(attr) {
+      return {
+        type: 'cylinder',
+        attr: attr
+      };
+    },
+    sphere: function(attr) {
+      return {
+        type: 'sphere',
+        attr: attr
+      };
     }
   };
   mapCollectASM = function(nodes, flags, params, dispatch) {
@@ -420,32 +432,46 @@
         var halfspaces;
         halfspaces = [
           asm.halfspace({
-            val: -node.attr.dimensions[0],
+            val: node.attr.dimensions[0] * -0.5,
             axis: 0
           }), asm.halfspace({
-            val: -node.attr.dimensions[1],
+            val: node.attr.dimensions[1] * -0.5,
             axis: 1
           }), asm.halfspace({
-            val: -node.attr.dimensions[2],
+            val: node.attr.dimensions[2] * -0.5,
             axis: 2
           }), asm.halfspace({
-            val: node.attr.dimensions[0],
+            val: node.attr.dimensions[0] * 0.5,
             axis: 0
           }), asm.halfspace({
-            val: node.attr.dimensions[1],
+            val: node.attr.dimensions[1] * 0.5,
             axis: 1
           }), asm.halfspace({
-            val: node.attr.dimensions[2],
+            val: node.attr.dimensions[2] * 0.5,
             axis: 2
           })
         ];
         return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
       },
       sphere: function(node) {
-        return {};
+        return asm.sphere({
+          radius: node.attr.radius
+        });
       },
       cylinder: function(node) {
-        return {};
+        var halfspaces;
+        halfspaces = [
+          asm.halfspace({
+            val: node.attr.length * -0.5,
+            axis: node.attr.axis
+          }), asm.invert(asm.halfspace({
+            val: node.attr.length * 0.5,
+            axis: node.attr.axis
+          }))
+        ];
+        return asm.intersect(asm.cylinder({
+          radius: node.attr.radius
+        }), halfspaces[0], halfspaces[1]);
       },
       intersect: function(node) {
         var n;
@@ -670,7 +696,7 @@
       if (remainingHalfSpaces === 1) {
         for (index = 0; index <= 5; index++) {
           if (state.hs[index] !== null) {
-            state.codes.push((index > 2 ? "" + ro + "[" + index + "] - " + hs[index] : "-" + ro + "[" + (index - 3) + "] + " + state.hs[index]));
+            state.codes.push((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]));
             state.hs[index] = null;
             break;
           }
@@ -717,47 +743,59 @@
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var collectChildren, cornerSize, dist, ro;
+        var c, childNode, codes, collectCode, cornersState, h, ro, _i, _j, _k, _len, _len2, _len3, _ref, _ref2;
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Union node is empty.");
           return;
         }
-        node.code = "";
-        collectChildren = function(node, children) {
-          var child, _i, _len, _results;
+        codes = [];
+        _ref = node.nodes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          childNode = _ref[_i];
+          if (childNode.code != null) {
+            codes.push(childNode.code);
+          }
+        }
+        collectCode = function(codes, nodes) {
+          var node, _j, _len2, _results;
           _results = [];
-          for (_i = 0, _len = children.length; _i < _len; _i++) {
-            child = children[_i];
+          for (_j = 0, _len2 = nodes.length; _j < _len2; _j++) {
+            node = nodes[_j];
+            if (node.code != null) {
+              codes.push(node.code);
+            }
             _results.push((function() {
-              if (child.code != null) {
-                if (node.code.length > 0) {
-                  return node.code = "min(" + childNode.code + ", " + node.code + ")";
-                } else {
-                  return node.code = child.code;
-                }
-              } else {
-                switch (child.type) {
-                  case 'translate':
-                  case 'mirror':
-                  case 'invert':
-                    return collectChildren(node, child.nodes);
-                }
+              switch (node.type) {
+                case 'translate':
+                case 'mirror':
+                case 'invert':
+                  return collectCode(codes, node.nodes);
               }
             })());
           }
           return _results;
         };
-        collectChildren(node, node.nodes);
+        collectCode(codes, node.nodes);
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        if ((node.halfSpaces[0] !== null || node.halfSpaces[3] !== null) && (node.halfSpaces[1] !== null || node.halfSpaces[4] !== null) && (node.halfSpaces[2] !== null || node.halfSpaces[5] !== null)) {
-          cornerSize = [node.halfSpaces[0] !== null ? node.halfSpaces[0] : node.halfSpaces[3], node.halfSpaces[1] !== null ? node.halfSpaces[1] : node.halfSpaces[4], node.halfSpaces[2] !== null ? node.halfSpaces[2] : node.halfSpaces[5]];
-          preludePush(flags.glslPrelude, "" + ro + " - vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")");
-          dist = preludePop(flags.glslPrelude);
-          if (node.code.length > 0) {
-            node.code = "min(min(min(" + dist + ".x, " + dist + ".y), " + dist + ".z), " + node.code + ");";
-          } else {
-            node.code = "min(min(" + dist + ".x, " + dist + ".y), " + dist + ".z);";
+        cornersState = {
+          codes: [],
+          hs: node.halfSpaces.shallowClone()
+        };
+        compileCorner(ro, flags, cornersState);
+        compileCorner(ro, flags, cornersState);
+        codes = codes.concat(cornersState.codes);
+        _ref2 = cornersState.hs;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          h = _ref2[_j];
+          if (h !== null) {
+            mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
+            break;
           }
+        }
+        node.code = codes.shift();
+        for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
+          c = codes[_k];
+          node.code = "min(" + c + ", " + node.code + ")";
         }
         return stack[0].nodes.push(node);
       },

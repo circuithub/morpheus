@@ -19,22 +19,22 @@ compileASM = (concreteSolidModel) ->
     box: (node) ->
       halfspaces = [
         asm.halfspace 
-          val: -node.attr.dimensions[0]
+          val: node.attr.dimensions[0] * -0.5
           axis: 0
         asm.halfspace
-          val: -node.attr.dimensions[1]
+          val: node.attr.dimensions[1] * -0.5
           axis: 1
         asm.halfspace
-          val: -node.attr.dimensions[2]
+          val: node.attr.dimensions[2] * -0.5
           axis: 2
         asm.halfspace 
-          val: node.attr.dimensions[0]
+          val: node.attr.dimensions[0] * 0.5
           axis: 0
         asm.halfspace 
-          val: node.attr.dimensions[1]
+          val: node.attr.dimensions[1] * 0.5
           axis: 1
         asm.halfspace 
-          val: node.attr.dimensions[2]
+          val: node.attr.dimensions[2] * 0.5
           axis: 2
       ]
       # TODO: Implement chamfer
@@ -57,11 +57,17 @@ compileASM = (concreteSolidModel) ->
       #  asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
       asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
     sphere: (node) ->
-      # TODO
-      {}
+      asm.sphere { radius: node.attr.radius }
     cylinder: (node) ->
-      # TODO
-      {}
+      halfspaces = [
+        asm.halfspace 
+          val: node.attr.length * -0.5
+          axis: node.attr.axis
+        asm.invert asm.halfspace
+          val: node.attr.length * 0.5
+          axis: node.attr.axis
+      ]
+      asm.intersect (asm.cylinder { radius: node.attr.radius }), halfspaces[0], halfspaces[1]
     intersect: (node) ->
       asm.intersect (compileASMNode n for n in node.nodes)...
     union: (node) ->
