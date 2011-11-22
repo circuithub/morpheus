@@ -244,15 +244,15 @@ compileGLSL = (abstractSolidModel) ->
           when 'intersect'
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
-            # TODO: this test is wrong - the lessThan should be flipped depending on whether the index is < 3 or > 2
-            if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] < node.attr.val else s.halfSpaces[index] > node.attr.val)
-              s.halfSpaces[index] = node.attr.val + translateOffset
+            val = node.attr.val + translateOffset
+            if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
+              s.halfSpaces[index] = val
           when 'union'
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
-            # TODO: this test is wrong - the lessThan should be flipped depending on whether the index is < 3 or > 2
-            if s.halfSpaces[index] == null or (if flags.invert then s.halfSpaces[index] > node.attr.val else s.halfSpaces[index] < node.attr.val)
-              s.halfSpaces[index] = node.attr.val + translateOffset
+            val = node.attr.val + translateOffset
+            if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
+              s.halfSpaces[index] = val
           when 'translate'
             translateOffset += s.attr.offset[node.attr.axis]
             continue # Search for preceding intersect/union node 
