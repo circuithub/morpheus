@@ -612,7 +612,7 @@
     rayOrigin = 'ro';
     rayDirection = 'rd';
     sceneDist = function(prelude, code) {
-      return "\nfloat sceneDist(in vec3 " + rayOrigin + "){\n" + prelude + "  return " + code + ";\n}\n\n";
+      return "\nfloat sceneDist(in vec3 " + rayOrigin + "){\n" + prelude + "  return max(0.0," + code + ");\n}\n\n";
     };
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
@@ -678,8 +678,8 @@
         remainingHalfSpaces -= 1;
       } else if (remainingHalfSpaces > 1) {
         cornerSize = [state.hs[0] !== null ? state.hs[0] : state.hs[3] !== null ? state.hs[3] : 0, state.hs[1] !== null ? state.hs[1] : state.hs[4] !== null ? state.hs[4] : 0, state.hs[2] !== null ? state.hs[2] : state.hs[5] !== null ? state.hs[5] : 0];
-        signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
-        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + signs[1] + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
+        signs = [state.hs[0] !== null, state.hs[1] !== null, state.hs[2] !== null];
+        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
         cornerWithSigns = "vec3(" + (signs[0] ? -cornerSize[0] : cornerSize[0]) + ", " + (signs[1] ? -cornerSize[1] : cornerSize[1]) + ", " + (signs[2] ? -cornerSize[2] : cornerSize[2]) + ")";
         preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         dist = preludePop(flags.glslPrelude);

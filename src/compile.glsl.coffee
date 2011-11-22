@@ -20,7 +20,7 @@ compileGLSL = (abstractSolidModel) ->
   rayDirection = 'rd'
   
   sceneDist = (prelude, code) ->
-    "\nfloat sceneDist(in vec3 #{rayOrigin}){\n#{prelude}  return #{code};\n}\n\n"
+    "\nfloat sceneDist(in vec3 #{rayOrigin}){\n#{prelude}  return max(0.0,#{code});\n}\n\n"
   
   sceneRayDist = 
     # ro = ray origin
@@ -119,16 +119,16 @@ compileGLSL = (abstractSolidModel) ->
         if state.hs[1] != null then state.hs[1] else if state.hs[4] != null then state.hs[4] else 0,
         if state.hs[2] != null then state.hs[2] else if state.hs[5] != null then state.hs[5] else 0]
       signs = [
-        state.hs[0] == null and state.hs[3] != null,
-        state.hs[1] == null and state.hs[4] != null,
-        state.hs[2] == null and state.hs[5] != null]
+        state.hs[0] != null,
+        state.hs[1] != null,
+        state.hs[2] != null]
       roWithSigns = 
         if not (signs[0] or signs[1] or signs[2])
           "#{ro}"
         else if (signs[0] or state.hs[3] == null) and (signs[1] or state.hs[4] == null) and (signs[2] or state.hs[5] == null)
           "-#{ro}"
         else
-          "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{signs[1]}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
+          "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
       cornerWithSigns = "vec3(#{if signs[0] then -cornerSize[0] else cornerSize[0]}, #{if signs[1] then -cornerSize[1] else cornerSize[1]}, #{if signs[2] then -cornerSize[2] else cornerSize[2]})"
       preludePush flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
       dist = preludePop flags.glslPrelude
