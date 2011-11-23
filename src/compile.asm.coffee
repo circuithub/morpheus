@@ -79,6 +79,8 @@ compileASM = (concreteSolidModel) ->
         asm.intersect()
     translate: (node) ->
       asm.translate node.attr, (compileASMNode n for n in node.nodes)...
+    material: (node) ->
+      asm.material node.attr, (compileASMNode n for n in node.nodes)...
 
   compileASMNode = (node) ->
     switch typeof node

@@ -55,22 +55,17 @@ do () ->
       type: 'translate'
       attr: attr
       nodes: nodes
+    material: Api (attr, nodes...) ->
+      type: 'material'
+      attr: attr
+      nodes: nodes
 
   # Put API functions into the global namespace
   window.scene = (nodes...) ->
-    # Strip extra API 
-    #strip = (nodes) ->
-    #  for n in nodes
-    #    for key, val of n
-    #      if key == 'prototype'
-    #        delete n[key]
-    #    strip n.nodes
-    #strip nodes
     strip = (nodes) ->
       { type: n.type, attr: n.attr, nodes: strip n.nodes } for n in nodes
-    return {
-      type: 'scene'
-      nodes: strip nodes }
+    type: 'scene'
+    nodes: strip nodes
 
   extend window, dispatch
 

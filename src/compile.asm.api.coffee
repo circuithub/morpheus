@@ -26,6 +26,10 @@ asm =
     type: 'translate'
     attr: attr
     nodes: nodes.flatten()
+  material:  (attr, nodes...) ->
+    type: 'material'
+    attr: attr
+    nodes: nodes.flatten()
   halfspace: (attr) ->
     type: 'halfspace'
     attr: attr

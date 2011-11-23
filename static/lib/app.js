@@ -220,6 +220,15 @@
         nodes: nodes.flatten()
       };
     },
+    material: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'material',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
     halfspace: function(attr) {
       return {
         type: 'halfspace',
@@ -530,6 +539,19 @@
           }
           return _results;
         })())));
+      },
+      material: function(node) {
+        var n;
+        return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
       }
     };
     compileASMNode = function(node) {
@@ -764,6 +786,7 @@
                 case 'translate':
                 case 'mirror':
                 case 'invert':
+                case 'material':
                   return collectCode(codes, node.nodes);
               }
             })());
@@ -814,6 +837,7 @@
                 case 'translate':
                 case 'mirror':
                 case 'invert':
+                case 'material':
                   return collectCode(codes, node.nodes);
               }
             })());

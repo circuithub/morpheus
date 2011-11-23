@@ -163,7 +163,7 @@ compileGLSL = (abstractSolidModel) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','mirror','invert'
+            when 'translate','mirror','invert','material'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -202,7 +202,7 @@ compileGLSL = (abstractSolidModel) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','mirror','invert'
+            when 'translate','mirror','invert','material'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -258,7 +258,7 @@ compileGLSL = (abstractSolidModel) ->
           when 'translate'
             translateOffset += s.attr.offset[node.attr.axis]
             continue # Search for preceding intersect/union node 
-          when 'invert', 'mirror'            
+          when 'invert', 'mirror'
             continue # Search for preceding intersect/union node
           else
             # This may occur in special cases where we cannot do normal corner compilation
