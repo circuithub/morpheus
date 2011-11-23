@@ -17,14 +17,9 @@
     };
     dispatch = {};
     Api = function(f) {
-      var ff;
-      ff = function(args) {
-        return extend(this, f.apply(null, args));
-      };
-      f.prototype = ff.prototype = dispatch;
       return function() {
         var obj;
-        obj = new ff(arguments);
+        obj = extend(Object.create(dispatch), f.apply(null, arguments));
         if (typeof this !== "undefined" && this !== null) {
           obj.nodes.unshift(this);
         }

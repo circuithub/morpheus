@@ -13,11 +13,10 @@ do () ->
 
   # Fluid API builder
   dispatch = {}
+  
   Api = (f) ->
-    ff = (args) -> extend this, f args...
-    f.prototype = ff.prototype = dispatch
     return () -> 
-      obj = new ff arguments
+      obj = extend (Object.create dispatch), (f arguments...)
       obj.nodes.unshift this if this?
       return obj
 
