@@ -46,6 +46,9 @@ compileGLSL = (abstractSolidModel) ->
     
     '''
 
+  sceneMaterial = (prelude, code) ->
+    "\nint sceneMaterial(in vec3 #{rayOrigin}) {\n#{prelude}  return #{code};\n}\n\n"
+
   main = 
     '''
     void main(void) {
@@ -301,7 +304,7 @@ compileGLSL = (abstractSolidModel) ->
     mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from compiler.'
     return ""
 
-  program = prefix + (glslLibrary.compile flags.glslFunctions) + (sceneDist flags.glslPrelude.code, result.nodes[0].code) + sceneNormal + main
+  program = prefix + (glslLibrary.compile flags.glslFunctions) + (sceneDist flags.glslPrelude.code, result.nodes[0].code) + sceneNormal + (sceneMaterial "", "0") + main
   console.log program
   return program
 
