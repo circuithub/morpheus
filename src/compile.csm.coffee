@@ -23,6 +23,7 @@ compileCSM = (source, callback) ->
     })();
     '''
   #mecha.log prefix + source + postfix
+  
   requestId = JSandbox.eval 
     data: prefix + source + postfix
     callback: (result) ->

@@ -655,35 +655,38 @@
       return code;
     }
   };
-  glslCompiler = function() {};
-  compileGLSLDistance = function() {};
-  compileGLSLMaterial = function() {};
-  compileGLSL = function(abstractSolidModel) {
-    var compileCorner, flags, main, postDispatch, preDispatch, prefix, preludePop, preludePush, program, rayDirection, rayOrigin, result, sceneDist, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
-    prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
-    uniforms = "";
+  glslCompiler = function(abstractSolidModel, preDispatch, postDispatch) {
+    var flags, rayOrigin, result;
     rayOrigin = 'ro';
-    rayDirection = 'rd';
-    sceneDist = function(prelude, code) {
-      return "\nfloat sceneDist(in vec3 " + rayOrigin + "){\n" + prelude + "  return max(0.0," + code + ");\n}\n\n";
+    flags = {
+      invert: false,
+      glslFunctions: {},
+      glslPrelude: [['ro', "" + rayOrigin]]
     };
-    sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
-    sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
-    sceneMaterial = function(prelude, code) {
-      return "\nint sceneMaterial(in vec3 " + rayOrigin + ") {\n" + prelude + "  return " + code + ";\n}\n\n";
-    };
-    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  /*if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }*/\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  /*const vec3 specularColor = vec3(1.0, 1.0, 1.0);*/\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
-    preludePush = function(prelude, value) {
-      var name;
-      name = 'r' + prelude.counter;
-      prelude.push([name, value]);
-      prelude.counter += 1;
-      prelude.code += "  vec3 " + name + " = " + value + ";\n";
-      return name;
-    };
-    preludePop = function(prelude) {
-      return prelude.pop()[0];
-    };
+    flags.glslPrelude.code = "";
+    flags.glslPrelude.counter = 0;
+    result = mapASM(preDispatch, postDispatch, [
+      {
+        nodes: []
+      }
+    ], abstractSolidModel, flags);
+    result.flags = flags;
+    return result;
+  };
+  glslCompiler.preludePush = function(prelude, value) {
+    var name;
+    name = 'r' + prelude.counter;
+    prelude.push([name, value]);
+    prelude.counter += 1;
+    prelude.code += "  vec3 " + name + " = " + value + ";\n";
+    return name;
+  };
+  glslCompiler.preludePop = function(prelude) {
+    return prelude.pop()[0];
+  };
+  compileGLSLDistance = (function() {
+    var compileCorner, postDispatch, preDispatch, rayOrigin;
+    rayOrigin = 'ro';
     preDispatch = {
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
@@ -709,7 +712,7 @@
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        return preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
+        return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
       },
       "default": function(stack, node, flags) {}
     };
@@ -737,8 +740,8 @@
         signs = [state.hs[0] !== null, state.hs[1] !== null, state.hs[2] !== null];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
         cornerWithSigns = "vec3(" + (signs[0] ? -cornerSize[0] : cornerSize[0]) + ", " + (signs[1] ? -cornerSize[1] : cornerSize[1]) + ", " + (signs[2] ? -cornerSize[2] : cornerSize[2]) + ")";
-        preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
-        dist = preludePop(flags.glslPrelude);
+        glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
+        dist = glslCompiler.preludePop(flags.glslPrelude);
         if (state.hs[0] !== null || state.hs[3] !== null) {
           state.codes.push("" + dist + ".x");
           if (state.hs[0] !== null) {
@@ -875,7 +878,7 @@
         return stack[0].nodes.push(node);
       },
       translate: function(stack, node, flags) {
-        preludePop(flags.glslPrelude);
+        glslCompiler.preludePop(flags.glslPrelude);
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Translate node is empty.");
           return;
@@ -937,19 +940,28 @@
         return stack[0].nodes.push(node);
       }
     };
-    console.log(abstractSolidModel);
-    flags = {
-      invert: false,
-      glslFunctions: {},
-      glslPrelude: [['ro', "" + rayOrigin]]
+    return function(abstractSolidModel) {
+      return glslCompiler(abstractSolidModel, preDispatch, postDispatch);
     };
-    flags.glslPrelude.code = "";
-    flags.glslPrelude.counter = 0;
-    result = mapASM(preDispatch, postDispatch, [
-      {
-        nodes: []
-      }
-    ], abstractSolidModel, flags);
+  })();
+  compileGLSLMaterial = function() {};
+  compileGLSL = function(abstractSolidModel) {
+    var main, prefix, program, rayDirection, rayOrigin, result, sceneDist, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
+    rayOrigin = 'ro';
+    rayDirection = 'rd';
+    prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
+    uniforms = "";
+    sceneDist = function(prelude, code) {
+      return "\nfloat sceneDist(in vec3 " + rayOrigin + "){\n" + prelude + "  return max(0.0," + code + ");\n}\n\n";
+    };
+    sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
+    sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
+    sceneMaterial = function(prelude, code) {
+      return "\nint sceneMaterial(in vec3 " + rayOrigin + ") {\n" + prelude + "  return " + code + ";\n}\n\n";
+    };
+    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    console.log(abstractSolidModel);
+    result = compileGLSLDistance(abstractSolidModel);
     console.log(result);
     if (result.nodes.length === 1) {
       result.nodes[0].code;
@@ -957,7 +969,7 @@
       mecha.logInternalError('GLSL Compiler: Expected exactly one result node from compiler.');
       return "";
     }
-    program = prefix + (glslLibrary.compile(flags.glslFunctions)) + (sceneDist(flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + (sceneMaterial("", "0")) + main;
+    program = prefix + (glslLibrary.compile(result.flags.glslFunctions)) + (sceneDist(result.flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + (sceneMaterial("", "0")) + main;
     console.log(program);
     return program;
   };
@@ -1039,6 +1051,7 @@
   };
   keyDown = function(event) {};
   controlsSourceCompile = function() {
+    sceneInit();
     try {
       return compileCSM(($('#source-code')).val(), function(result) {
         return (state.scene.findNode('main-shader')).set('shaders', [
@@ -1090,8 +1103,7 @@
     state.api.url = ($("link[rel='api']")).attr('href');
     return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
-      mecha.log("Loaded " + state.api.url);
-      return sceneInit();
+      return mecha.log("Loaded " + state.api.url);
     }).error(function() {
       return mecha.log("Error loading API script");
     });

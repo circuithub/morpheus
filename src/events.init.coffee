@@ -32,7 +32,8 @@ apiInit = () ->
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
       #TODO: This should probably be called elsewhere in the future!
-      sceneInit()
+      #TODO: In fact: it causes chrome's debugger to crash
+      #sceneInit()
     .error () -> 
       mecha.log "Error loading API script"
 
