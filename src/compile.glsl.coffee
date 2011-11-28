@@ -46,8 +46,20 @@ compileGLSL = (abstractSolidModel) ->
     
     '''
 
-  sceneMaterial = (prelude, code) ->
-    "\nint sceneMaterial(in vec3 #{rayOrigin}) {\nint mat = -1;\n#{prelude}  #{code};\n  return mat;\n}\n\n"
+  sceneId = (prelude, code) ->
+    "\nint sceneId(in vec3 #{rayOrigin}) {\n  int id = -1;\n#{prelude}  #{code};\n  return id;\n}\n\n"
+
+  sceneMaterial = () ->
+    # ro = ray origin
+    '''
+    vec3 sceneMaterial(in vec3 ro) {
+      int id = sceneId(ro);
+      return id == 1? vec3(0.2, 0.8, 0.1) :
+             id == 2? vec3(0.8, 0.2, 0.1) :
+             id > 2? vec3(0.8, 0.8, 0.1) : vec3(0.1, 0.2, 0.8);
+    }
+    
+    '''
 
   main = 
     '''
@@ -69,7 +81,8 @@ compileGLSL = (abstractSolidModel) ->
       }
       if(!hit) { discard; }
       //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
-      const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+      //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+      vec3 diffuseColor = sceneMaterial(rayOrigin);
       //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
       const vec3 lightPos = vec3(1.5,1.5, 4.0);
       vec3 ldir = normalize(lightPos - rayOrigin);
@@ -83,7 +96,7 @@ compileGLSL = (abstractSolidModel) ->
   console.log "ASM:"
   console.log abstractSolidModel
 
-  distanceResult = glslDistance abstractSolidModel
+  distanceResult = glslSceneDistance abstractSolidModel
 
   # TEMPORARY
   console.log "Distance Result:"
@@ -95,23 +108,24 @@ compileGLSL = (abstractSolidModel) ->
     mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from distance compiler.'
     return ""
 
-  materialResult = glslMaterial abstractSolidModel
+  idResult = glslSceneId abstractSolidModel
 
   # TEMPORARY
-  console.log "Material Result:"
-  console.log materialResult
+  console.log "Id Result:"
+  console.log idResult
 
-  if materialResult.nodes.length == 1
-    materialResult.nodes[0].code
+  if idResult.nodes.length == 1
+    idResult.nodes[0].code
   else
-    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from material compiler.'
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from id compiler.'
     return ""
 
   program = prefix + 
     (glslLibrary.compile distanceResult.flags.glslFunctions) +
     (sceneDist distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code) +
     sceneNormal +
-    (sceneMaterial materialResult.flags.glslPrelude.code, materialResult.nodes[0].code) +
+    (sceneId idResult.flags.glslPrelude.code, idResult.nodes[0].code) +
+    sceneMaterial() +
     main
   console.log program
   return program

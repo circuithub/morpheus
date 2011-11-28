@@ -1,5 +1,5 @@
 # Compile the GLSL distance function
-glslDistanceCompiler = (minCallback, maxCallback) ->
+glslCompilerDistance = (minCallback, maxCallback) ->
   rayOrigin = 'ro'
   preDispatch = 
     invert: (stack, node, flags) ->
@@ -195,6 +195,4 @@ glslDistanceCompiler = (minCallback, maxCallback) ->
       stack[0].nodes.push node
   
   return ((abstractSolidModel) -> glslCompiler abstractSolidModel, preDispatch, postDispatch)
-
-glslDistance = glslDistanceCompiler ((a,b) -> "min(#{a}, #{b})"), ((a,b) -> "max(#{a}, #{b})")
 
