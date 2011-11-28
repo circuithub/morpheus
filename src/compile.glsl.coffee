@@ -47,7 +47,7 @@ compileGLSL = (abstractSolidModel) ->
     '''
 
   sceneMaterial = (prelude, code) ->
-    "\nint sceneMaterial(in vec3 #{rayOrigin}) {\n#{prelude}  return #{code};\n}\n\n"
+    "\nint sceneMaterial(in vec3 #{rayOrigin}) {\nint mat = -1;\n#{prelude}  #{code};\n  return mat;\n}\n\n"
 
   main = 
     '''
@@ -80,20 +80,39 @@ compileGLSL = (abstractSolidModel) ->
     '''
   
   # TEMPORARY
+  console.log "ASM:"
   console.log abstractSolidModel
 
-  result = compileGLSLDistance abstractSolidModel
+  distanceResult = glslDistance abstractSolidModel
 
   # TEMPORARY
-  console.log result
+  console.log "Distance Result:"
+  console.log distanceResult
 
-  if result.nodes.length == 1
-    result.nodes[0].code
+  if distanceResult.nodes.length == 1
+    distanceResult.nodes[0].code
   else
-    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from compiler.'
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from distance compiler.'
     return ""
 
-  program = prefix + (glslLibrary.compile result.flags.glslFunctions) + (sceneDist result.flags.glslPrelude.code, result.nodes[0].code) + sceneNormal + (sceneMaterial "", "0") + main
+  materialResult = glslMaterial abstractSolidModel
+
+  # TEMPORARY
+  console.log "Material Result:"
+  console.log materialResult
+
+  if materialResult.nodes.length == 1
+    materialResult.nodes[0].code
+  else
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from material compiler.'
+    return ""
+
+  program = prefix + 
+    (glslLibrary.compile distanceResult.flags.glslFunctions) +
+    (sceneDist distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code) +
+    sceneNormal +
+    (sceneMaterial materialResult.flags.glslPrelude.code, materialResult.nodes[0].code) +
+    main
   console.log program
   return program
 

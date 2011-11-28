@@ -12,11 +12,13 @@ glslCompiler = (abstractSolidModel, preDispatch, postDispatch) ->
   result.flags = flags
   return result
 
-glslCompiler.preludePush = (prelude, value) ->
+# Add a variable to the prelude
+# * valueType is optional
+glslCompiler.preludePush = (prelude, value, valueType) ->
   name = 'r' + prelude.counter
   prelude.push [name, value]
   prelude.counter += 1
-  prelude.code += "  vec3 #{name} = #{value};\n"
+  prelude.code += "  #{if valueType? then valueType else 'vec3'} #{name} = #{value};\n"
   return name
 
 glslCompiler.preludePop = (prelude) ->

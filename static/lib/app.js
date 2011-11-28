@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, compileGLSLDistance, compileGLSLMaterial, constants, controlsInit, controlsSourceCompile, glslCompiler, glslLibrary, keyDown, lookAtToQuaternion, mapASM, mapCollectASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslDistance, glslDistanceCompiler, glslLibrary, glslMaterial, keyDown, lookAtToQuaternion, mapASM, mapCollectASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -673,18 +673,18 @@
     result.flags = flags;
     return result;
   };
-  glslCompiler.preludePush = function(prelude, value) {
+  glslCompiler.preludePush = function(prelude, value, valueType) {
     var name;
     name = 'r' + prelude.counter;
     prelude.push([name, value]);
     prelude.counter += 1;
-    prelude.code += "  vec3 " + name + " = " + value + ";\n";
+    prelude.code += "  " + (valueType != null ? valueType : 'vec3') + " " + name + " = " + value + ";\n";
     return name;
   };
   glslCompiler.preludePop = function(prelude) {
     return prelude.pop()[0];
   };
-  compileGLSLDistance = (function() {
+  glslDistanceCompiler = function(minCallback, maxCallback) {
     var compileCorner, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
     preDispatch = {
@@ -822,7 +822,7 @@
         node.code = codes.shift();
         for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
           c = codes[_j];
-          node.code = "min(" + c + ", " + node.code + ")";
+          node.code = minCallback(c, node.code, flags.glslPrelude);
         }
         return stack[0].nodes.push(node);
       },
@@ -873,7 +873,7 @@
         node.code = codes.shift();
         for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
           c = codes[_j];
-          node.code = "max(" + c + ", " + node.code + ")";
+          node.code = maxCallback(c, node.code, flags.glslPrelude);
         }
         return stack[0].nodes.push(node);
       },
@@ -943,10 +943,29 @@
     return function(abstractSolidModel) {
       return glslCompiler(abstractSolidModel, preDispatch, postDispatch);
     };
-  })();
-  compileGLSLMaterial = function() {};
+  };
+  glslDistance = glslDistanceCompiler((function(a, b) {
+    return "min(" + a + ", " + b + ")";
+  }), (function(a, b) {
+    return "max(" + a + ", " + b + ")";
+  }));
+  glslMaterial = glslDistanceCompiler((function(a, b, prelude) {
+    var memoA, memoB;
+    glslCompiler.preludePush(prelude, String(a), 'float');
+    memoA = glslCompiler.preludePop(prelude);
+    glslCompiler.preludePush(prelude, String(b), 'float');
+    memoB = glslCompiler.preludePop(prelude);
+    return "" + memoA + " < " + memoB + "? " + memoA + " : " + memoB;
+  }), (function(a, b, prelude) {
+    var memoA, memoB;
+    glslCompiler.preludePush(prelude, String(a), 'float');
+    memoA = glslCompiler.preludePop(prelude);
+    glslCompiler.preludePush(prelude, String(b), 'float');
+    memoB = glslCompiler.preludePop(prelude);
+    return "" + memoA + " > " + memoB + "? " + memoA + " : " + memoB;
+  }));
   compileGLSL = function(abstractSolidModel) {
-    var main, prefix, program, rayDirection, rayOrigin, result, sceneDist, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
+    var distanceResult, main, materialResult, prefix, program, rayDirection, rayOrigin, sceneDist, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
     rayOrigin = 'ro';
     rayDirection = 'rd';
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
@@ -957,19 +976,30 @@
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
     sceneMaterial = function(prelude, code) {
-      return "\nint sceneMaterial(in vec3 " + rayOrigin + ") {\n" + prelude + "  return " + code + ";\n}\n\n";
+      return "\nint sceneMaterial(in vec3 " + rayOrigin + ") {\nint mat = -1;\n" + prelude + "  " + code + ";\n  return mat;\n}\n\n";
     };
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    console.log("ASM:");
     console.log(abstractSolidModel);
-    result = compileGLSLDistance(abstractSolidModel);
-    console.log(result);
-    if (result.nodes.length === 1) {
-      result.nodes[0].code;
+    distanceResult = glslDistance(abstractSolidModel);
+    console.log("Distance Result:");
+    console.log(distanceResult);
+    if (distanceResult.nodes.length === 1) {
+      distanceResult.nodes[0].code;
     } else {
-      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from compiler.');
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from distance compiler.');
       return "";
     }
-    program = prefix + (glslLibrary.compile(result.flags.glslFunctions)) + (sceneDist(result.flags.glslPrelude.code, result.nodes[0].code)) + sceneNormal + (sceneMaterial("", "0")) + main;
+    materialResult = glslMaterial(abstractSolidModel);
+    console.log("Material Result:");
+    console.log(materialResult);
+    if (materialResult.nodes.length === 1) {
+      materialResult.nodes[0].code;
+    } else {
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from material compiler.');
+      return "";
+    }
+    program = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneMaterial(materialResult.flags.glslPrelude.code, materialResult.nodes[0].code)) + main;
     console.log(program);
     return program;
   };

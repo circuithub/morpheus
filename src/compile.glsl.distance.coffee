@@ -1,5 +1,5 @@
 # Compile the GLSL distance function
-compileGLSLDistance = do () ->
+glslDistanceCompiler = (minCallback, maxCallback) ->
   rayOrigin = 'ro'
   preDispatch = 
     invert: (stack, node, flags) ->
@@ -101,7 +101,7 @@ compileGLSLDistance = do () ->
       # Calculate the maximum distances
       node.code = codes.shift()
       for c in codes
-        node.code = "min(#{c}, #{node.code})"
+        node.code = minCallback c, node.code, flags.glslPrelude
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       # Check that composite node is not empty
@@ -140,7 +140,7 @@ compileGLSLDistance = do () ->
       # Calculate the maximum distances
       node.code = codes.shift()
       for c in codes
-        node.code = "max(#{c}, #{node.code})"
+        node.code = maxCallback c, node.code, flags.glslPrelude
       stack[0].nodes.push node
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
@@ -195,4 +195,6 @@ compileGLSLDistance = do () ->
       stack[0].nodes.push node
   
   return ((abstractSolidModel) -> glslCompiler abstractSolidModel, preDispatch, postDispatch)
+
+glslDistance = glslDistanceCompiler ((a,b) -> "min(#{a}, #{b})"), ((a,b) -> "max(#{a}, #{b})")
 
