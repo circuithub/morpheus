@@ -16,6 +16,7 @@ appFiles  = [
   'compile.csm'
   'compile.asm.api'
   'compile.asm.collect'
+  'compile.asm.generics'
   'compile.asm.optimize'
   'compile.asm'
   'compile.glsl.library'

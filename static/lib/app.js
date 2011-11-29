@@ -971,8 +971,6 @@
     result = Object.create(toStringPrototype);
     result.str = a;
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
-    console.log(result);
-    console.log(result.materialId);
     return result;
   }), (function(a, b, flags) {
     var memoA, memoB, result;
@@ -983,8 +981,6 @@
     result = Object.create(toStringPrototype);
     result.str = "" + memoA + " < " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
-    console.log(result);
-    console.log(result.materialId);
     return result;
   }), (function(a, b, flags) {
     var memoA, memoB, result;
@@ -995,8 +991,6 @@
     result = Object.create(toStringPrototype);
     result.str = "" + memoA + " > " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
-    console.log(result);
-    console.log(result.materialId);
     return result;
   }));
   compileGLSL = function(abstractSolidModel) {
