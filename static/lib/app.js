@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -377,6 +377,39 @@
         nodes: []
       }
     ], node, flags);
+  };
+  compileASMBounds = function(abstractSolidModel) {
+    var compileASMNode, dispatch;
+    dispatch = {
+      scene: function(node) {},
+      sphere: function(node) {},
+      cylinder: function(node) {},
+      intersect: function(node) {},
+      union: function(node) {},
+      difference: function(node) {},
+      translate: function(node) {},
+      material: function(node) {}
+    };
+    compileASMNode = function(node) {
+      switch (typeof node) {
+        case 'object':
+          if (dispatch[node.type] != null) {
+            return dispatch[node.type](node);
+          } else {
+            mecha.log("Unexpected node type '" + node.type + "'.");
+            return {};
+          }
+          break;
+        default:
+          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
+          return {};
+      }
+    };
+    if (abstractSolidModel.type !== 'scene') {
+      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + abstractSolidModel.type + "'.");
+      return;
+    }
+    return compileASMNode(abstractSolidModel);
   };
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;

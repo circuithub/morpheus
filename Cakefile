@@ -18,6 +18,7 @@ appFiles  = [
   'compile.asm.api'
   'compile.asm.generics'
   'compile.asm.optimize'
+  'compile.asm.bounds'
   'compile.asm'
   'compile.glsl.library'
   'compile.glsl.compiler'
