@@ -104,6 +104,8 @@ compileGLSL = (abstractSolidModel) ->
   console.log "ASM:"
   console.log abstractSolidModel
 
+  # Generate the fragment shader
+
   distanceResult = glslSceneDistance abstractSolidModel
 
   # TEMPORARY
@@ -128,13 +130,24 @@ compileGLSL = (abstractSolidModel) ->
     mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from id compiler.'
     return ""
 
-  program = prefix + 
+  fragmentShader = prefix + 
     (glslLibrary.compile distanceResult.flags.glslFunctions) +
     (sceneDist distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code) +
     sceneNormal +
     (sceneId idResult.flags.glslPrelude.code, idResult.nodes[0].code) +
     (sceneMaterial idResult.flags.materials) +
     main
-  console.log program
-  return program
+  console.log fragmentShader
+
+  # Generate the vertex shader
+  
+  boundsResult = compileASMBounds abstractSolidModel
+
+  # TEMPORARY
+  console.log "Bounds Result:"
+  console.log boundsResult
+
+  # TODO: vertexShader = ...
+
+  return fragmentShader
 

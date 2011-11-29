@@ -379,37 +379,100 @@
     ], node, flags);
   };
   compileASMBounds = function(abstractSolidModel) {
-    var compileASMNode, dispatch;
-    dispatch = {
-      scene: function(node) {},
-      sphere: function(node) {},
-      cylinder: function(node) {},
-      intersect: function(node) {},
-      union: function(node) {},
-      difference: function(node) {},
-      translate: function(node) {},
-      material: function(node) {}
+    var INTERSECT, UNION, flags, postDispatch, preDispatch, result;
+    INTERSECT = 0;
+    UNION = 1;
+    preDispatch = {
+      invert: function(stack, node, flags) {
+        return flags.invert = !flags.invert;
+      },
+      union: function(stack, node, flags) {
+        return flags.composition.push(UNION);
+      },
+      intersect: function(stack, node, flags) {
+        return flags.composition.push(INTERSECT);
+      },
+      "default": function(stack, node, flags) {}
     };
-    compileASMNode = function(node) {
-      switch (typeof node) {
-        case 'object':
-          if (dispatch[node.type] != null) {
-            return dispatch[node.type](node);
-          } else {
-            mecha.log("Unexpected node type '" + node.type + "'.");
-            return {};
+    ({
+      intersectChildren: function(nodes) {
+        var bounds, i, n, _i, _len;
+        bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          n = nodes[_i];
+          for (i = 0; i <= 2; i++) {
+            bounds[0][i] = Math.max(n.bounds[0][i], bounds[0][i]);
           }
-          break;
-        default:
-          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
-          return {};
+          for (i = 0; i <= 2; i++) {
+            bounds[1][i] = Math.min(n.bounds[1][i], bounds[1][i]);
+          }
+        }
+        return bounds;
+      },
+      unionChildren: function(nodes) {
+        var bounds, i, n, _i, _len;
+        bounds = [[Infinity, Infinity, Infinity], [-Infinity, -Infinity, -Infinity]];
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          n = nodes[_i];
+          for (i = 0; i <= 2; i++) {
+            bounds[0][i] = Math.min(n.bounds[0][i], bounds[0][i]);
+          }
+          for (i = 0; i <= 2; i++) {
+            bounds[1][i] = Math.max(n.bounds[1][i], bounds[1][i]);
+          }
+        }
+        return bounds;
+      }
+    });
+    postDispatch = {
+      invert: function(stack, node, flags) {
+        flags.invert = !flags.invert;
+        return stack[0].nodes.push(node);
+      },
+      union: function(stack, node, flags) {
+        flags.composition.pop();
+        return stack[0].nodes.push(node);
+      },
+      intersect: function(stack, node, flags) {
+        flags.composition.pop();
+        return stack[0].nodes.push(node);
+      },
+      translate: function(stack, node, flags) {
+        return stack[0].nodes.push(node);
+      },
+      halfspace: function(stack, node, flags) {
+        node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
+        node.bounds[flags.invert ? 0 : 1][node.attr.axis] = node.attr.val;
+        return stack[0].nodes.push(node);
+      },
+      cylinder: function(stack, node, flags) {
+        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
+        node.bounds[0][node.attr.axis] = -Infinity;
+        node.bounds[1][node.attr.axis] = Infinity;
+        return stack[0].nodes.push(node);
+      },
+      sphere: function(stack, node, flags) {
+        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
+        return stack[0].nodes.push(node);
+      },
+      material: function(stack, node, flags) {
+        return stack[0].nodes.push(node);
+      },
+      "default": function(stack, node, flags) {
+        return stack[0].nodes.push(node);
       }
     };
-    if (abstractSolidModel.type !== 'scene') {
-      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + abstractSolidModel.type + "'.");
-      return;
-    }
-    return compileASMNode(abstractSolidModel);
+    flags = {
+      invert: false,
+      composition: [UNION]
+    };
+    result = mapASM(preDispatch, postDispatch, [
+      {
+        nodes: []
+      }
+    ], abstractSolidModel, flags);
+    result.flags = flags;
+    return result;
   };
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
@@ -981,7 +1044,7 @@
     return result;
   }));
   compileGLSL = function(abstractSolidModel) {
-    var distanceResult, idResult, main, prefix, program, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
+    var boundsResult, distanceResult, fragmentShader, idResult, main, prefix, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
     rayOrigin = 'ro';
     rayDirection = 'rd';
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
@@ -1038,9 +1101,12 @@
       mecha.logInternalError('GLSL Compiler: Expected exactly one result node from id compiler.');
       return "";
     }
-    program = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + (sceneMaterial(idResult.flags.materials)) + main;
-    console.log(program);
-    return program;
+    fragmentShader = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + (sceneMaterial(idResult.flags.materials)) + main;
+    console.log(fragmentShader);
+    boundsResult = compileASMBounds(abstractSolidModel);
+    console.log("Bounds Result:");
+    console.log(boundsResult);
+    return fragmentShader;
   };
   constants = {
     canvas: {
