@@ -5,6 +5,8 @@ glslCompiler = (abstractSolidModel, preDispatch, postDispatch) ->
     invert: false
     glslFunctions: {}
     glslPrelude: [['ro', "#{rayOrigin}"]]
+    materials: []
+    materialIdStack: [-1]
   flags.glslPrelude.code = ""
   flags.glslPrelude.counter = 0
 

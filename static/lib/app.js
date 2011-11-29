@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mapCollectASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mapCollectASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -661,7 +661,9 @@
     flags = {
       invert: false,
       glslFunctions: {},
-      glslPrelude: [['ro', "" + rayOrigin]]
+      glslPrelude: [['ro', "" + rayOrigin]],
+      materials: [],
+      materialIdStack: [-1]
     };
     flags.glslPrelude.code = "";
     flags.glslPrelude.counter = 0;
@@ -684,7 +686,7 @@
   glslCompiler.preludePop = function(prelude) {
     return prelude.pop()[0];
   };
-  glslCompilerDistance = function(minCallback, maxCallback) {
+  glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback) {
     var compileCorner, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
     preDispatch = {
@@ -714,6 +716,10 @@
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
       },
+      material: function(stack, node, flags) {
+        flags.materialIdStack.push(flags.materials.length);
+        return flags.materials.push("vec3(" + node.attr.color[0] + ", " + node.attr.color[1] + ", " + node.attr.color[2] + ")");
+      },
       "default": function(stack, node, flags) {}
     };
     compileCorner = function(ro, flags, state) {
@@ -729,7 +735,7 @@
       if (remainingHalfSpaces === 1) {
         for (index = 0; index <= 5; index++) {
           if (state.hs[index] !== null) {
-            state.codes.push((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]));
+            state.codes.push(primitiveCallback((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]), flags));
             state.hs[index] = null;
             break;
           }
@@ -743,7 +749,7 @@
         glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         dist = glslCompiler.preludePop(flags.glslPrelude);
         if (state.hs[0] !== null || state.hs[3] !== null) {
-          state.codes.push("" + dist + ".x");
+          state.codes.push(primitiveCallback("" + dist + ".x", flags));
           if (state.hs[0] !== null) {
             state.hs[0] = null;
           } else {
@@ -752,7 +758,7 @@
           remainingHalfSpaces -= 1;
         }
         if (state.hs[1] !== null || state.hs[4] !== null) {
-          state.codes.push("" + dist + ".y");
+          state.codes.push(primitiveCallback("" + dist + ".y", flags));
           if (state.hs[1] !== null) {
             state.hs[1] = null;
           } else {
@@ -761,7 +767,7 @@
           remainingHalfSpaces -= 1;
         }
         if (state.hs[2] !== null || state.hs[5] !== null) {
-          state.codes.push("" + dist + ".z");
+          state.codes.push(primitiveCallback("" + dist + ".z", flags));
           if (state.hs[2] !== null) {
             state.hs[2] = null;
           } else {
@@ -822,7 +828,7 @@
         node.code = codes.shift();
         for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
           c = codes[_j];
-          node.code = minCallback(c, node.code, flags.glslPrelude);
+          node.code = minCallback(c, node.code, flags);
         }
         return stack[0].nodes.push(node);
       },
@@ -873,7 +879,7 @@
         node.code = codes.shift();
         for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
           c = codes[_j];
-          node.code = maxCallback(c, node.code, flags.glslPrelude);
+          node.code = maxCallback(c, node.code, flags);
         }
         return stack[0].nodes.push(node);
       },
@@ -917,7 +923,7 @@
               continue;
             default:
               ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-              node.code = "" + node.attr.val + " - " + ro + "[" + node.attr.axis + "]";
+              node.code = primitiveCallback("" + node.attr.val + " - " + ro + "[" + node.attr.axis + "]", flags);
           }
           break;
         }
@@ -927,13 +933,17 @@
         var planeCoords, ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         planeCoords = ['yz', 'xz', 'xy'][node.attr.axis];
-        node.code = "length(" + ro + "." + planeCoords + ") - " + node.attr.radius;
+        node.code = primitiveCallback("length(" + ro + "." + planeCoords + ") - " + node.attr.radius, flags);
         return stack[0].nodes.push(node);
       },
       sphere: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        node.code = "length(" + ro + ") - " + node.attr.radius;
+        node.code = primitiveCallback("length(" + ro + ") - " + node.attr.radius, flags);
+        return stack[0].nodes.push(node);
+      },
+      material: function(stack, node, flags) {
+        flags.materialIdStack.pop();
         return stack[0].nodes.push(node);
       },
       "default": function(stack, node, flags) {
@@ -944,25 +954,50 @@
       return glslCompiler(abstractSolidModel, preDispatch, postDispatch);
     };
   };
-  glslSceneDistance = glslCompilerDistance((function(a, b) {
+  glslSceneDistance = glslCompilerDistance((function(a) {
+    return a;
+  }), (function(a, b) {
     return "min(" + a + ", " + b + ")";
   }), (function(a, b) {
     return "max(" + a + ", " + b + ")";
   }));
-  glslSceneId = glslCompilerDistance((function(a, b, prelude) {
-    var memoA, memoB;
-    glslCompiler.preludePush(prelude, String(a), 'float');
-    memoA = glslCompiler.preludePop(prelude);
-    glslCompiler.preludePush(prelude, String(b), 'float');
-    memoB = glslCompiler.preludePop(prelude);
-    return "" + memoA + " < " + memoB + "? (id = 1, " + memoA + ") : (id = 2, " + memoB + ")";
-  }), (function(a, b, prelude) {
-    var memoA, memoB;
-    glslCompiler.preludePush(prelude, String(a), 'float');
-    memoA = glslCompiler.preludePop(prelude);
-    glslCompiler.preludePush(prelude, String(b), 'float');
-    memoB = glslCompiler.preludePop(prelude);
-    return "" + memoA + " > " + memoB + "? (id = 3, " + memoA + ") : (id = 4, " + memoB + ")";
+  toStringPrototype = {
+    toString: function() {
+      return this.str;
+    }
+  };
+  glslSceneId = glslCompilerDistance((function(a, flags) {
+    var result;
+    result = Object.create(toStringPrototype);
+    result.str = a;
+    result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
+    console.log(result);
+    console.log(result.materialId);
+    return result;
+  }), (function(a, b, flags) {
+    var memoA, memoB, result;
+    glslCompiler.preludePush(flags.glslPrelude, String(a), 'float');
+    memoA = glslCompiler.preludePop(flags.glslPrelude);
+    glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
+    memoB = glslCompiler.preludePop(flags.glslPrelude);
+    result = Object.create(toStringPrototype);
+    result.str = "" + memoA + " < " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
+    result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
+    console.log(result);
+    console.log(result.materialId);
+    return result;
+  }), (function(a, b, flags) {
+    var memoA, memoB, result;
+    glslCompiler.preludePush(flags.glslPrelude, String(a), 'float');
+    memoA = glslCompiler.preludePop(flags.glslPrelude);
+    glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
+    memoB = glslCompiler.preludePop(flags.glslPrelude);
+    result = Object.create(toStringPrototype);
+    result.str = "" + memoA + " > " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
+    result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
+    console.log(result);
+    console.log(result.materialId);
+    return result;
   }));
   compileGLSL = function(abstractSolidModel) {
     var distanceResult, idResult, main, prefix, program, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
@@ -978,8 +1013,28 @@
     sceneId = function(prelude, code) {
       return "\nint sceneId(in vec3 " + rayOrigin + ") {\n  int id = -1;\n" + prelude + "  " + code + ";\n  return id;\n}\n\n";
     };
-    sceneMaterial = function() {
-      return 'vec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n  return id == 1? vec3(0.2, 0.8, 0.1) :\n         id == 2? vec3(0.8, 0.2, 0.1) :\n         id > 2? vec3(0.8, 0.8, 0.1) : vec3(0.1, 0.2, 0.8);\n}\n';
+    sceneMaterial = function(materials) {
+      var binarySearch, i, m, result, _ref;
+      binarySearch = function(start, end) {
+        var diff, mid;
+        diff = end - start;
+        if (diff === 1) {
+          return "m" + start;
+        } else {
+          mid = Math.floor(diff * 0.5);
+          return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
+        }
+      };
+      result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
+      if (materials.length > 0) {
+        for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+          m = materials[i];
+          result += "  vec3 m" + i + " = " + m + ";\n";
+        }
+      }
+      result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+      result += "}\n\n";
+      return result;
     };
     main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(rayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
     console.log("ASM:");
@@ -1002,7 +1057,7 @@
       mecha.logInternalError('GLSL Compiler: Expected exactly one result node from id compiler.');
       return "";
     }
-    program = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + sceneMaterial() + main;
+    program = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + (sceneMaterial(idResult.flags.materials)) + main;
     console.log(program);
     return program;
   };

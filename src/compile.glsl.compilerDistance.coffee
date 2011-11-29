@@ -1,5 +1,5 @@
 # Compile the GLSL distance function
-glslCompilerDistance = (minCallback, maxCallback) ->
+glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
   rayOrigin = 'ro'
   preDispatch = 
     invert: (stack, node, flags) ->
@@ -14,6 +14,9 @@ glslCompilerDistance = (minCallback, maxCallback) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"
+    material: (stack, node, flags) ->
+      flags.materialIdStack.push flags.materials.length
+      flags.materials.push "vec3(#{node.attr.color[0]}, #{node.attr.color[1]}, #{node.attr.color[2]})"
     default: (stack, node, flags) ->
       return
 
@@ -24,7 +27,7 @@ glslCompilerDistance = (minCallback, maxCallback) ->
     if remainingHalfSpaces == 1
       # Find the axis (from 0 to 5) for the halfSpace node
       for index in [0..5] when state.hs[index] != null
-        state.codes.push (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}")
+        state.codes.push primitiveCallback (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}"), flags
         state.hs[index] = null
         break
       remainingHalfSpaces -= 1
@@ -48,15 +51,15 @@ glslCompilerDistance = (minCallback, maxCallback) ->
       glslCompiler.preludePush flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
       dist = glslCompiler.preludePop flags.glslPrelude
       if state.hs[0] != null or state.hs[3] != null
-        state.codes.push "#{dist}.x" 
+        state.codes.push primitiveCallback "#{dist}.x", flags
         if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
         remainingHalfSpaces -= 1
       if state.hs[1] != null or state.hs[4] != null
-        state.codes.push "#{dist}.y" 
+        state.codes.push primitiveCallback "#{dist}.y", flags
         if state.hs[1] != null then state.hs[1] = null else state.hs[4] = null
         remainingHalfSpaces -= 1
       if state.hs[2] != null or state.hs[5] != null
-        state.codes.push "#{dist}.z" 
+        state.codes.push primitiveCallback "#{dist}.z", flags
         if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
         remainingHalfSpaces -= 1
     return
@@ -101,7 +104,7 @@ glslCompilerDistance = (minCallback, maxCallback) ->
       # Calculate the maximum distances
       node.code = codes.shift()
       for c in codes
-        node.code = minCallback c, node.code, flags.glslPrelude
+        node.code = minCallback c, node.code, flags
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       # Check that composite node is not empty
@@ -140,7 +143,7 @@ glslCompilerDistance = (minCallback, maxCallback) ->
       # Calculate the maximum distances
       node.code = codes.shift()
       for c in codes
-        node.code = maxCallback c, node.code, flags.glslPrelude
+        node.code = maxCallback c, node.code, flags
       stack[0].nodes.push node
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
@@ -179,17 +182,20 @@ glslCompilerDistance = (minCallback, maxCallback) ->
             # This may occur in special cases where we cannot do normal corner compilation
             # (Such as a separate transformations on the plane itself)
             ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-            node.code = "#{node.attr.val} - #{ro}[#{node.attr.axis}]"
+            node.code = primitiveCallback "#{node.attr.val} - #{ro}[#{node.attr.axis}]", flags
         break
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       planeCoords = ['yz','xz','xy'][node.attr.axis]
-      node.code = "length(#{ro}.#{planeCoords}) - #{node.attr.radius}"
+      node.code = primitiveCallback "length(#{ro}.#{planeCoords}) - #{node.attr.radius}", flags
       stack[0].nodes.push node
     sphere: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      node.code = "length(#{ro}) - #{node.attr.radius}"
+      node.code = primitiveCallback "length(#{ro}) - #{node.attr.radius}", flags
+      stack[0].nodes.push node
+    material: (stack, node, flags) ->
+      flags.materialIdStack.pop()
       stack[0].nodes.push node
     default: (stack, node, flags) ->
       stack[0].nodes.push node

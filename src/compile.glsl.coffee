@@ -49,17 +49,40 @@ compileGLSL = (abstractSolidModel) ->
   sceneId = (prelude, code) ->
     "\nint sceneId(in vec3 #{rayOrigin}) {\n  int id = -1;\n#{prelude}  #{code};\n  return id;\n}\n\n"
 
-  sceneMaterial = () ->
-    # ro = ray origin
-    '''
-    vec3 sceneMaterial(in vec3 ro) {
-      int id = sceneId(ro);
-      return id == 1? vec3(0.2, 0.8, 0.1) :
-             id == 2? vec3(0.8, 0.2, 0.1) :
-             id > 2? vec3(0.8, 0.8, 0.1) : vec3(0.1, 0.2, 0.8);
-    }
-    
-    '''
+  sceneMaterial = (materials) ->
+
+    binarySearch = (start, end) ->
+      diff = end - start
+      if diff == 1
+        "m#{start}"
+      else
+        mid = Math.floor (diff * 0.5)
+        "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
+
+    #result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
+    #if materials.length > 0
+    #  for i in [0..materials.length]
+    #    m = materials[i]
+    #    result += "  vec3 m#{i} = #{m};\n"
+    #result += "  return id >= 0?" m[id] : "vec3(0.5);\n"
+    #result += "}\n\n"
+    #result
+    result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
+    if materials.length > 0
+      #result += "  const vec3 m[#{materials.length}] = vec3[](\n"
+      #result += "    #{materials[0]}"
+      #for m in materials[1..materials.length]
+      #  result += ",\n    #{m}"
+      #result += "\n  );\n"
+      #for i in [0...materials.length]
+      #  result += "  m[#{i}] = #{materials[i]};\n"
+      for i in [0...materials.length]
+        m = materials[i]
+        result += "  vec3 m#{i} = #{m};\n"
+    #result += "  return id >= 0? m[id] : vec3(0.5);\n"
+    result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
+    result += "}\n\n"
+    result
 
   main = 
     '''
@@ -125,7 +148,7 @@ compileGLSL = (abstractSolidModel) ->
     (sceneDist distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code) +
     sceneNormal +
     (sceneId idResult.flags.glslPrelude.code, idResult.nodes[0].code) +
-    sceneMaterial() +
+    (sceneMaterial idResult.flags.materials) +
     main
   console.log program
   return program
