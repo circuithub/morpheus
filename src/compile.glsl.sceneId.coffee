@@ -6,8 +6,6 @@ glslSceneId =
         result = Object.create toStringPrototype
         result.str = a
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
-        console.log result
-        console.log result.materialId
         result
     ),
     (
@@ -20,8 +18,6 @@ glslSceneId =
         result = Object.create toStringPrototype
         result.str = "#{memoA} < #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
-        console.log result
-        console.log result.materialId
         result
     ),
     (
@@ -34,7 +30,5 @@ glslSceneId =
         result = Object.create toStringPrototype
         result.str = "#{memoA} > #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
-        console.log result
-        console.log result.materialId
         result
     )
