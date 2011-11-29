@@ -33,6 +33,7 @@ compileGLSL = (abstractSolidModel) ->
     '''
 
   # TODO: See if we can also do anti-aliasing using the information gathered for the scene normal
+  #       Perhaps calculate some kind of rough pixel coverage information...
   sceneNormal =
     # p = position (ray hit position)
     '''

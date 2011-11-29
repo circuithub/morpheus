@@ -144,6 +144,15 @@
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
+  toStringPrototype = (function() {
+    function toStringPrototype(str) {
+      this.str = str;
+    }
+    toStringPrototype.prototype.toString = function() {
+      return this.str;
+    };
+    return toStringPrototype;
+  })();
   compileCSM = function(source, callback) {
     var postfix, prefix, requestId;
     prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  try {\n  /* BEGIN SOURCE */\n  return scene(\n';
@@ -914,15 +923,9 @@
   }), (function(a, b) {
     return "max(" + a + ", " + b + ")";
   }));
-  toStringPrototype = {
-    toString: function() {
-      return this.str;
-    }
-  };
   glslSceneId = glslCompilerDistance((function(a, flags) {
     var result;
-    result = Object.create(toStringPrototype);
-    result.str = a;
+    result = new toStringPrototype(a);
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
     return result;
   }), (function(a, b, flags) {
@@ -931,8 +934,7 @@
     memoA = glslCompiler.preludePop(flags.glslPrelude);
     glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
     memoB = glslCompiler.preludePop(flags.glslPrelude);
-    result = Object.create(toStringPrototype);
-    result.str = "" + memoA + " < " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
+    result = new toStringPrototype("" + memoA + " < " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")");
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
     return result;
   }), (function(a, b, flags) {
@@ -941,8 +943,7 @@
     memoA = glslCompiler.preludePop(flags.glslPrelude);
     glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
     memoB = glslCompiler.preludePop(flags.glslPrelude);
-    result = Object.create(toStringPrototype);
-    result.str = "" + memoA + " > " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")";
+    result = new toStringPrototype("" + memoA + " > " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")");
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
     return result;
   }));

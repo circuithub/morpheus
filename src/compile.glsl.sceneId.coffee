@@ -1,10 +1,8 @@
 # Generate a function to calculate the scene id at a certain point in space
-toStringPrototype = toString: () -> this.str
 glslSceneId =
   glslCompilerDistance (
       (a,flags) -> 
-        result = Object.create toStringPrototype
-        result.str = a
+        result = new toStringPrototype a
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
         result
     ),
@@ -15,8 +13,7 @@ glslSceneId =
         memoA = glslCompiler.preludePop flags.glslPrelude
         glslCompiler.preludePush flags.glslPrelude, (String b), 'float'
         memoB = glslCompiler.preludePop flags.glslPrelude
-        result = Object.create toStringPrototype
-        result.str = "#{memoA} < #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
+        result = new toStringPrototype "#{memoA} < #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
         result
     ),
@@ -27,8 +24,7 @@ glslSceneId =
         memoA = glslCompiler.preludePop flags.glslPrelude
         glslCompiler.preludePush flags.glslPrelude, (String b), 'float'
         memoB = glslCompiler.preludePop flags.glslPrelude
-        result = Object.create toStringPrototype
-        result.str = "#{memoA} > #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
+        result = new toStringPrototype "#{memoA} > #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
         result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
         result
     )

@@ -12,6 +12,7 @@ appFiles  = [
   'mecha.log'
   'array'
   'math'
+  'util.tostring'
   #'api.csm'
   'compile.csm'
   'compile.asm.api'
