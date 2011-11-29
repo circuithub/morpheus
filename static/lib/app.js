@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, collectASM, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mapCollectASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -246,53 +246,6 @@
         type: 'sphere',
         attr: attr
       };
-    }
-  };
-  mapCollectASM = function(nodes, flags, params, dispatch) {
-    var node, parentTranslation, _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-      node = nodes[_i];
-      _results.push((function() {
-        switch (node.type) {
-          case 'invert':
-            flags.invert = !flags.invert;
-            if (dispatch[node.type] != null) {
-              dispatch[node.type](node, flags, params);
-            }
-            mapCollectASM(node.nodes, flags, params, dispatch);
-            return flags.invert = !flags.invert;
-          case 'translate':
-            parentTranslation = flags.translation;
-            flags.translation = node.attr.offset;
-            mapCollectASM(node.nodes, flags, params, dispatch);
-            return flags.translation = parentTranslation;
-          default:
-            if (dispatch[node.type] != null) {
-              return dispatch[node.type](node, flags, params);
-            } else {
-              if (dispatch["default"] !== null) {
-                return dispatch["default"](node, flags, params);
-              }
-            }
-        }
-      })());
-    }
-    return _results;
-  };
-  collectASM = {
-    intersect: function(nodes, flags, halfSpaceBins) {
-      return mapCollectASM(nodes, flags, {
-        halfSpaceBins: halfSpaceBins
-      }, {
-        halfspace: function(node, flags, params) {
-          return params.halfSpaceBins[node.attr.axis + (flags.invert ? 3 : 0)].push(node.attr.val);
-        },
-        mirror: function() {},
-        "default": function(node) {
-          return mecha.logInternalError("ASM Collect: Unsupported node type, '" + node.type + "', inside intersection.");
-        }
-      });
     }
   };
   mapASM = function(preDispatch, postDispatch, stack, node, flags) {
