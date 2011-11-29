@@ -50,7 +50,6 @@ compileGLSL = (abstractSolidModel) ->
     "\nint sceneId(in vec3 #{rayOrigin}) {\n  int id = -1;\n#{prelude}  #{code};\n  return id;\n}\n\n"
 
   sceneMaterial = (materials) ->
-
     binarySearch = (start, end) ->
       diff = end - start
       if diff == 1
@@ -59,27 +58,11 @@ compileGLSL = (abstractSolidModel) ->
         mid = Math.floor (diff * 0.5)
         "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
 
-    #result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
-    #if materials.length > 0
-    #  for i in [0..materials.length]
-    #    m = materials[i]
-    #    result += "  vec3 m#{i} = #{m};\n"
-    #result += "  return id >= 0?" m[id] : "vec3(0.5);\n"
-    #result += "}\n\n"
-    #result
     result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
     if materials.length > 0
-      #result += "  const vec3 m[#{materials.length}] = vec3[](\n"
-      #result += "    #{materials[0]}"
-      #for m in materials[1..materials.length]
-      #  result += ",\n    #{m}"
-      #result += "\n  );\n"
-      #for i in [0...materials.length]
-      #  result += "  m[#{i}] = #{materials[i]};\n"
       for i in [0...materials.length]
         m = materials[i]
         result += "  vec3 m#{i} = #{m};\n"
-    #result += "  return id >= 0? m[id] : vec3(0.5);\n"
     result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
     result += "}\n\n"
     result
