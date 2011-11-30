@@ -1124,7 +1124,7 @@
     console.log(boundsResult);
     vertexShader = vertexShaderMain(boundsResult.nodes[0].bounds);
     console.log(vertexShader);
-    return fragmentShader;
+    return [vertexShader, fragmentShader];
   };
   constants = {
     canvas: {
@@ -1236,14 +1236,15 @@
   };
   sceneInit = function() {
     return compileCSM(($('#source-code')).val(), function(result) {
-      var shaderDef;
+      var shaderDef, shaders;
+      shaders = compileGLSL(compileASM(result));
       shaderDef = {
         type: 'shader',
         id: 'main-shader',
         shaders: [
           {
             stage: 'fragment',
-            code: compileGLSL(compileASM(result))
+            code: shaders[1]
           }
         ],
         vars: {}

@@ -169,5 +169,5 @@ compileGLSL = (abstractSolidModel) ->
   console.log vertexShader
   ##
 
-  return fragmentShader
+  return [vertexShader, fragmentShader]
 

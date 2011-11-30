@@ -9,12 +9,16 @@ canvasInit = () ->
 sceneInit = () ->
   compileCSM ($ '#source-code').val(), 
     (result) ->
+      shaders = compileGLSL compileASM result
       shaderDef =
         type: 'shader',
         id: 'main-shader',
         shaders: [
+        #  stage: 'vertex',
+        #  code: shaders[0]
+        #,
           stage: 'fragment',
-          code: compileGLSL compileASM result
+          code: shaders[1]
         ]
         vars: {}
       (state.scene.findNode 'cube-mat').insert 'node', shaderDef
