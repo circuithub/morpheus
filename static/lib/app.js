@@ -379,9 +379,9 @@
     ], node, flags);
   };
   compileASMBounds = function(abstractSolidModel) {
-    var INTERSECT, UNION, flags, postDispatch, preDispatch, result;
-    INTERSECT = 0;
-    UNION = 1;
+    var INTERSECT, UNION, collectChildren, flags, intersectChildren, postDispatch, preDispatch, result, unionChildren;
+    UNION = 0;
+    INTERSECT = 1;
     preDispatch = {
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
@@ -394,50 +394,68 @@
       },
       "default": function(stack, node, flags) {}
     };
-    ({
-      intersectChildren: function(nodes) {
-        var bounds, i, n, _i, _len;
-        bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          n = nodes[_i];
-          for (i = 0; i <= 2; i++) {
-            bounds[0][i] = Math.max(n.bounds[0][i], bounds[0][i]);
-          }
-          for (i = 0; i <= 2; i++) {
-            bounds[1][i] = Math.min(n.bounds[1][i], bounds[1][i]);
-          }
+    unionChildren = function(nodes) {
+      var bounds, i, n, _i, _len;
+      bounds = [[Infinity, Infinity, Infinity], [-Infinity, -Infinity, -Infinity]];
+      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+        n = nodes[_i];
+        for (i = 0; i <= 2; i++) {
+          bounds[0][i] = Math.min(n.bounds[0][i], bounds[0][i]);
         }
-        return bounds;
-      },
-      unionChildren: function(nodes) {
-        var bounds, i, n, _i, _len;
-        bounds = [[Infinity, Infinity, Infinity], [-Infinity, -Infinity, -Infinity]];
-        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          n = nodes[_i];
-          for (i = 0; i <= 2; i++) {
-            bounds[0][i] = Math.min(n.bounds[0][i], bounds[0][i]);
-          }
-          for (i = 0; i <= 2; i++) {
-            bounds[1][i] = Math.max(n.bounds[1][i], bounds[1][i]);
-          }
+        for (i = 0; i <= 2; i++) {
+          bounds[1][i] = Math.max(n.bounds[1][i], bounds[1][i]);
         }
-        return bounds;
       }
-    });
+      return bounds;
+    };
+    intersectChildren = function(nodes) {
+      var bounds, i, n, _i, _len;
+      bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
+      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+        n = nodes[_i];
+        for (i = 0; i <= 2; i++) {
+          bounds[0][i] = Math.max(n.bounds[0][i], bounds[0][i]);
+        }
+        for (i = 0; i <= 2; i++) {
+          bounds[1][i] = Math.min(n.bounds[1][i], bounds[1][i]);
+        }
+      }
+      return bounds;
+    };
+    collectChildren = function(nodes, flags) {
+      var composition;
+      composition = flags.composition[flags.composition.length - 1];
+      if (composition === UNION) {
+        return unionChildren(nodes);
+      } else {
+        return intersectChildren(nodes);
+      }
+    };
     postDispatch = {
       invert: function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
         flags.invert = !flags.invert;
         return stack[0].nodes.push(node);
       },
       union: function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
         flags.composition.pop();
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
         flags.composition.pop();
         return stack[0].nodes.push(node);
       },
       translate: function(stack, node, flags) {
+        var i;
+        node.bounds = collectChildren(node.nodes, flags);
+        for (i = 0; i <= 2; i++) {
+          node.bounds[0][i] += node.attr.offset[i];
+        }
+        for (i = 0; i <= 2; i++) {
+          node.bounds[1][i] += node.attr.offset[i];
+        }
         return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
@@ -455,10 +473,8 @@
         node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
         return stack[0].nodes.push(node);
       },
-      material: function(stack, node, flags) {
-        return stack[0].nodes.push(node);
-      },
       "default": function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
         return stack[0].nodes.push(node);
       }
     };
