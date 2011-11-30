@@ -69,7 +69,7 @@ compileGLSL = (abstractSolidModel) ->
     result += "}\n\n"
     result
 
-  main = 
+  fragmentShaderMain = 
     '''
     void main(void) {
       const int steps = 64;
@@ -100,35 +100,45 @@ compileGLSL = (abstractSolidModel) ->
     
     '''
   
-  # TEMPORARY
+  vertexShaderMain = (bounds) ->
+    # TODO: Possibly change these to uniforms later to avoid recompilation
+    "const vec3 sceneScale = vec3(#{bounds[1][0] - bounds[0][0]}, #{bounds[1][1] - bounds[0][1]}, #{bounds[1][2] - bounds[0][2]});\n" +
+    "const vec3 sceneTranslation = vec3(#{bounds[0][0] + bounds[1][0]}, #{bounds[0][1] + bounds[1][1]}, #{bounds[0][2] + bounds[1][2]});\n" +
+    '''
+    uniform mat4 projection;
+    uniform mat4 modelView;
+    attribute vec3 position;
+
+    void main(void) {
+      gl_Position = projection * modelView * vec4(position, 1.0);
+    }
+    
+    '''
+
+  ## TEMPORARY
   console.log "ASM:"
   console.log abstractSolidModel
+  ##
 
   # Generate the fragment shader
 
   distanceResult = glslSceneDistance abstractSolidModel
+  if distanceResult.nodes.length != 1
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the distance compiler.'
 
-  # TEMPORARY
+  ## TEMPORARY
   console.log "Distance Result:"
   console.log distanceResult
-
-  if distanceResult.nodes.length == 1
-    distanceResult.nodes[0].code
-  else
-    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from distance compiler.'
-    return ""
+  ##
 
   idResult = glslSceneId abstractSolidModel
+  if idResult.nodes.length != 1
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the material id compiler.'
 
-  # TEMPORARY
+  ## TEMPORARY
   console.log "Id Result:"
   console.log idResult
-
-  if idResult.nodes.length == 1
-    idResult.nodes[0].code
-  else
-    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from id compiler.'
-    return ""
+  ##
 
   fragmentShader = prefix + 
     (glslLibrary.compile distanceResult.flags.glslFunctions) +
@@ -136,18 +146,28 @@ compileGLSL = (abstractSolidModel) ->
     sceneNormal +
     (sceneId idResult.flags.glslPrelude.code, idResult.nodes[0].code) +
     (sceneMaterial idResult.flags.materials) +
-    main
+    fragmentShaderMain
+
+  ## TEMPORARY
   console.log fragmentShader
+  ##
 
   # Generate the vertex shader
   
   boundsResult = compileASMBounds abstractSolidModel
+  if boundsResult.nodes.length != 1
+    mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the bounding box compiler.'
 
-  # TEMPORARY
+  ## TEMPORARY
   console.log "Bounds Result:"
   console.log boundsResult
+  ##
 
-  # TODO: vertexShader = ...
+  vertexShader = vertexShaderMain boundsResult.nodes[0].bounds
+
+  ## TEMPORARY
+  console.log vertexShader
+  ##
 
   return fragmentShader
 

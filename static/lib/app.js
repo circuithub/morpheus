@@ -1060,7 +1060,7 @@
     return result;
   }));
   compileGLSL = function(abstractSolidModel) {
-    var boundsResult, distanceResult, fragmentShader, idResult, main, prefix, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms;
+    var boundsResult, distanceResult, fragmentShader, fragmentShaderMain, idResult, prefix, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms, vertexShader, vertexShaderMain;
     rayOrigin = 'ro';
     rayDirection = 'rd';
     prefix = '#ifdef GL_ES\n  precision highp float;\n#endif\nuniform vec3 SCENEJS_uEye;                  // World-space eye position\nvarying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector\nvarying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook\n';
@@ -1096,32 +1096,34 @@
       result += "}\n\n";
       return result;
     };
-    main = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(rayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    fragmentShaderMain = 'void main(void) {\n  const int steps = 64;\n  const float threshold = 0.01;\n  vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);\n  vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;\n  bool hit = false;\n  float dist = 0.0;\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    dist = sceneDist(rayOrigin);\n    if (dist < threshold) {\n      hit = true;\n      break;\n    }\n    rayOrigin += dist * rayDir;\n  }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(rayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - rayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n';
+    vertexShaderMain = function(bounds) {
+      return ("const vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\n") + ("const vec3 sceneTranslation = vec3(" + (bounds[0][0] + bounds[1][0]) + ", " + (bounds[0][1] + bounds[1][1]) + ", " + (bounds[0][2] + bounds[1][2]) + ");\n") + 'uniform mat4 projection;\nuniform mat4 modelView;\nattribute vec3 position;\n\nvoid main(void) {\n  gl_Position = projection * modelView * vec4(position, 1.0);\n}\n';
+    };
     console.log("ASM:");
     console.log(abstractSolidModel);
     distanceResult = glslSceneDistance(abstractSolidModel);
+    if (distanceResult.nodes.length !== 1) {
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
+    }
     console.log("Distance Result:");
     console.log(distanceResult);
-    if (distanceResult.nodes.length === 1) {
-      distanceResult.nodes[0].code;
-    } else {
-      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from distance compiler.');
-      return "";
-    }
     idResult = glslSceneId(abstractSolidModel);
+    if (idResult.nodes.length !== 1) {
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
+    }
     console.log("Id Result:");
     console.log(idResult);
-    if (idResult.nodes.length === 1) {
-      idResult.nodes[0].code;
-    } else {
-      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from id compiler.');
-      return "";
-    }
-    fragmentShader = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + (sceneMaterial(idResult.flags.materials)) + main;
+    fragmentShader = prefix + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + (sceneDist(distanceResult.flags.glslPrelude.code, distanceResult.nodes[0].code)) + sceneNormal + (sceneId(idResult.flags.glslPrelude.code, idResult.nodes[0].code)) + (sceneMaterial(idResult.flags.materials)) + fragmentShaderMain;
     console.log(fragmentShader);
     boundsResult = compileASMBounds(abstractSolidModel);
+    if (boundsResult.nodes.length !== 1) {
+      mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
+    }
     console.log("Bounds Result:");
     console.log(boundsResult);
+    vertexShader = vertexShaderMain(boundsResult.nodes[0].bounds);
+    console.log(vertexShader);
     return fragmentShader;
   };
   constants = {
