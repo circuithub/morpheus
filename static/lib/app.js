@@ -229,6 +229,24 @@
         nodes: nodes.flatten()
       };
     },
+    rotate: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'rotate',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
+    scale: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'scale',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
     material: function() {
       var attr, nodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -254,6 +272,24 @@
       return {
         type: 'sphere',
         attr: attr
+      };
+    },
+    chamfer: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'chamfer',
+        attr: attr,
+        nodes: nodes.flatten()
+      };
+    },
+    bevel: function() {
+      var attr, nodes;
+      attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return {
+        type: 'bevel',
+        attr: attr,
+        nodes: nodes.flatten()
       };
     }
   };
@@ -314,9 +350,9 @@
             case 'union':
               stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
-            case 'invert':
-            case 'mirror':
-            case 'translate':
+            case 'intersect':
+              break;
+            default:
               continue;
           }
           break;
@@ -328,12 +364,12 @@
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
+            case 'union':
+              break;
             case 'intersect':
               stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
-            case 'invert':
-            case 'mirror':
-            case 'translate':
+            default:
               continue;
           }
           break;
@@ -614,9 +650,80 @@
           return _results;
         })())));
       },
+      rotate: function(node) {
+        var n;
+        return asm.rotate.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      scale: function(node) {
+        var n;
+        return asm.scale.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
       material: function(node) {
         var n;
         return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      chamfer: function(node) {
+        var n;
+        return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      bevel: function(node) {
+        var n;
+        return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      wedge: function(node) {
+        var n;
+        return asm.intersect.apply(asm, [asm.halfspace({
+          val: 0.0,
+          axis: node.attr.axis
+        }), asm.invert(asm.halfspace({
+          val: 0.0,
+          axis: node.attr.axis
+        }))].concat(__slice.call((function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -651,17 +758,6 @@
   };
   glslLibrary = {
     distanceFunctions: {
-      sphereDist: {
-        id: '_sphereDist',
-        returnType: 'float',
-        arguments: ['vec3', 'float'],
-        code: (function() {
-          var position, radius;
-          position = 'a';
-          radius = 'b';
-          return ["return length(" + position + ") - " + radius + ";"];
-        })()
-      },
       boxChamferDist: {
         id: '_boxChamferDist',
         returnType: 'float',
@@ -679,22 +775,7 @@
           chamferDistLength = 'ccdl';
           gtChamferCenter = 'gtcc';
           return ["vec3 " + rel + " = abs(" + position + " - " + center + ");", "vec3 " + dist + " = max(vec3(0.0), " + rel + " - " + center + ");", "if (any(greaterThan(" + rel + ", " + center + " + vec3(" + chamferRadius + ")))) { return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "vec3 " + chamferCenter + " = " + radius + " - vec3(" + chamferRadius + ");", "bvec3 " + gtChamferCenter + " = greaterThan(" + rel + ", " + chamferCenter + ");", "if (!any(" + gtChamferCenter + ")) { return 0.0; }", "vec3 " + chamferDist + " = " + rel + " - " + chamferCenter + ";", "if (min(" + chamferDist + ".x, " + chamferDist + ".y) < 0.0 && min(" + chamferDist + ".x, " + chamferDist + ".z) < 0.0 && min(" + chamferDist + ".y, " + chamferDist + ".z) < 0.0)", "{ return max(max(" + dist + ".x, " + dist + ".y), " + dist + ".z); }", "float " + chamferDistLength + ";", "if (all(" + gtChamferCenter + ")) {", "  " + chamferDistLength + " = length(" + chamferDist + ");", "}", "else if(" + chamferDist + ".x < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".yz);", "}", "else if (" + chamferDist + ".y < 0.0) {", "  " + chamferDistLength + " = length(" + chamferDist + ".xz);", "}", "else { // " + chamferDist + ".z < 0.0", "  " + chamferDistLength + " = length(" + chamferDist + ".xy);", "}", "return min(" + chamferDistLength + " - " + chamferRadius + ", 0.0);"];
-        })(),
-        intersectDist: {
-          id: '__intersectDist',
-          arguments: ['float', 'float'],
-          code: ["return max(a,b);"]
-        },
-        differenceDist: {
-          id: '__differenceDist',
-          arguments: ['float', 'float'],
-          code: ["return max(a,-b);"]
-        },
-        unionDist: {
-          id: '__unionDist',
-          arguments: ['float', 'float'],
-          code: ["return min(a,b);"]
-        }
+        })()
       }
     },
     compile: function(libraryFunctions) {
@@ -1091,8 +1172,10 @@
           m = materials[i];
           result += "  vec3 m" + i + " = " + m + ";\n";
         }
+        result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+      } else {
+        result += "  return vec3(0.5);\n";
       }
-      result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
       result += "}\n\n";
       return result;
     };
@@ -1204,19 +1287,7 @@
   };
   keyDown = function(event) {};
   controlsSourceCompile = function() {
-    sceneInit();
-    try {
-      return compileCSM(($('#source-code')).val(), function(result) {
-        return (state.scene.findNode('main-shader')).set('shaders', [
-          {
-            stage: 'fragment',
-            code: compileGLSL(compileASM(result))
-          }
-        ]);
-      });
-    } catch (error) {
-      return mecha.log(error);
-    }
+    return sceneInit();
   };
   registerDOMEvents = function() {
     state.viewport.domElement.addEventListener('mousedown', mouseDown, true);

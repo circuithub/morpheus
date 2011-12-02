@@ -26,6 +26,14 @@ asm =
     type: 'translate'
     attr: attr
     nodes: nodes.flatten()
+  rotate: (attr, nodes...) ->
+    type: 'rotate'
+    attr: attr
+    nodes: nodes.flatten()
+  scale: (attr, nodes...) ->
+    type: 'scale'
+    attr: attr
+    nodes: nodes.flatten()
   material:  (attr, nodes...) ->
     type: 'material'
     attr: attr
@@ -39,4 +47,12 @@ asm =
   sphere: (attr) ->
     type: 'sphere'
     attr: attr
+  chamfer: (attr, nodes...) ->
+    type: 'chamfer'
+    attr: attr
+    nodes: nodes.flatten()
+  bevel: (attr, nodes...) ->
+    type: 'bevel'
+    attr: attr
+    nodes: nodes.flatten()
 

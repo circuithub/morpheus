@@ -54,12 +54,6 @@
       box: Api(function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        if (attr.chamfer != null) {
-          if (!(attr.chamfer.corners != null)) {
-            attr.chamfer.corners = true;
-          }
-          node.chamfer.edges = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-        }
         return {
           type: 'box',
           attr: attr,
@@ -93,11 +87,56 @@
           nodes: nodes
         };
       }),
+      rotate: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'rotate',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
+      scale: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'scale',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
       material: Api(function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         return {
           type: 'material',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
+      chamfer: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'chamfer',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
+      bevel: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'bevel',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
+      wedge: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'wedge',
           attr: attr,
           nodes: nodes
         };

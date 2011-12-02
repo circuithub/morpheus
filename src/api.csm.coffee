@@ -33,12 +33,12 @@ do () ->
       nodes: nodes
     box: Api (attr, nodes...) ->
       # Apply defaults
-      if attr.chamfer?
-        # Chamfer corners is on by default
-        if not attr.chamfer.corners?
-          attr.chamfer.corners = true
-        # Chamfer all edges by default
-        node.chamfer.edges = [0..11]
+      #if attr.chamfer?
+      #  # Chamfer corners is on by default
+      #  if not attr.chamfer.corners?
+      #    attr.chamfer.corners = true
+      #  # Chamfer all edges by default
+      #  node.chamfer.edges = [0..11]
       type: 'box'
       attr: attr
       nodes: nodes
@@ -54,8 +54,28 @@ do () ->
       type: 'translate'
       attr: attr
       nodes: nodes
+    rotate: Api (attr, nodes...) ->
+      type: 'rotate'
+      attr: attr
+      nodes: nodes
+    scale: Api (attr, nodes...) ->
+      type: 'scale'
+      attr: attr
+      nodes: nodes
     material: Api (attr, nodes...) ->
       type: 'material'
+      attr: attr
+      nodes: nodes
+    chamfer: Api (attr, nodes...) ->
+      type: 'chamfer'
+      attr: attr
+      nodes: nodes
+    bevel: Api (attr, nodes...) ->
+      type: 'bevel'
+      attr: attr
+      nodes: nodes
+    wedge: Api (attr, nodes...) ->
+      type: 'wedge'
       attr: attr
       nodes: nodes
 
