@@ -1,15 +1,15 @@
 glslLibrary = 
   distanceFunctions:
-    sphereDist:
-      id: '_sphereDist'
-      returnType: 'float'
-      arguments: ['vec3', 'float']
-      code: do () ->
-        position = 'a'
-        radius = 'b'
-        [
-          "return length(#{position}) - #{radius};"
-        ]
+    #sphereDist:
+    #  id: '_sphereDist'
+    #  returnType: 'float'
+    #  arguments: ['vec3', 'float']
+    #  code: do () ->
+    #    position = 'a'
+    #    radius = 'b'
+    #    [
+    #      "return length(#{position}) - #{radius};"
+    #    ]
     #cornerDist:
     #  id: '_cornerDist'
     #  returnType: 'float'
@@ -74,18 +74,18 @@ glslLibrary =
           "}"
           "return min(#{chamferDistLength} - #{chamferRadius}, 0.0);"
         ]
-      intersectDist:
-        id: '__intersectDist'
-        arguments: ['float', 'float']
-        code: ["return max(a,b);"]
-      differenceDist:
-        id: '__differenceDist'
-        arguments: ['float','float']
-        code: ["return max(a,-b);"]
-      unionDist:
-        id: '__unionDist'
-        arguments: ['float','float']
-        code: ["return min(a,b);"]
+      #intersectDist:
+      #  id: '__intersectDist'
+      #  arguments: ['float', 'float']
+      #  code: ["return max(a,b);"]
+      #differenceDist:
+      #  id: '__differenceDist'
+      #  arguments: ['float','float']
+      #  code: ["return max(a,-b);"]
+      #unionDist:
+      #  id: '__unionDist'
+      #  arguments: ['float','float']
+      #  code: ["return min(a,b);"]
   compile: (libraryFunctions) ->
     code = ""
     for f,v of libraryFunctions
