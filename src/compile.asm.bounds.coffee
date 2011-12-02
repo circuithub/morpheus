@@ -4,16 +4,16 @@
 
 compileASMBounds = (abstractSolidModel) ->
   # Constants (enum)
-  UNION = 0
-  INTERSECT = 1
+  COMPOSITION_UNION = 0
+  COMPOSITION_INTERSECT = 1
 
   preDispatch = 
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
     union: (stack, node, flags) ->
-      flags.composition.push UNION
+      flags.composition.push COMPOSITION_UNION
     intersect: (stack, node, flags) ->
-      flags.composition.push INTERSECT
+      flags.composition.push COMPOSITION_INTERSECT
     default: (stack, node, flags) ->
       return
   
@@ -33,7 +33,7 @@ compileASMBounds = (abstractSolidModel) ->
 
   collectChildren = (nodes, flags) ->
     composition = flags.composition[flags.composition.length - 1]
-    if composition == UNION then unionChildren nodes else intersectChildren nodes
+    if composition == COMPOSITION_UNION then unionChildren nodes else intersectChildren nodes
   
   postDispatch =
     invert: (stack, node, flags) ->
@@ -71,7 +71,7 @@ compileASMBounds = (abstractSolidModel) ->
   
   flags = 
     invert: false
-    composition: [UNION]
+    composition: [COMPOSITION_UNION]
   result = mapASM preDispatch, postDispatch, [{nodes: []}], abstractSolidModel, flags
   result.flags = flags
   result
