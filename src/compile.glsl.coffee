@@ -65,7 +65,9 @@ compileGLSL = (abstractSolidModel) ->
       for i in [0...materials.length]
         m = materials[i]
         result += "  vec3 m#{i} = #{m};\n"
-    result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
+      result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
+    else
+      result += "  return vec3(0.5);\n"
     result += "}\n\n"
     result
 
