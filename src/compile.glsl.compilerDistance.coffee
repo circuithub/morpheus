@@ -4,10 +4,12 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
   preDispatch = 
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
-    intersect: (stack, node, flags) ->
+    union: (stack, node, flags) ->
+      flags.composition.push glslCompiler.COMPOSITION_UNION
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
-    union: (stack, node, flags) ->
+    intersect: (stack, node, flags) ->
+      flags.composition.push glslCompiler.COMPOSITION_INTERSECT
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
     translate: (stack, node, flags) ->
@@ -108,9 +110,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
     union: (stack, node, flags) ->
+      flags.composition.pop()
       compileCompositeNode 'Union', minCallback, stack, node, flags
     intersect: (stack, node, flags) ->
+      flags.composition.pop()
       compileCompositeNode 'Intersect', maxCallback, stack, node, flags
+    chamfer: (stack, node, flags) ->
+      cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
+      compileCompositeNode 'Chamfer', cmpCallback, stack, node, flags
+    bevel: (stack, node, flags) ->
+      cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
+      compileCompositeNode 'Bevel', cmpCallback, stack, node, flags
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude

@@ -415,18 +415,18 @@
     ], node, flags);
   };
   compileASMBounds = function(abstractSolidModel) {
-    var INTERSECT, UNION, collectChildren, flags, intersectChildren, postDispatch, preDispatch, result, unionChildren;
-    UNION = 0;
-    INTERSECT = 1;
+    var COMPOSITION_INTERSECT, COMPOSITION_UNION, collectChildren, flags, intersectChildren, postDispatch, preDispatch, result, unionChildren;
+    COMPOSITION_UNION = 0;
+    COMPOSITION_INTERSECT = 1;
     preDispatch = {
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        return flags.composition.push(UNION);
+        return flags.composition.push(COMPOSITION_UNION);
       },
       intersect: function(stack, node, flags) {
-        return flags.composition.push(INTERSECT);
+        return flags.composition.push(COMPOSITION_INTERSECT);
       },
       "default": function(stack, node, flags) {}
     };
@@ -461,7 +461,7 @@
     collectChildren = function(nodes, flags) {
       var composition;
       composition = flags.composition[flags.composition.length - 1];
-      if (composition === UNION) {
+      if (composition === COMPOSITION_UNION) {
         return unionChildren(nodes);
       } else {
         return intersectChildren(nodes);
@@ -516,7 +516,7 @@
     };
     flags = {
       invert: false,
-      composition: [UNION]
+      composition: [COMPOSITION_UNION]
     };
     result = mapASM(preDispatch, postDispatch, [
       {
@@ -818,7 +818,8 @@
       glslFunctions: {},
       glslPrelude: [['ro', "" + rayOrigin]],
       materials: [],
-      materialIdStack: [-1]
+      materialIdStack: [-1],
+      composition: [glslCompiler.COMPOSITION_UNION]
     };
     flags.glslPrelude.code = "";
     flags.glslPrelude.counter = 0;
@@ -830,6 +831,8 @@
     result.flags = flags;
     return result;
   };
+  glslCompiler.COMPOSITION_UNION = 0;
+  glslCompiler.COMPOSITION_INTERSECT = 1;
   glslCompiler.preludePush = function(prelude, value, valueType) {
     var name;
     name = 'r' + prelude.counter;
@@ -848,8 +851,9 @@
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
       },
-      intersect: function(stack, node, flags) {
+      union: function(stack, node, flags) {
         var i, _results;
+        flags.composition.push(glslCompiler.COMPOSITION_UNION);
         node.halfSpaces = [];
         _results = [];
         for (i = 0; i <= 5; i++) {
@@ -857,8 +861,9 @@
         }
         return _results;
       },
-      union: function(stack, node, flags) {
+      intersect: function(stack, node, flags) {
         var i, _results;
+        flags.composition.push(glslCompiler.COMPOSITION_INTERSECT);
         node.halfSpaces = [];
         _results = [];
         for (i = 0; i <= 5; i++) {
@@ -988,10 +993,22 @@
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
+        flags.composition.pop();
         return compileCompositeNode('Union', minCallback, stack, node, flags);
       },
       intersect: function(stack, node, flags) {
+        flags.composition.pop();
         return compileCompositeNode('Intersect', maxCallback, stack, node, flags);
+      },
+      chamfer: function(stack, node, flags) {
+        var cmpCallback;
+        cmpCallback = flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION ? minCallback : maxCallback;
+        return compileCompositeNode('Chamfer', cmpCallback, stack, node, flags);
+      },
+      bevel: function(stack, node, flags) {
+        var cmpCallback;
+        cmpCallback = flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION ? minCallback : maxCallback;
+        return compileCompositeNode('Bevel', cmpCallback, stack, node, flags);
       },
       translate: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
