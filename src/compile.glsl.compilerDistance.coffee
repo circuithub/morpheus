@@ -63,11 +63,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
         remainingHalfSpaces -= 1
     return
-  
-  postDispatch =
-    invert: (stack, node, flags) ->
-      flags.invert = not flags.invert
-    union: (stack, node, flags) ->
+
+  compileCompositeNode = (name, cmpCallback, stack, node, flags) ->
       # Check that composite node is not empty
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Union node is empty."
@@ -104,47 +101,16 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       # Calculate the maximum distances
       node.code = codes.shift()
       for c in codes
-        node.code = minCallback c, node.code, flags
+        node.code = cmpCallback c, node.code, flags
       stack[0].nodes.push node
+  
+  postDispatch =
+    invert: (stack, node, flags) ->
+      flags.invert = not flags.invert
+    union: (stack, node, flags) ->
+      compileCompositeNode 'Union', minCallback, stack, node, flags
     intersect: (stack, node, flags) ->
-      # Check that composite node is not empty
-      if node.nodes.length == 0
-        mecha.logInternalError "GLSL Compiler: Intersect node is empty."
-        return
-      
-      # Collect the source code for all the child nodes
-      # Some nodes are only modifiers, so it's necessary to collect their children 
-      # to apply the correct composite operation
-      codes = []
-      collectCode = (codes, nodes) -> 
-        for node in nodes
-          codes.push node.code if node.code?
-          switch node.type
-            when 'translate','mirror','invert','material'
-              collectCode codes, node.nodes
-      collectCode codes, node.nodes
-
-      # Corner compilation
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      cornersState = 
-        codes: []
-        hs: node.halfSpaces.shallowClone()
-
-      # Compile the first and a possible second corner
-      compileCorner ro, flags, cornersState
-      compileCorner ro, flags, cornersState
-      codes = codes.concat cornersState.codes
-
-      # Post-condition: All halfspaces must be accounted for
-      for h in cornersState.hs when h != null
-        mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
-        break
-
-      # Calculate the maximum distances
-      node.code = codes.shift()
-      for c in codes
-        node.code = maxCallback c, node.code, flags
-      stack[0].nodes.push node
+      compileCompositeNode 'Intersect', maxCallback, stack, node, flags
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude

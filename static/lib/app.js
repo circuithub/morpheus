@@ -842,7 +842,7 @@
     return prelude.pop()[0];
   };
   glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback) {
-    var compileCorner, postDispatch, preDispatch, rayOrigin;
+    var compileCompositeNode, compileCorner, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
     preDispatch = {
       invert: function(stack, node, flags) {
@@ -932,111 +932,66 @@
         }
       }
     };
+    compileCompositeNode = function(name, cmpCallback, stack, node, flags) {
+      var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
+      if (node.nodes.length === 0) {
+        mecha.logInternalError("GLSL Compiler: Union node is empty.");
+        return;
+      }
+      codes = [];
+      collectCode = function(codes, nodes) {
+        var node, _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+          node = nodes[_i];
+          if (node.code != null) {
+            codes.push(node.code);
+          }
+          _results.push((function() {
+            switch (node.type) {
+              case 'translate':
+              case 'mirror':
+              case 'invert':
+              case 'material':
+                return collectCode(codes, node.nodes);
+            }
+          })());
+        }
+        return _results;
+      };
+      collectCode(codes, node.nodes);
+      ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+      cornersState = {
+        codes: [],
+        hs: node.halfSpaces.shallowClone()
+      };
+      compileCorner(ro, flags, cornersState);
+      compileCorner(ro, flags, cornersState);
+      codes = codes.concat(cornersState.codes);
+      _ref = cornersState.hs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        h = _ref[_i];
+        if (h !== null) {
+          mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
+          break;
+        }
+      }
+      node.code = codes.shift();
+      for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
+        c = codes[_j];
+        node.code = cmpCallback(c, node.code, flags);
+      }
+      return stack[0].nodes.push(node);
+    };
     postDispatch = {
       invert: function(stack, node, flags) {
         return flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
-        if (node.nodes.length === 0) {
-          mecha.logInternalError("GLSL Compiler: Union node is empty.");
-          return;
-        }
-        codes = [];
-        collectCode = function(codes, nodes) {
-          var node, _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-            node = nodes[_i];
-            if (node.code != null) {
-              codes.push(node.code);
-            }
-            _results.push((function() {
-              switch (node.type) {
-                case 'translate':
-                case 'mirror':
-                case 'invert':
-                case 'material':
-                  return collectCode(codes, node.nodes);
-              }
-            })());
-          }
-          return _results;
-        };
-        collectCode(codes, node.nodes);
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        cornersState = {
-          codes: [],
-          hs: node.halfSpaces.shallowClone()
-        };
-        compileCorner(ro, flags, cornersState);
-        compileCorner(ro, flags, cornersState);
-        codes = codes.concat(cornersState.codes);
-        _ref = cornersState.hs;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          h = _ref[_i];
-          if (h !== null) {
-            mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
-            break;
-          }
-        }
-        node.code = codes.shift();
-        for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
-          c = codes[_j];
-          node.code = minCallback(c, node.code, flags);
-        }
-        return stack[0].nodes.push(node);
+        return compileCompositeNode('Union', minCallback, stack, node, flags);
       },
       intersect: function(stack, node, flags) {
-        var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
-        if (node.nodes.length === 0) {
-          mecha.logInternalError("GLSL Compiler: Intersect node is empty.");
-          return;
-        }
-        codes = [];
-        collectCode = function(codes, nodes) {
-          var node, _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-            node = nodes[_i];
-            if (node.code != null) {
-              codes.push(node.code);
-            }
-            _results.push((function() {
-              switch (node.type) {
-                case 'translate':
-                case 'mirror':
-                case 'invert':
-                case 'material':
-                  return collectCode(codes, node.nodes);
-              }
-            })());
-          }
-          return _results;
-        };
-        collectCode(codes, node.nodes);
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        cornersState = {
-          codes: [],
-          hs: node.halfSpaces.shallowClone()
-        };
-        compileCorner(ro, flags, cornersState);
-        compileCorner(ro, flags, cornersState);
-        codes = codes.concat(cornersState.codes);
-        _ref = cornersState.hs;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          h = _ref[_i];
-          if (h !== null) {
-            mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
-            break;
-          }
-        }
-        node.code = codes.shift();
-        for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
-          c = codes[_j];
-          node.code = maxCallback(c, node.code, flags);
-        }
-        return stack[0].nodes.push(node);
+        return compileCompositeNode('Intersect', maxCallback, stack, node, flags);
       },
       translate: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
