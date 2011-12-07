@@ -714,8 +714,8 @@
         })())));
       },
       chamfer: function(node) {
-        var n;
-        return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
+        var n, nodes;
+        nodes = (function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -724,11 +724,18 @@
             _results.push(compileASMNode(n));
           }
           return _results;
-        })())));
+        })();
+        if (nodes.length === 1 && (nodes[0].type === 'intersect' || nodes[0].type === 'union')) {
+          node = asm.chamfer.apply(asm, [node.attr].concat(__slice.call(nodes[0].nodes)));
+          nodes[0].nodes = [node];
+          return nodes[0];
+        } else {
+          return asm.chamfer.apply(asm, [node.attr].concat(__slice.call(nodes)));
+        }
       },
       bevel: function(node) {
-        var n;
-        return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
+        var n, nodes;
+        nodes = (function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -737,7 +744,14 @@
             _results.push(compileASMNode(n));
           }
           return _results;
-        })())));
+        })();
+        if (nodes.length === 1 && (nodes[0].type === 'intersect' || nodes[0].type === 'union')) {
+          node = asm.bevel.apply(asm, [node.attr].concat(__slice.call(nodes[0].nodes)));
+          nodes[0].nodes = [node];
+          return nodes[0];
+        } else {
+          return asm.bevel.apply(asm, [node.attr].concat(__slice.call(nodes)));
+        }
       },
       wedge: function(node) {
         var n;
@@ -1102,17 +1116,19 @@
           s = stack[_i];
           switch (s.type) {
             case 'intersect':
-              index = node.attr.axis + (flags.invert ? 3 : 0);
-              val = node.attr.val + translateOffset;
-              if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
-                s.halfSpaces[index] = val;
-              }
-              break;
             case 'union':
+            case 'chamfer':
+            case 'bevel':
               index = node.attr.axis + (flags.invert ? 3 : 0);
               val = node.attr.val + translateOffset;
-              if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
-                s.halfSpaces[index] = val;
+              if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
+                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
+                  s.halfSpaces[index] = val;
+                }
+              } else {
+                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
+                  s.halfSpaces[index] = val;
+                }
               }
               break;
             case 'translate':
