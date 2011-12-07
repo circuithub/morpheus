@@ -72,6 +72,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0)) - #{radius}", flags
         else
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
+        #state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
         if state.hs[0] != null or state.hs[3] != null
           if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
         if state.hs[1] != null or state.hs[4] != null
@@ -131,6 +132,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       node.code = codes.shift()
       for c in codes
         node.code = cmpCallback c, node.code, flags
+      #if node.type == 'chamfer'
+      #  node.code += " - #{node.attr.radius}"
       stack[0].nodes.push node
   
   postDispatch =
