@@ -18,7 +18,27 @@ optimizeASM = (node, flags) ->
   postDispatch =
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
-      # TODO: if this node contains only half-spaces, then search for symmetry (try to convert this node into a mirror node)
+
+      ## TODO: Search for symmetry (try to convert this node into a mirror node)
+      #matchNode = (nodes, match) ->
+      #  for n in nodes
+      #    if n.attr.val == match.attr.val and n.attr.axis == match.attr.axis
+      #      return true
+      #  return false
+      #for s in stack
+      #  switch s.type
+      #    when 'union', 'intersect', 'chamfer', 'bevel'
+      #      # Check if there's a mirror image of the invert nodes
+      #      mirrorNodes = []
+      #      inverseNodes = []
+      #      otherNodes = []
+      #      for i in [0...s.nodes.length]
+      #        if s.nodes[i].type == 'halfspace'
+      #          if matchNode node.nodes, s.nodes[i]
+      #            # ...
+      #        else if if s.nodes[i] == node
+      #          continue
+      #  break # Any other type of node means the union node is needed
       stack[0].nodes.push node
     union: (stack, node, flags) ->
       for s in stack

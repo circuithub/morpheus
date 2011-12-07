@@ -18,15 +18,15 @@ compileASM = (concreteSolidModel) ->
         {}
     box: (node) ->
       halfspaces = [
-        asm.halfspace 
-          val: node.attr.dimensions[0] * -0.5
-          axis: 0
-        asm.halfspace
-          val: node.attr.dimensions[1] * -0.5
-          axis: 1
-        asm.halfspace
-          val: node.attr.dimensions[2] * -0.5
-          axis: 2
+        #asm.halfspace 
+        #  val: node.attr.dimensions[0] * -0.5
+        #  axis: 0
+        #asm.halfspace
+        #  val: node.attr.dimensions[1] * -0.5
+        #  axis: 1
+        #asm.halfspace
+        #  val: node.attr.dimensions[2] * -0.5
+        #  axis: 2
         asm.halfspace 
           val: node.attr.dimensions[0] * 0.5
           axis: 0
@@ -55,7 +55,7 @@ compileASM = (concreteSolidModel) ->
       #    asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
       #else
       #  asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
-      asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
+      asm.intersect asm.mirror { axes: [0,1,2] }, halfspaces[0], halfspaces[1], halfspaces[2]
     sphere: (node) ->
       asm.sphere { radius: node.attr.radius }
     cylinder: (node) ->

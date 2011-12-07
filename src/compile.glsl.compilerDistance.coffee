@@ -22,6 +22,10 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"
+    mirror: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
       flags.materials.push "vec3(#{node.attr.color[0]}, #{node.attr.color[1]}, #{node.attr.color[2]})"
@@ -47,13 +51,13 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       if cornerSpaces == 1
         radius = 0
       cornerSize = [
-        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #999
-        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0, #999
-        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0] #999
+        if state.hs[0] != null then state.hs[0] - radius else if state.hs[3] != null then -state.hs[3] - radius else 0, #999
+        if state.hs[1] != null then state.hs[1] - radius else if state.hs[4] != null then -state.hs[4] - radius else 0, #999
+        if state.hs[2] != null then state.hs[2] - radius else if state.hs[5] != null then -state.hs[5] - radius else 0] #999
       signs = [
-        state.hs[0] != null,
-        state.hs[1] != null,
-        state.hs[2] != null]
+        state.hs[0] == null and state.hs[3] != null,
+        state.hs[1] == null and state.hs[4] != null,
+        state.hs[2] == null and state.hs[5] != null]
       roWithSigns = 
         if not (signs[0] or signs[1] or signs[2])
           "#{ro}"

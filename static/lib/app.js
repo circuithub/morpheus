@@ -576,15 +576,6 @@
         var halfspaces;
         halfspaces = [
           asm.halfspace({
-            val: node.attr.dimensions[0] * -0.5,
-            axis: 0
-          }), asm.halfspace({
-            val: node.attr.dimensions[1] * -0.5,
-            axis: 1
-          }), asm.halfspace({
-            val: node.attr.dimensions[2] * -0.5,
-            axis: 2
-          }), asm.halfspace({
             val: node.attr.dimensions[0] * 0.5,
             axis: 0
           }), asm.halfspace({
@@ -595,7 +586,9 @@
             axis: 2
           })
         ];
-        return asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2], asm.invert.apply(asm, halfspaces.slice(3, 7)));
+        return asm.intersect(asm.mirror({
+          axes: [0, 1, 2]
+        }, halfspaces[0], halfspaces[1], halfspaces[2]));
       },
       sphere: function(node) {
         return asm.sphere({
@@ -937,6 +930,11 @@
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
       },
+      mirror: function(stack, node, flags) {
+        var ro;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        return glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
+      },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);
         return flags.materials.push("vec3(" + node.attr.color[0] + ", " + node.attr.color[1] + ", " + node.attr.color[2] + ")");
@@ -965,8 +963,8 @@
         if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
         if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
         if (cornerSpaces === 1) radius = 0;
-        cornerSize = [state.hs[0] !== null ? -state.hs[0] + radius : state.hs[3] !== null ? state.hs[3] - radius : 0, state.hs[1] !== null ? -state.hs[1] + radius : state.hs[4] !== null ? state.hs[4] - radius : 0, state.hs[2] !== null ? -state.hs[2] + radius : state.hs[5] !== null ? state.hs[5] - radius : 0];
-        signs = [state.hs[0] !== null, state.hs[1] !== null, state.hs[2] !== null];
+        cornerSize = [state.hs[0] !== null ? state.hs[0] - radius : state.hs[3] !== null ? -state.hs[3] - radius : 0, state.hs[1] !== null ? state.hs[1] - radius : state.hs[4] !== null ? -state.hs[4] - radius : 0, state.hs[2] !== null ? state.hs[2] - radius : state.hs[5] !== null ? -state.hs[5] - radius : 0];
+        signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
         cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
         glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
