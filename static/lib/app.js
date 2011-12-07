@@ -586,9 +586,9 @@
             axis: 2
           })
         ];
-        return asm.intersect(asm.mirror({
+        return asm.mirror({
           axes: [0, 1, 2]
-        }, halfspaces[0], halfspaces[1], halfspaces[2]));
+        }, asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2]));
       },
       sphere: function(node) {
         return asm.sphere({
@@ -907,24 +907,8 @@
         }
         return _results;
       },
-      chamfer: function(stack, node, flags) {
-        var i, _results;
-        node.halfSpaces = [];
-        _results = [];
-        for (i = 0; i <= 5; i++) {
-          _results.push(node.halfSpaces.push(null));
-        }
-        return _results;
-      },
-      bevel: function(stack, node, flags) {
-        var i, _results;
-        node.halfSpaces = [];
-        _results = [];
-        for (i = 0; i <= 5; i++) {
-          _results.push(node.halfSpaces.push(null));
-        }
-        return _results;
-      },
+      chamfer: function(stack, node, flags) {},
+      bevel: function(stack, node, flags) {},
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -1017,7 +1001,7 @@
       }
     };
     compileCompositeNode = function(name, cmpCallback, stack, node, flags) {
-      var c, codes, collectCode, cornersState, h, ro, _i, _j, _len, _len2, _ref;
+      var bevelRadius, c, chamferRadius, codes, collectCode, cornersState, h, ro, s, _i, _j, _k, _len, _len2, _len3, _ref, _results;
       if (node.nodes.length === 0) {
         mecha.logInternalError("GLSL Compiler: Union node is empty.");
         return;
@@ -1034,6 +1018,8 @@
             case 'mirror':
             case 'invert':
             case 'material':
+            case 'chamfer':
+            case 'bevel':
               _results.push(collectCode(codes, node.nodes));
               break;
             default:
@@ -1048,44 +1034,62 @@
         codes: [],
         hs: node.halfSpaces.shallowClone()
       };
-      compileCorner(ro, flags, cornersState, (node.type === 'chamfer' ? node.attr.radius : 0));
-      compileCorner(ro, flags, cornersState, (node.type === 'chamfer' ? node.attr.radius : 0));
+      chamferRadius = 0;
+      bevelRadius = 0;
+      for (_i = 0, _len = stack.length; _i < _len; _i++) {
+        s = stack[_i];
+        switch (s.type) {
+          case 'chamfer':
+            chamferRadius = s.attr.radius;
+            break;
+          case 'bevel':
+            bevelRadius = s.attr.radius;
+            break;
+          case 'translate':
+          case 'invert':
+          case 'mirror':
+            continue;
+        }
+        break;
+      }
+      compileCorner(ro, flags, cornersState, chamferRadius);
+      compileCorner(ro, flags, cornersState, chamferRadius);
       codes = codes.concat(cornersState.codes);
       _ref = cornersState.hs;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        h = _ref[_i];
+      for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+        h = _ref[_j];
         if (!(h !== null)) continue;
         mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
         break;
       }
       node.code = codes.shift();
-      for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
-        c = codes[_j];
-        node.code = cmpCallback(c, node.code, flags);
+      _results = [];
+      for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
+        c = codes[_k];
+        _results.push(node.code = cmpCallback(c, node.code, flags));
       }
-      return stack[0].nodes.push(node);
+      return _results;
     };
     postDispatch = {
       invert: function(stack, node, flags) {
-        return flags.invert = !flags.invert;
+        flags.invert = !flags.invert;
+        return stack[0].nodes.push(node);
       },
       union: function(stack, node, flags) {
         flags.composition.pop();
-        return compileCompositeNode('Union', minCallback, stack, node, flags);
+        compileCompositeNode('Union', minCallback, stack, node, flags);
+        return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
         flags.composition.pop();
-        return compileCompositeNode('Intersect', maxCallback, stack, node, flags);
+        compileCompositeNode('Intersect', maxCallback, stack, node, flags);
+        return stack[0].nodes.push(node);
       },
       chamfer: function(stack, node, flags) {
-        var cmpCallback;
-        cmpCallback = flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION ? minCallback : maxCallback;
-        return compileCompositeNode('Chamfer', cmpCallback, stack, node, flags);
+        return stack[0].nodes.push(node);
       },
       bevel: function(stack, node, flags) {
-        var cmpCallback;
-        cmpCallback = flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION ? minCallback : maxCallback;
-        return compileCompositeNode('Bevel', cmpCallback, stack, node, flags);
+        return stack[0].nodes.push(node);
       },
       translate: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
@@ -1096,7 +1100,8 @@
         return stack[0].nodes.push(node);
       },
       mirror: function(stack, node, flags) {
-        return glslCompiler.preludePop(flags.glslPrelude);
+        glslCompiler.preludePop(flags.glslPrelude);
+        return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
         var index, ro, s, translateOffset, val, _i, _len;
@@ -1110,8 +1115,6 @@
           switch (s.type) {
             case 'intersect':
             case 'union':
-            case 'chamfer':
-            case 'bevel':
               index = node.attr.axis + (flags.invert ? 3 : 0);
               val = node.attr.val + translateOffset;
               if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {

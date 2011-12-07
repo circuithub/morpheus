@@ -13,11 +13,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
     chamfer: (stack, node, flags) ->
-      node.halfSpaces = []
-      node.halfSpaces.push null for i in [0..5]
+      #node.halfSpaces = []
+      #node.halfSpaces.push null for i in [0..5]
     bevel: (stack, node, flags) ->
-      node.halfSpaces = []
-      node.halfSpaces.push null for i in [0..5]
+      #node.halfSpaces = []
+      #node.halfSpaces.push null for i in [0..5]
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -113,7 +113,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','mirror','invert','material'
+            when 'translate','mirror','invert','material','chamfer','bevel'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -122,10 +122,23 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       cornersState = 
         codes: []
         hs: node.halfSpaces.shallowClone()
+      
+      # Determine whether the composite should be chamfered / beveled in some way
+      chamferRadius = 0
+      bevelRadius = 0
+      for s in stack
+        switch s.type
+          when 'chamfer'
+            chamferRadius = s.attr.radius
+          when 'bevel'
+            bevelRadius = s.attr.radius
+          when 'translate','invert','mirror'
+            continue
+        break
 
       # Compile the first and a possible second corner
-      compileCorner ro, flags, cornersState, (if node.type == 'chamfer' then node.attr.radius else 0)
-      compileCorner ro, flags, cornersState, (if node.type == 'chamfer' then node.attr.radius else 0)
+      compileCorner ro, flags, cornersState, chamferRadius
+      compileCorner ro, flags, cornersState, chamferRadius
       codes = codes.concat cornersState.codes
 
       # Post-condition: All halfspaces must be accounted for
@@ -139,23 +152,28 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         node.code = cmpCallback c, node.code, flags
       #if node.type == 'chamfer'
       #  node.code += " - #{node.attr.radius}"
-      stack[0].nodes.push node
-  
+    
   postDispatch =
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
+      stack[0].nodes.push node
     union: (stack, node, flags) ->
       flags.composition.pop()
       compileCompositeNode 'Union', minCallback, stack, node, flags
+      stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       flags.composition.pop()
       compileCompositeNode 'Intersect', maxCallback, stack, node, flags
+      stack[0].nodes.push node
     chamfer: (stack, node, flags) ->
-      cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
-      compileCompositeNode 'Chamfer', cmpCallback, stack, node, flags
+      # NOTE: From now on chamfer must be on the outside of an intersect/union
+      #  cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
+      #  compileCompositeNode 'Chamfer', cmpCallback, stack, node, flags
+      stack[0].nodes.push node
     bevel: (stack, node, flags) ->
-      cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
-      compileCompositeNode 'Bevel', cmpCallback, stack, node, flags
+      #  cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
+      #  compileCompositeNode 'Bevel', cmpCallback, stack, node, flags
+      stack[0].nodes.push node
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
@@ -167,6 +185,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
     mirror: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
+      stack[0].nodes.push node
     halfspace: (stack, node, flags) ->
       # Check that geometry node is empty
       if node.nodes.length != 0
@@ -175,7 +194,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       translateOffset = 0.0
       for s in stack
         switch s.type
-          when 'intersect', 'union', 'chamfer', 'bevel'
+          when 'intersect', 'union' #, 'chamfer', 'bevel' # Note: halfspaces shouldn't be nested inside chamfer/bevel... (anymore)
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
             val = node.attr.val + translateOffset

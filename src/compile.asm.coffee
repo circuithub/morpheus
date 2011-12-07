@@ -55,7 +55,7 @@ compileASM = (concreteSolidModel) ->
       #    asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
       #else
       #  asm.intersect halfspaces[0], halfspaces[1], halfspaces[2], asm.invert halfspaces[3..6]...
-      asm.intersect asm.mirror { axes: [0,1,2] }, halfspaces[0], halfspaces[1], halfspaces[2]
+      asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
     sphere: (node) ->
       asm.sphere { radius: node.attr.radius }
     cylinder: (node) ->
