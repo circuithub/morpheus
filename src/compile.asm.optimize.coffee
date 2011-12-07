@@ -47,23 +47,15 @@ optimizeASM = (node, flags) ->
             # The node at the top of the stack is either intersect or non-union (like mirror, invert or translate for example)
             stack[0].nodes = stack[0].nodes.concat node.nodes
             return # Discard node
-          when 'intersect'
-            break
-          else
-            continue # Search for preceding union node
         break # Any other type of node means the union node is needed
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       for s in stack
         switch s.type
-          when 'union'
-            break
           when 'intersect'
             # The node at the top of the stack is either intersect or non-union (like mirror, invert or translate for example)
             stack[0].nodes = stack[0].nodes.concat node.nodes
             return # Discard node
-          else
-            continue # Search for preceding intersect node
         break # Any other type of node means the intersect node is needed
       stack[0].nodes.push node
     translate: (stack, node, flags) ->

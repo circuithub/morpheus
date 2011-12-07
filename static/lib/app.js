@@ -372,10 +372,6 @@
             case 'union':
               stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
-            case 'intersect':
-              break;
-            default:
-              continue;
           }
           break;
         }
@@ -386,13 +382,9 @@
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
           switch (s.type) {
-            case 'union':
-              break;
             case 'intersect':
               stack[0].nodes = stack[0].nodes.concat(node.nodes);
               return;
-            default:
-              continue;
           }
           break;
         }
