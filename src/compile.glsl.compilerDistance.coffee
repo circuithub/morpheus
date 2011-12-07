@@ -47,9 +47,9 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       if cornerSpaces == 1
         radius = 0
       cornerSize = [
-        if state.hs[0] != null then -state.hs[0] + radius else if state.hs[3] != null then state.hs[3] - radius else 0, #999
-        if state.hs[1] != null then -state.hs[1] + radius else if state.hs[4] != null then state.hs[4] - radius else 0, #999
-        if state.hs[2] != null then -state.hs[2] + radius else if state.hs[5] != null then state.hs[5] - radius else 0] #999
+        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #999
+        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0, #999
+        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0] #999
       signs = [
         state.hs[0] != null,
         state.hs[1] != null,
