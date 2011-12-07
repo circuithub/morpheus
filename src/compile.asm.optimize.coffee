@@ -83,7 +83,7 @@ optimizeASM = (node, flags) ->
           when 'intersect'
             for n in s.nodes
               if n.type == 'halfspace' and n.attr.axis == node.attr.axis
-                if (n.attr.val < node.attr.val and flags.invert) or (n.attr.val > node.attr.val and not flags.invert)
+                if (n.attr.val > node.attr.val and flags.invert) or (n.attr.val < node.attr.val and not flags.invert)
                   n.attr = node.attr
                 return # Discard node
         break # Only run to depth of one

@@ -36,14 +36,15 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
   compileCorner = (ro, flags, state, radius) ->
     remainingHalfSpaces = 0
     remainingHalfSpaces += 1 for h in state.hs when h != null
-    if remainingHalfSpaces == 1
-      # Find the axis (from 0 to 5) for the halfSpace node
-      for index in [0..5] when state.hs[index] != null
-        state.codes.push primitiveCallback (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}"), flags
-        state.hs[index] = null
-        break
-      remainingHalfSpaces -= 1
-    else if remainingHalfSpaces > 1
+    #if remainingHalfSpaces == 1
+    #  # Find the axis (from 0 to 5) for the halfSpace node
+    #  for index in [0..5] when state.hs[index] != null
+    #    state.codes.push primitiveCallback (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}"), flags
+    #    state.hs[index] = null
+    #    break
+    #  remainingHalfSpaces -= 1
+    #else if remainingHalfSpaces > 1
+    if remainingHalfSpaces > 0
       cornerSpaces = 0
       cornerSpaces += 1 if state.hs[0] != null or state.hs[3] != null
       cornerSpaces += 1 if state.hs[1] != null or state.hs[4] != null
@@ -51,9 +52,9 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       if cornerSpaces == 1
         radius = 0
       cornerSize = [
-        if state.hs[0] != null then state.hs[0] - radius else if state.hs[3] != null then -state.hs[3] - radius else 0, #999
-        if state.hs[1] != null then state.hs[1] - radius else if state.hs[4] != null then -state.hs[4] - radius else 0, #999
-        if state.hs[2] != null then state.hs[2] - radius else if state.hs[5] != null then -state.hs[5] - radius else 0] #999
+        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #999
+        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0, #999
+        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0] #999
       signs = [
         state.hs[0] == null and state.hs[3] != null,
         state.hs[1] == null and state.hs[4] != null,
@@ -67,7 +68,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
           "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
       #cornerWithSigns = "vec3(#{if signs[0] then -cornerSize[0] else cornerSize[0]}, #{if signs[1] then -cornerSize[1] else cornerSize[1]}, #{if signs[2] then -cornerSize[2] else cornerSize[2]})"
       cornerWithSigns = "vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-      glslCompiler.preludePush flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
+      glslCompiler.preludePush flags.glslPrelude, "#{roWithSigns} + #{cornerWithSigns}"
       dist = glslCompiler.preludePop flags.glslPrelude
 
       # Special cases
@@ -163,6 +164,9 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         mecha.logInternalError "GLSL Compiler: Translate node is empty."
         return
       stack[0].nodes.push node
+    mirror: (stack, node, flags) ->
+      # Remove the modified ray origin from the prelude stack
+      glslCompiler.preludePop flags.glslPrelude
     halfspace: (stack, node, flags) ->
       # Check that geometry node is empty
       if node.nodes.length != 0
@@ -176,10 +180,10 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
             index = node.attr.axis + (if flags.invert then 3 else 0)
             val = node.attr.val + translateOffset
             if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
-              if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
+              if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
                 s.halfSpaces[index] = val
             else
-              if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
+              if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
                 s.halfSpaces[index] = val
           when 'translate'
             translateOffset += s.attr.offset[node.attr.axis]

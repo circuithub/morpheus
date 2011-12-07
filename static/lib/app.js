@@ -414,7 +414,7 @@
               for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
                 n = _ref[_j];
                 if (n.type === 'halfspace' && n.attr.axis === node.attr.axis) {
-                  if ((n.attr.val < node.attr.val && flags.invert) || (n.attr.val > node.attr.val && !flags.invert)) {
+                  if ((n.attr.val > node.attr.val && flags.invert) || (n.attr.val < node.attr.val && !flags.invert)) {
                     n.attr = node.attr;
                   }
                   return;
@@ -519,7 +519,7 @@
       },
       halfspace: function(stack, node, flags) {
         node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
-        node.bounds[flags.invert ? 0 : 1][node.attr.axis] = node.attr.val;
+        node.bounds[flags.invert ? 1 : 0][node.attr.axis] = node.attr.val;
         return stack[0].nodes.push(node);
       },
       cylinder: function(stack, node, flags) {
@@ -599,10 +599,10 @@
         var halfspaces;
         halfspaces = [
           asm.halfspace({
-            val: node.attr.length * -0.5,
+            val: node.attr.length * 0.5,
             axis: node.attr.axis
           }), asm.invert(asm.halfspace({
-            val: node.attr.length * 0.5,
+            val: node.attr.length * -0.5,
             axis: node.attr.axis
           }))
         ];
@@ -942,32 +942,24 @@
       "default": function(stack, node, flags) {}
     };
     compileCorner = function(ro, flags, state, radius) {
-      var cornerSize, cornerSpaces, cornerWithSigns, dist, h, index, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
+      var cornerSize, cornerSpaces, cornerWithSigns, dist, h, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
       remainingHalfSpaces = 0;
       _ref = state.hs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         h = _ref[_i];
         if (h !== null) remainingHalfSpaces += 1;
       }
-      if (remainingHalfSpaces === 1) {
-        for (index = 0; index <= 5; index++) {
-          if (!(state.hs[index] !== null)) continue;
-          state.codes.push(primitiveCallback((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]), flags));
-          state.hs[index] = null;
-          break;
-        }
-        remainingHalfSpaces -= 1;
-      } else if (remainingHalfSpaces > 1) {
+      if (remainingHalfSpaces > 0) {
         cornerSpaces = 0;
         if (state.hs[0] !== null || state.hs[3] !== null) cornerSpaces += 1;
         if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
         if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
         if (cornerSpaces === 1) radius = 0;
-        cornerSize = [state.hs[0] !== null ? state.hs[0] - radius : state.hs[3] !== null ? -state.hs[3] - radius : 0, state.hs[1] !== null ? state.hs[1] - radius : state.hs[4] !== null ? -state.hs[4] - radius : 0, state.hs[2] !== null ? state.hs[2] - radius : state.hs[5] !== null ? -state.hs[5] - radius : 0];
+        cornerSize = [state.hs[0] !== null ? -state.hs[0] - radius : state.hs[3] !== null ? state.hs[3] - radius : 0, state.hs[1] !== null ? -state.hs[1] - radius : state.hs[4] !== null ? state.hs[4] - radius : 0, state.hs[2] !== null ? -state.hs[2] - radius : state.hs[5] !== null ? state.hs[5] - radius : 0];
         signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
         cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
-        glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
+        glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " + " + cornerWithSigns);
         dist = glslCompiler.preludePop(flags.glslPrelude);
         if (cornerSpaces > 1) {
           if (radius > 0) {
@@ -1103,6 +1095,9 @@
         }
         return stack[0].nodes.push(node);
       },
+      mirror: function(stack, node, flags) {
+        return glslCompiler.preludePop(flags.glslPrelude);
+      },
       halfspace: function(stack, node, flags) {
         var index, ro, s, translateOffset, val, _i, _len;
         if (node.nodes.length !== 0) {
@@ -1120,11 +1115,11 @@
               index = node.attr.axis + (flags.invert ? 3 : 0);
               val = node.attr.val + translateOffset;
               if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
-                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
+                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
                   s.halfSpaces[index] = val;
                 }
               } else {
-                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
+                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
                   s.halfSpaces[index] = val;
                 }
               }

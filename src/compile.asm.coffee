@@ -61,10 +61,10 @@ compileASM = (concreteSolidModel) ->
     cylinder: (node) ->
       halfspaces = [
         asm.halfspace 
-          val: node.attr.length * -0.5
+          val: node.attr.length * 0.5
           axis: node.attr.axis
         asm.invert asm.halfspace
-          val: node.attr.length * 0.5
+          val: node.attr.length * -0.5
           axis: node.attr.axis
       ]
       asm.intersect (asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }), halfspaces[0], halfspaces[1]
