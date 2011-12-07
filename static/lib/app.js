@@ -6,18 +6,22 @@
 (function() {
   var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
+
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
     attrRecord = node.get(attr);
     attrRecord[subAttr] = value;
     return node.set(attr, attrRecord);
   };
+
   recordToVec3 = function(record) {
     return [record.x, record.y, record.z];
   };
+
   recordToVec4 = function(record) {
     return [record.x, record.y, record.z, record.w];
   };
+
   vec3ToRecord = function(vec) {
     return {
       x: vec[0],
@@ -25,6 +29,7 @@
       z: vec[2]
     };
   };
+
   vec4ToRecord = function(vec) {
     return {
       x: vec[0],
@@ -33,6 +38,7 @@
       w: vec[3]
     };
   };
+
   lookAtToQuaternion = function(lookAt) {
     var eye, look, up, x, y, z;
     eye = recordToVec3(lookAt.eye);
@@ -49,6 +55,7 @@
     SceneJS_math_normalizeVec3(z);
     return SceneJS_math_newQuaternionFromMat3(x.concat(y, z));
   };
+
   orbitLookAt = function(dAngles, orbitUp, lookAt) {
     var axis, dAngle, eye0, eye0len, eye0norm, eye1, look, result, rotMat, tangent0, tangent0norm, tangent1, tangentError, up0, up0norm, up1;
     if (dAngles[0] === 0.0 && dAngles[1] === 0.0) {
@@ -84,6 +91,7 @@
       up: vec3ToRecord(up1)
     };
   };
+
   orbitLookAtNode = function(node, dAngles, orbitUp) {
     return node.set(orbitLookAt(dAngles, orbitUp, {
       eye: node.get('eye'),
@@ -91,6 +99,7 @@
       up: node.get('up')
     }));
   };
+
   zoomLookAt = function(distance, limits, lookAt) {
     var eye0, eye0len, eye1, eye1len, look, result;
     eye0 = recordToVec3(lookAt.eye);
@@ -109,6 +118,7 @@
       up: lookAt.up
     };
   };
+
   zoomLookAtNode = function(node, distance, limits) {
     return node.set(zoomLookAt(distance, limits, {
       eye: node.get('eye'),
@@ -116,16 +126,21 @@
       up: node.get('up')
     }));
   };
+
   mecha = {};
+
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
+
   mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
+
   mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
+
   Array.prototype.flatten = function() {
     var x, _ref;
     return (_ref = []).concat.apply(_ref, (function() {
@@ -133,26 +148,34 @@
       _results = [];
       for (_i = 0, _len = this.length; _i < _len; _i++) {
         x = this[_i];
-        _results.push((Array.isArray(x) ? flatten(x) : [x]));
+        _results.push(Array.isArray(x) ? flatten(x) : [x]);
       }
       return _results;
     }).call(this));
   };
+
   Array.prototype.shallowClone = function() {
     return this.slice(0);
   };
+
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
+
   toStringPrototype = (function() {
+
     function toStringPrototype(str) {
       this.str = str;
     }
+
     toStringPrototype.prototype.toString = function() {
       return this.str;
     };
+
     return toStringPrototype;
+
   })();
+
   compileCSM = function(source, callback) {
     var postfix, prefix, requestId;
     prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  try {\n  /* BEGIN SOURCE */\n  return scene(\n';
@@ -168,6 +191,7 @@
       }
     });
   };
+
   asm = {
     union: function() {
       var nodes;
@@ -188,18 +212,14 @@
           _results = [];
           for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
             n = flattenedNodes[_i];
-            if (n.type !== 'intersect') {
-              _results.push(n);
-            }
+            if (n.type !== 'intersect') _results.push(n);
           }
           return _results;
         })()
       };
       for (_i = 0, _len = flattenedNodes.length; _i < _len; _i++) {
         n = flattenedNodes[_i];
-        if (n.type === 'intersect') {
-          result.nodes = result.nodes.concat(n.nodes);
-        }
+        if (n.type === 'intersect') result.nodes = result.nodes.concat(n.nodes);
       }
       return result;
     },
@@ -293,6 +313,7 @@
       };
     }
   };
+
   mapASM = function(preDispatch, postDispatch, stack, node, flags) {
     var n, resultNode, _i, _len, _ref;
     stack.reverse();
@@ -323,6 +344,7 @@
     stack.reverse();
     return stack[0];
   };
+
   optimizeASM = function(node, flags) {
     var postDispatch, preDispatch, resultNode;
     resultNode = {};
@@ -414,6 +436,7 @@
       }
     ], node, flags);
   };
+
   compileASMBounds = function(abstractSolidModel) {
     var COMPOSITION_INTERSECT, COMPOSITION_UNION, collectChildren, flags, intersectChildren, postDispatch, preDispatch, result, unionChildren;
     COMPOSITION_UNION = 0;
@@ -526,6 +549,7 @@
     result.flags = flags;
     return result;
   };
+
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
     dispatch = {
@@ -625,7 +649,7 @@
         if (node.nodes.length > 0) {
           return asm.intersect(compileASMNode(node.nodes[0], asm.invert.apply(asm, (function() {
             var _i, _len, _ref, _results;
-            _ref = node.nodes.slice(1, (node.nodes.length + 1) || 9e9);
+            _ref = node.nodes.slice(1, node.nodes.length + 1 || 9e9);
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               n = _ref[_i];
@@ -756,6 +780,7 @@
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
   };
+
   glslLibrary = {
     distanceFunctions: {
       boxChamferDist: {
@@ -795,9 +820,7 @@
           argCharCode = charCodeA + i;
           argName = String.fromCharCode(argCharCode);
           code += "in " + distanceFunction.arguments[i] + " " + argName;
-          if (i < distanceFunction.arguments.length - 1) {
-            code += ',';
-          }
+          if (i < distanceFunction.arguments.length - 1) code += ',';
         }
         code += ") {\n";
         _ref2 = distanceFunction.code;
@@ -810,6 +833,7 @@
       return code;
     }
   };
+
   glslCompiler = function(abstractSolidModel, preDispatch, postDispatch) {
     var flags, rayOrigin, result;
     rayOrigin = 'ro';
@@ -831,8 +855,11 @@
     result.flags = flags;
     return result;
   };
+
   glslCompiler.COMPOSITION_UNION = 0;
+
   glslCompiler.COMPOSITION_INTERSECT = 1;
+
   glslCompiler.preludePush = function(prelude, value, valueType) {
     var name;
     name = 'r' + prelude.counter;
@@ -841,9 +868,11 @@
     prelude.code += "  " + (valueType != null ? valueType : 'vec3') + " " + name + " = " + value + ";\n";
     return name;
   };
+
   glslCompiler.preludePop = function(prelude) {
     return prelude.pop()[0];
   };
+
   glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback) {
     var compileCompositeNode, compileCorner, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
@@ -871,6 +900,24 @@
         }
         return _results;
       },
+      chamfer: function(stack, node, flags) {
+        var i, _results;
+        node.halfSpaces = [];
+        _results = [];
+        for (i = 0; i <= 5; i++) {
+          _results.push(node.halfSpaces.push(null));
+        }
+        return _results;
+      },
+      bevel: function(stack, node, flags) {
+        var i, _results;
+        node.halfSpaces = [];
+        _results = [];
+        for (i = 0; i <= 5; i++) {
+          _results.push(node.halfSpaces.push(null));
+        }
+        return _results;
+      },
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -882,56 +929,84 @@
       },
       "default": function(stack, node, flags) {}
     };
-    compileCorner = function(ro, flags, state) {
-      var cornerSize, cornerWithSigns, dist, h, index, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
+    compileCorner = function(ro, flags, state, radius) {
+      var cornerSize, cornerSpaces, cornerWithSigns, dist, h, index, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
       remainingHalfSpaces = 0;
       _ref = state.hs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         h = _ref[_i];
-        if (h !== null) {
-          remainingHalfSpaces += 1;
-        }
+        if (h !== null) remainingHalfSpaces += 1;
       }
       if (remainingHalfSpaces === 1) {
         for (index = 0; index <= 5; index++) {
-          if (state.hs[index] !== null) {
-            state.codes.push(primitiveCallback((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]), flags));
-            state.hs[index] = null;
-            break;
-          }
+          if (!(state.hs[index] !== null)) continue;
+          state.codes.push(primitiveCallback((index > 2 ? "" + ro + "[" + (index - 3) + "] - " + state.hs[index] : "-" + ro + "[" + index + "] + " + state.hs[index]), flags));
+          state.hs[index] = null;
+          break;
         }
         remainingHalfSpaces -= 1;
       } else if (remainingHalfSpaces > 1) {
-        cornerSize = [state.hs[0] !== null ? state.hs[0] : state.hs[3] !== null ? state.hs[3] : 0, state.hs[1] !== null ? state.hs[1] : state.hs[4] !== null ? state.hs[4] : 0, state.hs[2] !== null ? state.hs[2] : state.hs[5] !== null ? state.hs[5] : 0];
+        cornerSpaces = 0;
+        if (state.hs[0] !== null || state.hs[3] !== null) cornerSpaces += 1;
+        if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
+        if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
+        if (cornerSpaces === 1) radius = 0;
+        cornerSize = [state.hs[0] !== null ? -state.hs[0] + radius : state.hs[3] !== null ? state.hs[3] - radius : 0, state.hs[1] !== null ? -state.hs[1] + radius : state.hs[4] !== null ? state.hs[4] - radius : 0, state.hs[2] !== null ? -state.hs[2] + radius : state.hs[5] !== null ? state.hs[5] - radius : 0];
         signs = [state.hs[0] !== null, state.hs[1] !== null, state.hs[2] !== null];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
-        cornerWithSigns = "vec3(" + (signs[0] ? -cornerSize[0] : cornerSize[0]) + ", " + (signs[1] ? -cornerSize[1] : cornerSize[1]) + ", " + (signs[2] ? -cornerSize[2] : cornerSize[2]) + ")";
+        cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
         glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         dist = glslCompiler.preludePop(flags.glslPrelude);
-        if (state.hs[0] !== null || state.hs[3] !== null) {
-          state.codes.push(primitiveCallback("" + dist + ".x", flags));
-          if (state.hs[0] !== null) {
-            state.hs[0] = null;
+        if (cornerSpaces > 1) {
+          if (radius > 0) {
+            state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
           } else {
-            state.hs[3] = null;
+            state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
           }
-          remainingHalfSpaces -= 1;
-        }
-        if (state.hs[1] !== null || state.hs[4] !== null) {
-          state.codes.push(primitiveCallback("" + dist + ".y", flags));
-          if (state.hs[1] !== null) {
-            state.hs[1] = null;
-          } else {
-            state.hs[4] = null;
+          if (state.hs[0] !== null || state.hs[3] !== null) {
+            if (state.hs[0] !== null) {
+              state.hs[0] = null;
+            } else {
+              state.hs[3] = null;
+            }
           }
-          remainingHalfSpaces -= 1;
-        }
-        if (state.hs[2] !== null || state.hs[5] !== null) {
-          state.codes.push(primitiveCallback("" + dist + ".z", flags));
-          if (state.hs[2] !== null) {
-            state.hs[2] = null;
-          } else {
-            state.hs[5] = null;
+          if (state.hs[1] !== null || state.hs[4] !== null) {
+            if (state.hs[1] !== null) {
+              state.hs[1] = null;
+            } else {
+              state.hs[4] = null;
+            }
+          }
+          if (state.hs[2] !== null || state.hs[5] !== null) {
+            if (state.hs[2] !== null) {
+              state.hs[2] = null;
+            } else {
+              state.hs[5] = null;
+            }
+          }
+          remainingHalfSpaces -= cornerSpaces;
+        } else {
+          if (state.hs[0] !== null || state.hs[3] !== null) {
+            state.codes.push(primitiveCallback("" + dist + ".x", flags));
+            if (state.hs[0] !== null) {
+              state.hs[0] = null;
+            } else {
+              state.hs[3] = null;
+            }
+          } else if (state.hs[1] !== null || state.hs[4] !== null) {
+            state.codes.push(primitiveCallback("" + dist + ".y", flags));
+            if (state.hs[1] !== null) {
+              state.hs[1] = null;
+            } else {
+              state.hs[4] = null;
+            }
+          } else if (state.hs[2] !== null || state.hs[5] !== null) {
+            state.codes.push(primitiveCallback("" + dist + ".z", flags));
+            if (state.hs[2] !== null) {
+              state.hs[2] = null;
+            } else {
+              state.hs[5] = null;
+            }
           }
           remainingHalfSpaces -= 1;
         }
@@ -949,18 +1024,17 @@
         _results = [];
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
-          if (node.code != null) {
-            codes.push(node.code);
+          if (node.code != null) codes.push(node.code);
+          switch (node.type) {
+            case 'translate':
+            case 'mirror':
+            case 'invert':
+            case 'material':
+              _results.push(collectCode(codes, node.nodes));
+              break;
+            default:
+              _results.push(void 0);
           }
-          _results.push((function() {
-            switch (node.type) {
-              case 'translate':
-              case 'mirror':
-              case 'invert':
-              case 'material':
-                return collectCode(codes, node.nodes);
-            }
-          })());
         }
         return _results;
       };
@@ -970,16 +1044,15 @@
         codes: [],
         hs: node.halfSpaces.shallowClone()
       };
-      compileCorner(ro, flags, cornersState);
-      compileCorner(ro, flags, cornersState);
+      compileCorner(ro, flags, cornersState, (node.type === 'chamfer' ? node.attr.radius : 0));
+      compileCorner(ro, flags, cornersState, (node.type === 'chamfer' ? node.attr.radius : 0));
       codes = codes.concat(cornersState.codes);
       _ref = cornersState.hs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         h = _ref[_i];
-        if (h !== null) {
-          mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
-          break;
-        }
+        if (!(h !== null)) continue;
+        mecha.logInternalError("GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation.");
+        break;
       }
       node.code = codes.shift();
       for (_j = 0, _len2 = codes.length; _j < _len2; _j++) {
@@ -1077,10 +1150,11 @@
         return stack[0].nodes.push(node);
       }
     };
-    return function(abstractSolidModel) {
+    return (function(abstractSolidModel) {
       return glslCompiler(abstractSolidModel, preDispatch, postDispatch);
-    };
+    });
   };
+
   glslSceneDistance = glslCompilerDistance((function(a) {
     return a;
   }), (function(a, b) {
@@ -1088,6 +1162,7 @@
   }), (function(a, b) {
     return "max(" + a + ", " + b + ")";
   }));
+
   glslSceneId = glslCompilerDistance((function(a, flags) {
     var result;
     result = new toStringPrototype(a);
@@ -1112,6 +1187,7 @@
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
     return result;
   }));
+
   compileGLSL = function(abstractSolidModel) {
     var boundsResult, distanceResult, fragmentShader, fragmentShaderMain, idResult, prefix, rayDirection, rayOrigin, sceneDist, sceneId, sceneMaterial, sceneNormal, sceneRayDist, uniforms, vertexShader, vertexShaderMain;
     rayOrigin = 'ro';
@@ -1181,6 +1257,7 @@
     console.log(vertexShader);
     return [vertexShader, fragmentShader];
   };
+
   constants = {
     canvas: {
       defaultSize: [512, 512]
@@ -1191,6 +1268,7 @@
       zoomSpeedFactor: 0.5
     }
   };
+
   state = {
     scene: SceneJS.scene('Scene'),
     canvas: document.getElementById('scenejsCanvas'),
@@ -1210,6 +1288,7 @@
       initialized: false
     }
   };
+
   mouseCoordsWithinElement = function(event) {
     var coords, element, totalOffsetLeft, totalOffsetTop;
     coords = [0, 0];
@@ -1229,16 +1308,20 @@
     }
     return coords;
   };
+
   windowResize = function() {};
+
   mouseDown = function(event) {
     switch (event.which) {
       case 1:
         return state.viewport.mouse.leftDragging = true;
     }
   };
+
   mouseUp = function(event) {
     return state.viewport.mouse.leftDragging = false;
   };
+
   mouseMove = function(event) {
     var delta, deltaLength, orbitAngles;
     if (state.viewport.mouse.leftDragging) {
@@ -1251,16 +1334,20 @@
     }
     return state.viewport.mouse.last = [event.clientX, event.clientY];
   };
+
   mouseWheel = function(event) {
     var delta, zoomDistance;
     delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
     zoomDistance = delta * constants.camera.zoomSpeedFactor;
     return zoomLookAtNode(state.scene.findNode('main-lookAt'), zoomDistance);
   };
+
   keyDown = function(event) {};
+
   controlsSourceCompile = function() {
     return sceneInit();
   };
+
   registerDOMEvents = function() {
     state.viewport.domElement.addEventListener('mousedown', mouseDown, true);
     state.viewport.domElement.addEventListener('mouseup', mouseUp, true);
@@ -1270,13 +1357,17 @@
     document.addEventListener('keydown', keyDown, true);
     return window.addEventListener('resize', windowResize, true);
   };
+
   registerControlEvents = function() {
     return ($('#source-compile')).click(controlsSourceCompile);
   };
+
   sceneIdle = function() {};
+
   canvasInit = function() {
     return windowResize();
   };
+
   sceneInit = function() {
     return compileCSM(($('#source-code')).val(), function(result) {
       var shaderDef, shaders;
@@ -1295,7 +1386,9 @@
       return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
     });
   };
+
   controlsInit = function() {};
+
   apiInit = function() {
     state.api.url = ($("link[rel='api']")).attr('href');
     return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
@@ -1305,10 +1398,13 @@
       return mecha.log("Error loading API script");
     });
   };
+
   canvasInit();
+
   state.scene.start({
     idleFunc: sceneIdle
   });
+
   $(function() {
     apiInit();
     controlsInit();
@@ -1316,4 +1412,5 @@
     registerControlEvents();
     return state.application.initialized = true;
   });
+
 }).call(this);

@@ -5,6 +5,7 @@
 
 (function() {
   var __slice = Array.prototype.slice;
+
   (function() {
     var Api, dispatch, extend;
     extend = function(obj, mixin) {
@@ -20,9 +21,7 @@
       return function() {
         var obj;
         obj = extend(Object.create(dispatch), f.apply(null, arguments));
-        if (typeof this !== "undefined" && this !== null) {
-          obj.nodes.unshift(this);
-        }
+        if (typeof this !== "undefined" && this !== null) obj.nodes.unshift(this);
         return obj;
       };
     };
@@ -165,4 +164,5 @@
     };
     return extend(window, dispatch);
   })();
+
 }).call(this);
