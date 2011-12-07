@@ -86,23 +86,25 @@ compileASM = (concreteSolidModel) ->
     material: (node) ->
       asm.material node.attr, (compileASMNode n for n in node.nodes)...
     chamfer: (node) ->
-      nodes = (compileASMNode n for n in node.nodes)
-      if nodes.length == 1 and (nodes[0].type == 'intersect' or nodes[0].type == 'union')
-        # Put the chamfer node *below* any composite node
-        node = asm.chamfer node.attr, nodes[0].nodes...
-        nodes[0].nodes = [node]
-        nodes[0]
-      else
-        asm.chamfer node.attr, nodes...
+      #nodes = (compileASMNode n for n in node.nodes)
+      #if nodes.length == 1 and (nodes[0].type == 'intersect' or nodes[0].type == 'union')
+      #  # Put the chamfer node *below* any composite node
+      #  node = asm.chamfer node.attr, nodes[0].nodes...
+      #  nodes[0].nodes = [node]
+      #  nodes[0]
+      #else
+      #  asm.chamfer node.attr, nodes...
+      asm.chamfer node.attr, (compileASMNode n for n in node.nodes)...
     bevel: (node) ->
-      nodes = (compileASMNode n for n in node.nodes)
-      if nodes.length == 1 and (nodes[0].type == 'intersect' or nodes[0].type == 'union')
-        # Put the chamfer node *below* any composite node
-        node = asm.bevel node.attr, nodes[0].nodes...
-        nodes[0].nodes = [node]
-        nodes[0]
-      else
-        asm.bevel node.attr, nodes...
+      #nodes = (compileASMNode n for n in node.nodes)
+      #if nodes.length == 1 and (nodes[0].type == 'intersect' or nodes[0].type == 'union')
+      #  # Put the chamfer node *below* any composite node
+      #  node = asm.bevel node.attr, nodes[0].nodes...
+      #  nodes[0].nodes = [node]
+      #  nodes[0]
+      #else
+      #  asm.bevel node.attr, nodes...
+      asm.bevel node.attr, (compileASMNode n for n in node.nodes)...
     wedge: (node) ->
       # TODO: rotate halfspace nodes
       asm.intersect (asm.halfspace { val: 0.0, axis: node.attr.axis }), 
