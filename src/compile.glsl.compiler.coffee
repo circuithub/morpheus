@@ -23,12 +23,18 @@ glslCompiler.COMPOSITION_INTERSECT = 1
 # * valueType is optional
 glslCompiler.preludePush = (prelude, value, valueType) ->
   name = 'r' + prelude.counter
-  prelude.push [name, value]
   prelude.counter += 1
   prelude.code += "  #{if valueType? then valueType else 'vec3'} #{name} = #{value};\n"
+  prelude.push [name, value]
   return name
 
 # Remove a variable from the prelude stack (but not its compiled code)
 glslCompiler.preludePop = (prelude) ->
   return prelude.pop()[0]
 
+# Add a value to the prelude without pushing it onto the stack
+glslCompiler.preludeAdd = (prelude, value, valueType) ->
+  name = 'r' + prelude.counter
+  prelude.counter += 1
+  prelude.code += "  #{if valueType? then valueType else 'vec3'} #{name} = #{value};\n"
+  return name

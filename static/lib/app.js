@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_invsqrt2, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -848,14 +848,22 @@
   glslCompiler.preludePush = function(prelude, value, valueType) {
     var name;
     name = 'r' + prelude.counter;
-    prelude.push([name, value]);
     prelude.counter += 1;
     prelude.code += "  " + (valueType != null ? valueType : 'vec3') + " " + name + " = " + value + ";\n";
+    prelude.push([name, value]);
     return name;
   };
 
   glslCompiler.preludePop = function(prelude) {
     return prelude.pop()[0];
+  };
+
+  glslCompiler.preludeAdd = function(prelude, value, valueType) {
+    var name;
+    name = 'r' + prelude.counter;
+    prelude.counter += 1;
+    prelude.code += "  " + (valueType != null ? valueType : 'vec3') + " " + name + " = " + value + ";\n";
+    return name;
   };
 
   glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback) {
@@ -903,8 +911,8 @@
       },
       "default": function(stack, node, flags) {}
     };
-    compileCorner = function(ro, flags, state, radius) {
-      var cornerSize, cornerSpaces, cornerWithSigns, dist, h, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
+    compileCorner = function(ro, flags, state, chamferRadius, bevelRadius) {
+      var axisDist, cornerSize, cornerSpaces, cornerWithSigns, dist, h, radius, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
       remainingHalfSpaces = 0;
       _ref = state.hs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -916,16 +924,18 @@
         if (state.hs[0] !== null || state.hs[3] !== null) cornerSpaces += 1;
         if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
         if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
-        if (cornerSpaces === 1) radius = 0;
+        radius = cornerSpaces === 1 || bevelRadius > chamferRadius ? 0 : chamferRadius;
         cornerSize = [state.hs[0] !== null ? -state.hs[0] - radius : state.hs[3] !== null ? state.hs[3] - radius : 0, state.hs[1] !== null ? -state.hs[1] - radius : state.hs[4] !== null ? state.hs[4] - radius : 0, state.hs[2] !== null ? -state.hs[2] - radius : state.hs[5] !== null ? state.hs[5] - radius : 0];
         signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
-        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z";
+        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z");
         cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
-        glslCompiler.preludePush(flags.glslPrelude, "" + roWithSigns + " + " + cornerWithSigns);
-        dist = glslCompiler.preludePop(flags.glslPrelude);
+        dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " + " + cornerWithSigns);
         if (cornerSpaces > 1) {
           if (radius > 0) {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
+          } else if (bevelRadius > 0) {
+            axisDist = glslCompiler.preludeAdd(flags.glslPrelude, "" + ro + "[0] + " + ro + "[1] - " + (cornerSize[0] + cornerSize[1] - bevelRadius));
+            state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * length(vec2(" + axisDist + ")))", flags));
           } else {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
           }
@@ -1030,8 +1040,8 @@
         }
         break;
       }
-      compileCorner(ro, flags, cornersState, chamferRadius);
-      compileCorner(ro, flags, cornersState, chamferRadius);
+      compileCorner(ro, flags, cornersState, chamferRadius, bevelRadius);
+      compileCorner(ro, flags, cornersState, chamferRadius, bevelRadius);
       codes = codes.concat(cornersState.codes);
       _ref = cornersState.hs;
       for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
@@ -1247,6 +1257,10 @@
     console.log(vertexShader);
     return [vertexShader, fragmentShader];
   };
+
+  math_sqrt2 = Math.sqrt(2.0);
+
+  math_invsqrt2 = 1.0 / math_sqrt2;
 
   constants = {
     canvas: {

@@ -1,7 +1,8 @@
 # Program constants
 
 # Mathematical constants
-#math_sqrt2 = Math.sqrt 2.0
+math_sqrt2 = Math.sqrt 2.0
+math_invsqrt2 = 1.0 / math_sqrt2
 
 # Application constants
 constants =

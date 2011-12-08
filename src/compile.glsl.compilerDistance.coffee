@@ -33,7 +33,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       return
 
   # Compile a single corner
-  compileCorner = (ro, flags, state, radius) ->
+  compileCorner = (ro, flags, state, chamferRadius, bevelRadius) ->
     remainingHalfSpaces = 0
     remainingHalfSpaces += 1 for h in state.hs when h != null
     #if remainingHalfSpaces == 1
@@ -49,12 +49,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       cornerSpaces += 1 if state.hs[0] != null or state.hs[3] != null
       cornerSpaces += 1 if state.hs[1] != null or state.hs[4] != null
       cornerSpaces += 1 if state.hs[2] != null or state.hs[5] != null
-      if cornerSpaces == 1
-        radius = 0
+      radius = if cornerSpaces == 1 or bevelRadius > chamferRadius then 0 else chamferRadius
       cornerSize = [
-        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #999
-        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0, #999
-        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0] #999
+        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
+        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0,
+        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0]
       signs = [
         state.hs[0] == null and state.hs[3] != null,
         state.hs[1] == null and state.hs[4] != null,
@@ -65,16 +64,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         else if (signs[0] or state.hs[3] == null) and (signs[1] or state.hs[4] == null) and (signs[2] or state.hs[5] == null)
           "-#{ro}"
         else
-          "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
-      #cornerWithSigns = "vec3(#{if signs[0] then -cornerSize[0] else cornerSize[0]}, #{if signs[1] then -cornerSize[1] else cornerSize[1]}, #{if signs[2] then -cornerSize[2] else cornerSize[2]})"
+          glslCompiler.preludeAdd flags.glslPrelude, "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
       cornerWithSigns = "vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-      glslCompiler.preludePush flags.glslPrelude, "#{roWithSigns} + #{cornerWithSigns}"
-      dist = glslCompiler.preludePop flags.glslPrelude
+      dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} + #{cornerWithSigns}"
 
       # Special cases
       if cornerSpaces > 1
         if radius > 0
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0)) - #{radius}", flags
+        else if bevelRadius > 0
+          axisDist = glslCompiler.preludeAdd flags.glslPrelude, "#{ro}[0] + #{ro}[1] - #{cornerSize[0] + cornerSize[1] - bevelRadius}"
+          state.codes.push primitiveCallback "max(length(max(#{dist}, 0.0)), #{math_invsqrt2} * length(vec2(#{axisDist})))", flags
         else
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
         #state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
@@ -137,8 +137,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         break
 
       # Compile the first and a possible second corner
-      compileCorner ro, flags, cornersState, chamferRadius
-      compileCorner ro, flags, cornersState, chamferRadius
+      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
+      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
       codes = codes.concat cornersState.codes
 
       # Post-condition: All halfspaces must be accounted for
