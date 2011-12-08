@@ -162,7 +162,20 @@
         nodes: strip(nodes)
       };
     };
-    return extend(window, dispatch);
+    extend(window, dispatch);
+    window.range = function(start, end) {
+      return {
+        param: 'range',
+        start: start,
+        end: end
+      };
+    };
+    return window.number = function(defaultArg) {
+      return {
+        param: 'param',
+        defaultArg: defaultArg
+      };
+    };
   })();
 
 }).call(this);

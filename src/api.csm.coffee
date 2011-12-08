@@ -88,3 +88,14 @@ do () ->
 
   extend window, dispatch
 
+  # Parameters
+  window.range = (start, end) ->
+    param: 'range'
+    start: start
+    end: end
+
+  window.number = (defaultArg) ->
+    param: 'param'
+    defaultArg: defaultArg
+
+
