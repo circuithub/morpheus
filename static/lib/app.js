@@ -148,7 +148,7 @@
       _results = [];
       for (_i = 0, _len = this.length; _i < _len; _i++) {
         x = this[_i];
-        _results.push(Array.isArray(x) ? flatten(x) : [x]);
+        _results.push(Array.isArray(x) ? x.flatten() : [x]);
       }
       return _results;
     }).call(this));
@@ -176,12 +176,50 @@
 
   })();
 
-  compileCSM = function(source, callback) {
-    var postfix, prefix, requestId;
-    prefix = '(function(){\n  /* BEGIN API */\n  ' + state.api.sourceCode + '  try {\n  /* BEGIN SOURCE */\n  return scene(\n';
-    postfix = '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+  compileCSM = function(csmSourceCode, callback) {
+    var requestId, sandboxSourceCode, v, variables, variablesSource;
+    variablesSource = csmSourceCode.match(/var[^;]*;/g);
+    csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
+    variables = ((function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = variablesSource.length; _i < _len; _i++) {
+        v = variablesSource[_i];
+        _results.push(v.split('var'));
+      }
+      return _results;
+    })()).flatten();
+    variables = ((function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = variables.length; _i < _len; _i++) {
+        v = variables[_i];
+        _results.push(v.split(','));
+      }
+      return _results;
+    })()).flatten();
+    variables = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = variables.length; _i < _len; _i++) {
+        v = variables[_i];
+        if ((v.search('=')) !== -1) _results.push((v.split('='))[0]);
+      }
+      return _results;
+    })();
+    variables = (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = variables.length; _i < _len; _i++) {
+        v = variables[_i];
+        if ((v.search(/\(\)\=\,/)) === -1) _results.push(v.trim());
+      }
+      return _results;
+    })();
+    sandboxSourceCode = '(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + ("\n" + (variablesSource.join('\n')) + "\n") + '\n/* BEGIN SOURCE */\nreturn scene(\n' + csmSourceCode + '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    console.log(sandboxSourceCode);
     return requestId = JSandbox.eval({
-      data: prefix + source + postfix,
+      data: sandboxSourceCode,
       callback: function(result) {
         console.log(result);
         return callback(result);

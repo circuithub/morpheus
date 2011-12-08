@@ -1,19 +1,36 @@
 # Compile the source code into a concrete solid model
-compileCSM = (source, callback) ->
+compileCSM = (csmSourceCode, callback) ->
   #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
-  prefix = 
+
+  # Extract all parameters from the source
+  # (Note: if desired this could be optimized quite a bit)
+
+  variablesSource = csmSourceCode.match /var[^;]*;/g
+  csmSourceCode = (csmSourceCode.replace /var[^;]*;/g, '').trim()
+
+  variables = (v.split 'var' for v in variablesSource).flatten()
+  variables = (v.split ',' for v in variables).flatten()
+  variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
+  variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
+
+  # Concatenate the sandbox source code
+  sandboxSourceCode =
     '''
     (function(){
       /* BEGIN API */
-      
-    ''' + state.api.sourceCode +
+
+    ''' + "\n#{state.api.sourceCode}\n" +
     '''
+
       try {
+
+    ''' + "\n#{variablesSource.join '\n'}\n" +
+    '''
+
       /* BEGIN SOURCE */
       return scene(
-    
-    '''
-  postfix =
+      
+    ''' + csmSourceCode +
     '''
       
       );
@@ -22,10 +39,12 @@ compileCSM = (source, callback) ->
       }
     })();
     '''
-  #mecha.log prefix + source + postfix
   
+  console.log sandboxSourceCode
+
+  # Run the script inside a webworker sandbox
   requestId = JSandbox.eval 
-    data: prefix + source + postfix
+    data: sandboxSourceCode
     callback: (result) ->
       # TEMPORARY
       console.log result
