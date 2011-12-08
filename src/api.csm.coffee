@@ -22,7 +22,7 @@ do () ->
 
   # API dispatcher
   extend dispatch,
-    union: Api (attr, nodes...) ->
+    union: Api (nodes...) ->
       type: 'union'
       nodes: nodes
     intersect: Api (nodes...) ->

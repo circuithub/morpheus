@@ -27,8 +27,8 @@
     };
     extend(dispatch, {
       union: Api(function() {
-        var attr, nodes;
-        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        var nodes;
+        nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         return {
           type: 'union',
           nodes: nodes
