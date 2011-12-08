@@ -59,12 +59,13 @@
       <input id='source-compile' name='source-compile' type='button' value='Compile'>
       <textarea id='source-code' name='source-code'>
 translate({ offset: [0.0, 0.4, 0.0] },
-  intersect(
-    box({ dimensions: [0.2, 0.5, 0.2] }),
+  union(
+    box({ dimensions: [0.2, 0.5, 0.2] })
+    .bevel({ radius: 0.05 }),
     box({ dimensions: [0.5, 0.2, 0.2] })
     .translate({ offset: [0.3, 0.0, 0.0] })
+    .chamfer({ radius: 0.05 })
   )
-  .chamfer({ radius: 0.05 })
 ),
 cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
 sphere({ radius: 0.3 })
