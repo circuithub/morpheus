@@ -934,7 +934,7 @@
           if (radius > 0) {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
           } else if (bevelRadius > 0) {
-            axisDist = glslCompiler.preludeAdd(flags.glslPrelude, "" + ro + "[0] + " + ro + "[1] - " + (cornerSize[0] + cornerSize[1] - bevelRadius));
+            axisDist = glslCompiler.preludeAdd(flags.glslPrelude, "" + ro + "[0] + " + ro + "[1] - " + (cornerSize[0] + cornerSize[1] - bevelRadius), "float");
             state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * length(vec2(" + axisDist + ")))", flags));
           } else {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
