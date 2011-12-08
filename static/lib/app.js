@@ -912,7 +912,7 @@
       "default": function(stack, node, flags) {}
     };
     compileCorner = function(ro, flags, state, chamferRadius, bevelRadius) {
-      var axisDist, cornerSize, cornerSpaces, cornerWithSigns, dist, h, radius, remainingHalfSpaces, roWithSigns, signs, _i, _len, _ref;
+      var axisCombinations, cornerSize, cornerSpaces, cornerWithSigns, dist, h, radius, remainingHalfSpaces, roComponents, roWithSigns, signs, _i, _len, _ref;
       remainingHalfSpaces = 0;
       _ref = state.hs;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -927,15 +927,36 @@
         radius = cornerSpaces === 1 || bevelRadius > chamferRadius ? 0 : chamferRadius;
         cornerSize = [state.hs[0] !== null ? state.hs[0] - radius : state.hs[3] !== null ? -state.hs[3] + radius : 0, state.hs[1] !== null ? state.hs[1] - radius : state.hs[4] !== null ? -state.hs[4] + radius : 0, state.hs[2] !== null ? state.hs[2] - radius : state.hs[5] !== null ? -state.hs[5] + radius : 0];
         signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
-        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z");
+        roComponents = [signs[0] ? "-" + ro + ".x" : "" + ro + ".x", signs[1] ? "-" + ro + ".y" : "" + ro + ".y", signs[2] ? "-" + ro + ".z" : "" + ro + ".z"];
+        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + roComponents[0] + ", " + roComponents[1] + ", " + roComponents[2] + ")");
         cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
         dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         if (cornerSpaces > 1) {
           if (radius > 0) {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
           } else if (bevelRadius > 0) {
-            axisDist = glslCompiler.preludeAdd(flags.glslPrelude, "" + ro + "[0] + " + ro + "[1] - " + (cornerSize[0] + cornerSize[1] - bevelRadius), "float");
-            state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + axisDist + ")", flags));
+            axisCombinations = [];
+            if (state.hs[0] !== null || state.hs[3] !== null) {
+              axisCombinations.push(0);
+            }
+            if (state.hs[1] !== null || state.hs[4] !== null) {
+              axisCombinations.push(1);
+            }
+            if (state.hs[2] !== null || state.hs[5] !== null) {
+              axisCombinations.push(2);
+            }
+            glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[0]] + " + " + roComponents[axisCombinations[1]] + " - " + (cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[1]] - bevelRadius), "float");
+            if (axisCombinations.length === 3) {
+              glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[0]] + " + " + roComponents[axisCombinations[2]] + " - " + (cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[2]] - bevelRadius), "float");
+              glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[1]] + " + " + roComponents[axisCombinations[2]] + " - " + (cornerSize[axisCombinations[1]] + cornerSize[axisCombinations[2]] - bevelRadius), "float");
+            }
+            switch (axisCombinations.length) {
+              case 2:
+                state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + ")", flags));
+                break;
+              case 3:
+                state.codes.push(primitiveCallback("max(max(max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + "), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + "), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + ")", flags));
+            }
           } else {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
           }
