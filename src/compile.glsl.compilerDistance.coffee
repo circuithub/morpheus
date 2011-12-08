@@ -51,9 +51,9 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       cornerSpaces += 1 if state.hs[2] != null or state.hs[5] != null
       radius = if cornerSpaces == 1 or bevelRadius > chamferRadius then 0 else chamferRadius
       cornerSize = [
-        if state.hs[0] != null then -state.hs[0] - radius else if state.hs[3] != null then state.hs[3] - radius else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
-        if state.hs[1] != null then -state.hs[1] - radius else if state.hs[4] != null then state.hs[4] - radius else 0,
-        if state.hs[2] != null then -state.hs[2] - radius else if state.hs[5] != null then state.hs[5] - radius else 0]
+        if state.hs[0] != null then state.hs[0] - radius else if state.hs[3] != null then -state.hs[3] + radius else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
+        if state.hs[1] != null then state.hs[1] - radius else if state.hs[4] != null then -state.hs[4] + radius else 0,
+        if state.hs[2] != null then state.hs[2] - radius else if state.hs[5] != null then -state.hs[5] + radius else 0]
       signs = [
         state.hs[0] == null and state.hs[3] != null,
         state.hs[1] == null and state.hs[4] != null,
@@ -66,7 +66,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         else
           glslCompiler.preludeAdd flags.glslPrelude, "vec3(#{if signs[0] then '-' else ''}#{ro}.x, #{if signs[1] then '-' else ''}#{ro}.y, #{if signs[2] then '-' else ''}#{ro}.z"
       cornerWithSigns = "vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
-      dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} + #{cornerWithSigns}"
+      dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
 
       # Special cases
       if cornerSpaces > 1
@@ -74,7 +74,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0)) - #{radius}", flags
         else if bevelRadius > 0
           axisDist = glslCompiler.preludeAdd flags.glslPrelude, "#{ro}[0] + #{ro}[1] - #{cornerSize[0] + cornerSize[1] - bevelRadius}", "float"
-          state.codes.push primitiveCallback "max(length(max(#{dist}, 0.0)), #{math_invsqrt2} * length(vec2(#{axisDist})))", flags
+          state.codes.push primitiveCallback "max(length(max(#{dist}, 0.0)), #{math_invsqrt2} * #{axisDist})", flags
         else
           state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
         #state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags

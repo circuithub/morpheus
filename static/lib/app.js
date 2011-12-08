@@ -925,17 +925,17 @@
         if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
         if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
         radius = cornerSpaces === 1 || bevelRadius > chamferRadius ? 0 : chamferRadius;
-        cornerSize = [state.hs[0] !== null ? -state.hs[0] - radius : state.hs[3] !== null ? state.hs[3] - radius : 0, state.hs[1] !== null ? -state.hs[1] - radius : state.hs[4] !== null ? state.hs[4] - radius : 0, state.hs[2] !== null ? -state.hs[2] - radius : state.hs[5] !== null ? state.hs[5] - radius : 0];
+        cornerSize = [state.hs[0] !== null ? state.hs[0] - radius : state.hs[3] !== null ? -state.hs[3] + radius : 0, state.hs[1] !== null ? state.hs[1] - radius : state.hs[4] !== null ? -state.hs[4] + radius : 0, state.hs[2] !== null ? state.hs[2] - radius : state.hs[5] !== null ? -state.hs[5] + radius : 0];
         signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + (signs[0] ? '-' : '') + ro + ".x, " + (signs[1] ? '-' : '') + ro + ".y, " + (signs[2] ? '-' : '') + ro + ".z");
         cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
-        dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " + " + cornerWithSigns);
+        dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         if (cornerSpaces > 1) {
           if (radius > 0) {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
           } else if (bevelRadius > 0) {
             axisDist = glslCompiler.preludeAdd(flags.glslPrelude, "" + ro + "[0] + " + ro + "[1] - " + (cornerSize[0] + cornerSize[1] - bevelRadius), "float");
-            state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * length(vec2(" + axisDist + ")))", flags));
+            state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + axisDist + ")", flags));
           } else {
             state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
           }
