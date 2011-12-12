@@ -32,8 +32,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         glslCompiler.preludePush flags.glslPrelude, "(#{ro} /* TODO: rotate */)"
       else
         # Modify only the components that are needed (yz / xz / xy)
-        cosAngle = Math.cos node.attr.angle
-        sinAngle = Math.sin node.attr.angle  
+        cosAngle = Math.cos -node.attr.angle
+        sinAngle = Math.sin -node.attr.angle
         components = [
             switch node.attr.axis
               when 0 then "#{ro}.x"

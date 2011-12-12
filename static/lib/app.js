@@ -944,8 +944,8 @@
         if (Array.isArray(node.axis)) {
           return glslCompiler.preludePush(flags.glslPrelude, "(" + ro + " /* TODO: rotate */)");
         } else {
-          cosAngle = Math.cos(node.attr.angle);
-          sinAngle = Math.sin(node.attr.angle);
+          cosAngle = Math.cos(-node.attr.angle);
+          sinAngle = Math.sin(-node.attr.angle);
           components = [
             (function() {
               switch (node.attr.axis) {
