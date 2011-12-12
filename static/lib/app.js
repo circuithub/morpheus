@@ -938,6 +938,47 @@
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
       },
+      rotate: function(stack, node, flags) {
+        var components, cosAngle, ro, sinAngle;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        if (Array.isArray(node.axis)) {
+          return glslCompiler.preludePush(flags.glslPrelude, "(" + ro + " /* TODO: rotate */)");
+        } else {
+          cosAngle = Math.cos(node.attr.angle);
+          sinAngle = Math.sin(node.attr.angle);
+          components = [
+            (function() {
+              switch (node.attr.axis) {
+                case 0:
+                  return "" + ro + ".x";
+                case 1:
+                  return "" + cosAngle + " * " + ro + ".x + " + sinAngle + " * " + ro + ".z";
+                default:
+                  return "" + cosAngle + " * " + ro + ".x + " + (-sinAngle) + " * " + ro + ".y";
+              }
+            })(), (function() {
+              switch (node.attr.axis) {
+                case 0:
+                  return "" + cosAngle + " * " + ro + ".y + " + (-sinAngle) + " * " + ro + ".z";
+                case 1:
+                  return "" + ro + ".y";
+                default:
+                  return "" + sinAngle + " * " + ro + ".x + " + cosAngle + " * " + ro + ".y";
+              }
+            })(), (function() {
+              switch (node.attr.axis) {
+                case 0:
+                  return "" + sinAngle + " * " + ro + ".y + " + cosAngle + " * " + ro + ".z";
+                case 1:
+                  return "" + (-sinAngle) + " * " + ro + ".x + " + cosAngle + " * " + ro + ".z";
+                default:
+                  return "" + ro + ".z";
+              }
+            })()
+          ];
+          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components[0] + ", " + components[1] + ", " + components[2] + ")");
+        }
+      },
       mirror: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -1062,6 +1103,7 @@
           if (node.code != null) codes.push(node.code);
           switch (node.type) {
             case 'translate':
+            case 'rotate':
             case 'mirror':
             case 'invert':
             case 'material':
@@ -1093,6 +1135,7 @@
             bevelRadius = s.attr.radius;
             break;
           case 'translate':
+          case 'rotate':
           case 'invert':
           case 'mirror':
             continue;
@@ -1142,6 +1185,14 @@
         glslCompiler.preludePop(flags.glslPrelude);
         if (node.nodes.length === 0) {
           mecha.logInternalError("GLSL Compiler: Translate node is empty.");
+          return;
+        }
+        return stack[0].nodes.push(node);
+      },
+      rotate: function(stack, node, flags) {
+        glslCompiler.preludePop(flags.glslPrelude);
+        if (node.nodes.length === 0) {
+          mecha.logInternalError("GLSL Compiler: Rotate node is empty.");
           return;
         }
         return stack[0].nodes.push(node);

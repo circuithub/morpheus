@@ -22,6 +22,35 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"
+    rotate: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      # Note that we're using the right-hand rules for basis vectors as well as rotations as is the standard convention in physics and math
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      if Array.isArray node.axis
+        # Compute a matrix for the angle-axis rotation
+        # TODO...
+        glslCompiler.preludePush flags.glslPrelude, "(#{ro} /* TODO: rotate */)"
+      else
+        # Modify only the components that are needed (yz / xz / xy)
+        cosAngle = Math.cos node.attr.angle
+        sinAngle = Math.sin node.attr.angle  
+        components = [
+            switch node.attr.axis
+              when 0 then "#{ro}.x"
+              when 1 then "#{cosAngle} * #{ro}.x + #{sinAngle} * #{ro}.z"
+              else        "#{cosAngle} * #{ro}.x + #{-sinAngle} * #{ro}.y"
+          ,
+            switch node.attr.axis
+              when 0 then "#{cosAngle} * #{ro}.y + #{-sinAngle} * #{ro}.z"
+              when 1 then "#{ro}.y"
+              else        "#{sinAngle} * #{ro}.x + #{cosAngle} * #{ro}.y"
+          ,
+            switch node.attr.axis
+              when 0 then "#{sinAngle} * #{ro}.y + #{cosAngle} * #{ro}.z"
+              when 1 then "#{-sinAngle} * #{ro}.x + #{cosAngle} * #{ro}.z"
+              else        "#{ro}.z"
+        ]
+        glslCompiler.preludePush flags.glslPrelude, "vec3(#{components[0]}, #{components[1]}, #{components[2]})"
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -128,7 +157,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','mirror','invert','material','chamfer','bevel'
+            when 'translate','rotate','mirror','invert','material','chamfer','bevel'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -147,7 +176,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
             chamferRadius = s.attr.radius
           when 'bevel'
             bevelRadius = s.attr.radius
-          when 'translate','invert','mirror'
+          when 'translate','rotate','invert','mirror'
             continue
         break
 
@@ -195,6 +224,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       # Check that composite node is not empty
       if node.nodes.length == 0
         mecha.logInternalError "GLSL Compiler: Translate node is empty."
+        return
+      stack[0].nodes.push node
+    rotate: (stack, node, flags) ->  
+      # Remove the modified ray origin from the prelude stack
+      glslCompiler.preludePop flags.glslPrelude
+      # Check that composite node is not empty
+      if node.nodes.length == 0
+        mecha.logInternalError "GLSL Compiler: Rotate node is empty."
         return
       stack[0].nodes.push node
     mirror: (stack, node, flags) ->
