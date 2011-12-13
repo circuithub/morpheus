@@ -8,8 +8,10 @@ state =
     domElement: document.getElementById 'viewport'
     mouse:
       last: [0, 0]
-      leftDragging: false
-      middleDragging: false
+      leftDown: false
+      middleDown: false
+      leftDragDistance: 0
+      middleDragDistance: 0
   api:
     url: null
     sourceCode: null

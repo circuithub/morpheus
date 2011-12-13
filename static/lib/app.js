@@ -1395,8 +1395,10 @@
       domElement: document.getElementById('viewport'),
       mouse: {
         last: [0, 0],
-        leftDragging: false,
-        middleDragging: false
+        leftDown: false,
+        middleDown: false,
+        leftDragDistance: 0,
+        middleDragDistance: 0
       }
     },
     api: {
@@ -1431,24 +1433,54 @@
   windowResize = function() {};
 
   mouseDown = function(event) {
+    var coords;
+    if (!(state.scene != null)) return;
+    state.viewport.mouse.last = [event.clientX, event.clientY];
     switch (event.which) {
       case 1:
-        return state.viewport.mouse.leftDragging = true;
+        state.viewport.mouse.leftDown = true;
+        break;
+      case 2:
+        state.viewport.mouse.middleDown = true;
+    }
+    if (event.which === 1) {
+      coords = mouseCoordsWithinElement(event);
+      return state.viewport.mouse.pickRecord = state.scene.pick(coords[0], coords[1]);
     }
   };
 
   mouseUp = function(event) {
-    return state.viewport.mouse.leftDragging = false;
+    if (!(state.scene != null)) return;
+    switch (event.which) {
+      case 1:
+        state.viewport.mouse.leftDown = false;
+        return state.viewport.mouse.leftDragDistance = 0;
+      case 2:
+        state.viewport.mouse.middleDown = false;
+        return state.viewport.mouse.middleDragDistance = 0;
+    }
   };
 
   mouseMove = function(event) {
     var delta, deltaLength, orbitAngles;
-    if (state.viewport.mouse.leftDragging) {
-      delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
-      deltaLength = SceneJS_math_lenVec2(delta);
+    delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
+    deltaLength = SceneJS_math_lenVec2(delta);
+    if (state.viewport.mouse.leftDown) {
+      state.viewport.mouse.leftDragDistance += deltaLength;
+    }
+    if (state.viewport.mouse.middleDown) {
+      state.viewport.mouse.middleDragDistance += deltaLength;
+    }
+    if (state.viewport.mouse.leftDown && event.which === 1) {
       orbitAngles = [0.0, 0.0];
       SceneJS_math_mulVec2Scalar(delta, constants.camera.orbitSpeedFactor / deltaLength, orbitAngles);
       orbitAngles = [Math.clamp(orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed), Math.clamp(orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed)];
+      if ((isNaN(orbitAngles[0])) || (Math.abs(orbitAngles[0])) === Infinity) {
+        orbitAngles[0] = 0.0;
+      }
+      if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
+        orbitAngles[1] = 0.0;
+      }
       orbitLookAtNode(state.scene.findNode('main-lookAt'), orbitAngles, [0.0, 0.0, 1.0]);
     }
     return state.viewport.mouse.last = [event.clientX, event.clientY];
