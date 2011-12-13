@@ -38,6 +38,10 @@ appFiles  = [
   'events.init'
 ]
 
+task 'all', "Build all distribution files", ->
+  invoke 'build'
+  invoke 'minify'
+
 task 'build', "Build single application file from source files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) ->
   # Concatenate files
