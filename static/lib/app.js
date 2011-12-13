@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_invsqrt2, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -941,11 +941,11 @@
       rotate: function(stack, node, flags) {
         var components, cosAngle, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        if (Array.isArray(node.axis)) {
+        if (Array.isArray(node.attr.axis)) {
           return glslCompiler.preludePush(flags.glslPrelude, "(" + ro + " /* TODO: rotate */)");
         } else {
-          cosAngle = Math.cos(-node.attr.angle);
-          sinAngle = Math.sin(-node.attr.angle);
+          cosAngle = Math.cos(-math_degToRad * node.attr.angle);
+          sinAngle = Math.sin(-math_degToRad * node.attr.angle);
           components = [
             (function() {
               switch (node.attr.axis) {
@@ -1371,6 +1371,10 @@
   math_sqrt2 = Math.sqrt(2.0);
 
   math_invsqrt2 = 1.0 / math_sqrt2;
+
+  math_degToRad = Math.PI / 180.0;
+
+  math_radToDeg = 180.0 / Math.PI;
 
   constants = {
     canvas: {

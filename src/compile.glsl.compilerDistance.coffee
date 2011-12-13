@@ -26,14 +26,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       # Push the modified ray origin onto the prelude stack
       # Note that we're using the right-hand rules for basis vectors as well as rotations as is the standard convention in physics and math
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      if Array.isArray node.axis
+      if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
         # TODO...
         glslCompiler.preludePush flags.glslPrelude, "(#{ro} /* TODO: rotate */)"
       else
         # Modify only the components that are needed (yz / xz / xy)
-        cosAngle = Math.cos -node.attr.angle
-        sinAngle = Math.sin -node.attr.angle
+        cosAngle = Math.cos -math_degToRad * node.attr.angle
+        sinAngle = Math.sin -math_degToRad * node.attr.angle
         components = [
             switch node.attr.axis
               when 0 then "#{ro}.x"
