@@ -28,7 +28,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
-        mat = SceneJS_math_rotationMat4v math_degToRad * node.attr.angle, node.attr.axis
+        mat = SceneJS_math_rotationMat3v -math_degToRad * node.attr.angle, node.attr.axis
         glslCompiler.preludePush flags.glslPrelude, "(mat3(#{mat}) * #{ro})"
       else
         # Modify only the components that are needed (yz / xz / xy)

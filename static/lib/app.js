@@ -942,7 +942,7 @@
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          mat = SceneJS_math_rotationMat4v(math_degToRad * node.attr.angle, node.attr.axis);
+          mat = SceneJS_math_rotationMat3v(-math_degToRad * node.attr.angle, node.attr.axis);
           return glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
