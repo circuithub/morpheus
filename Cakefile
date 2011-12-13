@@ -57,18 +57,15 @@ Function.prototype.chain = ->
   (this.partial arguments) (callback) ->
     callback
 ###
-    
 taskList = []
-
-invokeEach = (tasks...) ->
+invokeSeries = (tasks...) ->
   taskList = tasks.slice 1
   invoke tasks[0] if tasks.length > 0
-
 invokeNext = () ->
   invoke taskList.shift() if taskList.length > 0
 
 task 'all', "Build all distribution files", ->
-  invokeEach 'build', 'minify'
+  invokeSeries 'build', 'minify'
 
 task 'build', "Build single application file from source files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
