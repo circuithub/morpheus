@@ -936,13 +936,14 @@
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset[0] + ", " + node.attr.offset[1] + ", " + node.attr.offset[2] + ")");
+        return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset + ")");
       },
       rotate: function(stack, node, flags) {
-        var components, cosAngle, ro, sinAngle;
+        var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          return glslCompiler.preludePush(flags.glslPrelude, "(" + ro + " /* TODO: rotate */)");
+          mat = SceneJS_math_rotationMat4v(math_degToRad * node.attr.angle, node.attr.axis);
+          return glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
           sinAngle = Math.sin(-math_degToRad * node.attr.angle);
@@ -976,7 +977,7 @@
               }
             })()
           ];
-          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components[0] + ", " + components[1] + ", " + components[2] + ")");
+          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components + ")");
         }
       },
       mirror: function(stack, node, flags) {
@@ -986,7 +987,7 @@
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);
-        return flags.materials.push("vec3(" + node.attr.color[0] + ", " + node.attr.color[1] + ", " + node.attr.color[2] + ")");
+        return flags.materials.push("vec3(" + node.attr.color + ")");
       },
       "default": function(stack, node, flags) {}
     };
@@ -1008,7 +1009,7 @@
         signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
         roComponents = [signs[0] ? "-" + ro + ".x" : "" + ro + ".x", signs[1] ? "-" + ro + ".y" : "" + ro + ".y", signs[2] ? "-" + ro + ".z" : "" + ro + ".z"];
         roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + roComponents[0] + ", " + roComponents[1] + ", " + roComponents[2] + ")");
-        cornerWithSigns = "vec3(" + cornerSize[0] + ", " + cornerSize[1] + ", " + cornerSize[2] + ")";
+        cornerWithSigns = "vec3(" + cornerSize + ")";
         dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
         if (cornerSpaces > 1) {
           if (radius > 0) {

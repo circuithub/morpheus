@@ -21,15 +21,15 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset[0]}, #{node.attr.offset[1]}, #{node.attr.offset[2]})"
+      glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset})"
     rotate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       # Note that we're using the right-hand rules for basis vectors as well as rotations as is the standard convention in physics and math
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
-        # TODO...
-        glslCompiler.preludePush flags.glslPrelude, "(#{ro} /* TODO: rotate */)"
+        mat = SceneJS_math_rotationMat4v math_degToRad * node.attr.angle, node.attr.axis
+        glslCompiler.preludePush flags.glslPrelude, "(mat3(#{mat}) * #{ro})"
       else
         # Modify only the components that are needed (yz / xz / xy)
         cosAngle = Math.cos -math_degToRad * node.attr.angle
@@ -50,14 +50,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
               when 1 then "#{-sinAngle} * #{ro}.x + #{cosAngle} * #{ro}.z"
               else        "#{ro}.z"
         ]
-        glslCompiler.preludePush flags.glslPrelude, "vec3(#{components[0]}, #{components[1]}, #{components[2]})"
+        glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
-      flags.materials.push "vec3(#{node.attr.color[0]}, #{node.attr.color[1]}, #{node.attr.color[2]})"
+      flags.materials.push "vec3(#{node.attr.color})"
     default: (stack, node, flags) ->
       return
 
@@ -98,7 +98,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
           "-#{ro}"
         else
           glslCompiler.preludeAdd flags.glslPrelude, "vec3(#{roComponents[0]}, #{roComponents[1]}, #{roComponents[2]})"
-      cornerWithSigns = "vec3(#{cornerSize[0]}, #{cornerSize[1]}, #{cornerSize[2]})"
+      cornerWithSigns = "vec3(#{cornerSize})"
       dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
 
       # Special cases
