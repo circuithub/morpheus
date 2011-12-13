@@ -21,6 +21,10 @@ var SceneJS_math_mulVec3 = function(u, v, dest) {
     return dest;
 };
 
+var SceneJS_math_mat3 = function() {
+    return new Array(9);
+};
+
 /**
  * Also see http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
  * @param m mat3
@@ -83,3 +87,42 @@ var SceneJS_math_newUpVec3FromQuaternion = function(q) {
     return [txy - twz, 1.0 - (txx + tzz), tyz + twx];
 };
 
+
+/** 
+ * Generate a 3-dimensional axis-angle rotation matrix
+ */
+var SceneJS_math_rotationMat3v = function(anglerad, axis) {
+    var ax = SceneJS_math_normalizeVec4([axis[0],axis[1],axis[2],0.0]);
+    var s = Math.sin(anglerad);
+    var c = Math.cos(anglerad);
+    var q = 1.0 - c;
+
+    var x = ax[0];
+    var y = ax[1];
+    var z = ax[2];
+
+    var xy,yz,zx,xs,ys,zs;
+
+    //xx = x * x; used once
+    //yy = y * y; used once
+    //zz = z * z; used once
+    xy = x * y;
+    yz = y * z;
+    zx = z * x;
+    xs = x * s;
+    ys = y * s;
+    zs = z * s;
+
+    var m = SceneJS_math_mat3();
+    m[0] = (q * x * x) + c;
+    m[1] = (q * xy) + zs;
+    m[2] = (q * zx) - ys;
+    m[3] = (q * xy) - zs;
+    m[4] = (q * y * y) + c;
+    m[5] = (q * yz) + xs;
+    m[6] = (q * zx) + ys;
+    m[7] = (q * yz) - xs;
+    m[8] = (q * z * z) + c;
+
+    return m;
+};
