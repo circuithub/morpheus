@@ -684,6 +684,19 @@
           return asm.intersect();
         }
       },
+      mirror: function(node) {
+        var n;
+        return asm.mirror.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
       translate: function(node) {
         var n;
         return asm.translate.apply(asm, [node.attr].concat(__slice.call((function() {
@@ -1055,9 +1068,27 @@
         }
       },
       mirror: function(stack, node, flags) {
-        var ro;
+        var a, axes, axesCodes, i, ro, _i, _len, _ref;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        return glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
+        axes = [false, false, false];
+        _ref = node.attr.axes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          a = _ref[_i];
+          axes[a] = true;
+        }
+        if (axes[0] && axes[1] && axes[2]) {
+          return glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
+        } else {
+          axesCodes = (function() {
+            var _results;
+            _results = [];
+            for (i = 0; i <= 2; i++) {
+              _results.push(axes[i] ? "abs(" + ro + "[" + i + "])" : "" + ro + "[" + i + "]");
+            }
+            return _results;
+          })();
+          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + axesCodes + ")");
+        }
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);

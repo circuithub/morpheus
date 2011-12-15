@@ -77,6 +77,15 @@
           nodes: nodes
         };
       }),
+      mirror: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'mirror',
+          attr: attr,
+          nodes: nodes
+        };
+      }),
       translate: Api(function() {
         var attr, nodes;
         attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];

@@ -66,9 +66,10 @@ translate({ offset: [0.0, 0.4, 0.0] },
     .bevel({ radius: 0.05 })
     .material({ color: [0.7, 0.8, 0.0] }),
     box({ dimensions: [0.5, 0.2, 0.2] })
-    .translate({ offset: [0.3, 0.0, 0.0] })
+    .translate({ offset: [0.3, 0.0, 0.3] })
     .chamfer({ radius: 0.05 })
     .rotate({ axis: [1.0, 1.0, 0.0], angle: 20.0 })
+    .mirror({ axes: [0] })
     .material({ color: [0.8, 0.7, 0.0] })
   )
 ),

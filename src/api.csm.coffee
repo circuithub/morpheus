@@ -50,6 +50,10 @@ do () ->
       type: 'sphere'
       attr: attr
       nodes: nodes
+    mirror: Api (attr, nodes...) ->
+      type: 'mirror'
+      attr: attr
+      nodes: nodes
     translate: Api (attr, nodes...) ->
       type: 'translate'
       attr: attr

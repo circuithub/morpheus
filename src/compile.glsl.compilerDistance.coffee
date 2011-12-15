@@ -54,7 +54,13 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
+      axes = [false, false, false]
+      (axes[a] = true) for a in node.attr.axes
+      if axes[0] and axes[1] and axes[2]
+        glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
+      else
+        axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
+        glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
       flags.materials.push "vec3(#{node.attr.color})"
