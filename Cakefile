@@ -21,6 +21,7 @@ appFiles  = [
   'compile.asm.optimize'
   'compile.asm.bounds'
   'compile.asm'
+  'compile.glsl.api'
   'compile.glsl.library'
   'compile.glsl.compiler'
   'compile.glsl.compilerDistance'
