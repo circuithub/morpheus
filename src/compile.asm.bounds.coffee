@@ -53,6 +53,14 @@ compileASMBounds = (abstractSolidModel) ->
       node.bounds[0][i] += node.attr.offset[i] for i in [0..2]
       node.bounds[1][i] += node.attr.offset[i] for i in [0..2]
       stack[0].nodes.push node
+    rotate: (stack, node, flags) ->
+      node.bounds = collectChildren node.nodes, flags
+      # TODO...
+      stack[0].nodes.push node
+    scale: (stack, node, flags) ->
+      node.bounds = collectChildren node.nodes, flags
+      # TODO...
+      stack[0].nodes.push node
     halfspace: (stack, node, flags) ->
       node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
       node.bounds[if flags.invert then 1 else 0][node.attr.axis] = node.attr.val
