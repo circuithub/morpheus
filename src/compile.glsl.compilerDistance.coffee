@@ -37,17 +37,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         components = [
             switch node.attr.axis
               when 0 then "#{ro}.x"
-              when 1 then "#{cosAngle} * #{ro}.x + #{sinAngle} * #{ro}.z"
-              else        "#{cosAngle} * #{ro}.x + #{-sinAngle} * #{ro}.y"
+              when 1 then "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul sinAngle, (ro + '.z'))}"
+              else        "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul (glsl.neg sinAngle), (ro + '.y'))}"
           ,
             switch node.attr.axis
-              when 0 then "#{cosAngle} * #{ro}.y + #{-sinAngle} * #{ro}.z"
+              when 0 then "#{glsl.add (glsl.mul cosAngle, (ro + '.y')), (glsl.mul (glsl.neg sinAngle), (ro + '.z'))}"
               when 1 then "#{ro}.y"
-              else        "#{sinAngle} * #{ro}.x + #{cosAngle} * #{ro}.y"
+              else        "#{glsl.add (glsl.mul sinAngle, (ro + '.x')), (glsl.mul cosAngle, (ro + '.y'))}"
           ,
             switch node.attr.axis
-              when 0 then "#{sinAngle} * #{ro}.y + #{cosAngle} * #{ro}.z"
-              when 1 then "#{-sinAngle} * #{ro}.x + #{cosAngle} * #{ro}.z"
+              when 0 then "#{glsl.add (glsl.mul sinAngle, (ro + '.y')), (glsl.mul cosAngle, (ro + '.z'))}"
+              when 1 then "#{glsl.add (glsl.mul (glsl.neg sinAngle), (ro + '.x')), (glsl.mul cosAngle, (ro + '.z'))}"
               else        "#{ro}.z"
         ]
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
@@ -265,7 +265,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
             # This may occur in special cases where we cannot do normal corner compilation
             # (Such as a separate transformations on the plane itself)
             ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-            node.code = primitiveCallback "#{node.attr.val} - #{ro}[#{node.attr.axis}]", flags
+            node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
         break
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->

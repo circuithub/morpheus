@@ -107,8 +107,11 @@ compileASM = (concreteSolidModel) ->
       asm.bevel node.attr, (compileASMNode n for n in node.nodes)...
     wedge: (node) ->
       # TODO: rotate halfspace nodes
-      asm.intersect (asm.halfspace { val: 0.0, axis: node.attr.axis }), 
-        (asm.invert asm.halfspace { val: 0.0, axis: node.attr.axis }),
+      halfSpaceAxis = if node.attr.axis + 1 > 2 then 0 else node.attr.axis + 1
+      asm.intersect (asm.rotate { axis: node.attr.axis, angle: node.attr.from },
+          (asm.halfspace { val: 0.0, axis: halfSpaceAxis })), 
+        (asm.rotate { axis: node.attr.axis, angle: node.attr.to},
+          (asm.invert asm.halfspace { val: 0.0, axis: halfSpaceAxis })),
         (compileASMNode n for n in node.nodes)...
 
   compileASMNode = (node) ->

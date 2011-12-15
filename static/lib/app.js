@@ -4,7 +4,7 @@
 "use strict";
 
 (function() {
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -763,14 +763,21 @@
         })())));
       },
       wedge: function(node) {
-        var n;
-        return asm.intersect.apply(asm, [asm.halfspace({
+        var halfSpaceAxis, n;
+        halfSpaceAxis = node.attr.axis + 1 > 2 ? 0 : node.attr.axis + 1;
+        return asm.intersect.apply(asm, [asm.rotate({
+          axis: node.attr.axis,
+          angle: node.attr.from
+        }, asm.halfspace({
           val: 0.0,
-          axis: node.attr.axis
-        }), asm.invert(asm.halfspace({
+          axis: halfSpaceAxis
+        })), asm.rotate({
+          axis: node.attr.axis,
+          angle: node.attr.to
+        }, asm.invert(asm.halfspace({
           val: 0.0,
-          axis: node.attr.axis
-        }))].concat(__slice.call((function() {
+          axis: halfSpaceAxis
+        })))].concat(__slice.call((function() {
           var _i, _len, _ref, _results;
           _ref = node.nodes;
           _results = [];
@@ -802,6 +809,73 @@
       return;
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
+  };
+
+  glsl = {
+    mul: function(a, b) {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a * b;
+      } else if (typeof a === 'number') {
+        switch (a) {
+          case 0:
+            return 0;
+          case 1:
+            return b;
+          case -1:
+            return "-" + b;
+          default:
+            return "" + ((a | 0) === a ? a + '.0' : a) + " * " + b;
+        }
+      } else if (typeof b === 'number') {
+        return glsl.mul(b, a);
+      } else {
+        return "" + a + " * " + b;
+      }
+    },
+    add: function(a, b) {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a + b;
+      } else if (typeof a === 'number') {
+        switch (a) {
+          case 0:
+            return b;
+          default:
+            return "" + ((a | 0) === a ? a + '.0' : a) + " + " + b;
+        }
+      } else if (typeof b === 'number') {
+        return glsl.add(b, a);
+      } else {
+        return "" + a + " + " + b;
+      }
+    },
+    sub: function(a, b) {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a - b;
+      } else if (typeof a === 'number') {
+        switch (a) {
+          case 0:
+            return glsl.neg(b);
+          default:
+            return "" + ((a | 0) === a ? a + '.0' : a) + " - " + b;
+        }
+      } else if (typeof b === 'number') {
+        switch (b) {
+          case 0:
+            return a;
+          default:
+            return "" + a + " - " + ((b | 0) === b ? b + '.0' : b);
+        }
+      } else {
+        return "" + a + " + " + b;
+      }
+    },
+    neg: function(a) {
+      if (typeof a === 'number') {
+        return -a;
+      } else {
+        return "-" + a;
+      }
+    }
   };
 
   glslLibrary = {
@@ -953,25 +1027,25 @@
                 case 0:
                   return "" + ro + ".x";
                 case 1:
-                  return "" + cosAngle + " * " + ro + ".x + " + sinAngle + " * " + ro + ".z";
+                  return "" + (glsl.add(glsl.mul(cosAngle, ro + '.x'), glsl.mul(sinAngle, ro + '.z')));
                 default:
-                  return "" + cosAngle + " * " + ro + ".x + " + (-sinAngle) + " * " + ro + ".y";
+                  return "" + (glsl.add(glsl.mul(cosAngle, ro + '.x'), glsl.mul(glsl.neg(sinAngle), ro + '.y')));
               }
             })(), (function() {
               switch (node.attr.axis) {
                 case 0:
-                  return "" + cosAngle + " * " + ro + ".y + " + (-sinAngle) + " * " + ro + ".z";
+                  return "" + (glsl.add(glsl.mul(cosAngle, ro + '.y'), glsl.mul(glsl.neg(sinAngle), ro + '.z')));
                 case 1:
                   return "" + ro + ".y";
                 default:
-                  return "" + sinAngle + " * " + ro + ".x + " + cosAngle + " * " + ro + ".y";
+                  return "" + (glsl.add(glsl.mul(sinAngle, ro + '.x'), glsl.mul(cosAngle, ro + '.y')));
               }
             })(), (function() {
               switch (node.attr.axis) {
                 case 0:
-                  return "" + sinAngle + " * " + ro + ".y + " + cosAngle + " * " + ro + ".z";
+                  return "" + (glsl.add(glsl.mul(sinAngle, ro + '.y'), glsl.mul(cosAngle, ro + '.z')));
                 case 1:
-                  return "" + (-sinAngle) + " * " + ro + ".x + " + cosAngle + " * " + ro + ".z";
+                  return "" + (glsl.add(glsl.mul(glsl.neg(sinAngle), ro + '.x'), glsl.mul(cosAngle, ro + '.z')));
                 default:
                   return "" + ro + ".z";
               }
@@ -1234,7 +1308,7 @@
               continue;
             default:
               ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-              node.code = primitiveCallback("" + node.attr.val + " - " + ro + "[" + node.attr.axis + "]", flags);
+              node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
           }
           break;
         }
