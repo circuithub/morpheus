@@ -181,43 +181,47 @@
     var requestId, sandboxSourceCode, v, variables, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    variables = ((function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = variablesSource.length; _i < _len; _i++) {
-        v = variablesSource[_i];
-        _results.push(v.split('var'));
-      }
-      return _results;
-    })()).flatten();
-    variables = ((function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = variables.length; _i < _len; _i++) {
-        v = variables[_i];
-        _results.push(v.split(','));
-      }
-      return _results;
-    })()).flatten();
-    variables = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = variables.length; _i < _len; _i++) {
-        v = variables[_i];
-        if ((v.search('=')) !== -1) _results.push((v.split('='))[0]);
-      }
-      return _results;
-    })();
-    variables = (function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = variables.length; _i < _len; _i++) {
-        v = variables[_i];
-        if ((v.search(/\(\)\=\,/)) === -1) _results.push(v.trim());
-      }
-      return _results;
-    })();
-    sandboxSourceCode = '(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + ("\n" + (variablesSource.join('\n')) + "\n") + '\n/* BEGIN SOURCE */\nreturn scene(\n' + csmSourceCode + '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    if (variablesSource != null) {
+      variables = ((function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = variablesSource.length; _i < _len; _i++) {
+          v = variablesSource[_i];
+          _results.push(v.split('var'));
+        }
+        return _results;
+      })()).flatten();
+      variables = ((function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = variables.length; _i < _len; _i++) {
+          v = variables[_i];
+          _results.push(v.split(','));
+        }
+        return _results;
+      })()).flatten();
+      variables = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = variables.length; _i < _len; _i++) {
+          v = variables[_i];
+          if ((v.search('=')) !== -1) _results.push((v.split('='))[0]);
+        }
+        return _results;
+      })();
+      variables = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = variables.length; _i < _len; _i++) {
+          v = variables[_i];
+          if ((v.search(/\(\)\=\,/)) === -1) _results.push(v.trim());
+        }
+        return _results;
+      })();
+    } else {
+      variables = [];
+    }
+    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '\n/* BEGIN SOURCE */\nreturn scene(\n' + csmSourceCode + '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
     console.log(sandboxSourceCode);
     return requestId = JSandbox.eval({
       data: sandboxSourceCode,
@@ -546,6 +550,14 @@
         for (i = 0; i <= 2; i++) {
           node.bounds[1][i] += node.attr.offset[i];
         }
+        return stack[0].nodes.push(node);
+      },
+      rotate: function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
+        return stack[0].nodes.push(node);
+      },
+      scale: function(stack, node, flags) {
+        node.bounds = collectChildren(node.nodes, flags);
         return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
@@ -1068,6 +1080,7 @@
           return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components + ")");
         }
       },
+      scale: function(stack, node, flags) {},
       mirror: function(stack, node, flags) {
         var a, axes, axesCodes, i, ro, _i, _len, _ref;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -1211,6 +1224,7 @@
           switch (node.type) {
             case 'translate':
             case 'rotate':
+            case 'scale':
             case 'mirror':
             case 'invert':
             case 'material':
@@ -1243,6 +1257,7 @@
             break;
           case 'translate':
           case 'rotate':
+          case 'scale':
           case 'invert':
           case 'mirror':
             continue;

@@ -19,6 +19,7 @@ compileCSM = (csmSourceCode, callback) ->
   # Concatenate the sandbox source code
   sandboxSourceCode =
     '''
+    "use strict";
     (function(){
       /* BEGIN API */
 
