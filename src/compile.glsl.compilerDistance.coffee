@@ -51,6 +51,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
               else        "#{ro}.z"
         ]
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
+    scale: (stack, node, flags) ->
+      # TODO...
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -163,7 +165,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','rotate','mirror','invert','material','chamfer','bevel'
+            when 'translate','rotate','scale','mirror','invert','material','chamfer','bevel'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -182,7 +184,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
             chamferRadius = s.attr.radius
           when 'bevel'
             bevelRadius = s.attr.radius
-          when 'translate','rotate','invert','mirror'
+          when 'translate','rotate','scale','invert','mirror'
             continue
         break
 
