@@ -48,8 +48,8 @@ compileGLSL = (abstractSolidModel) ->
     
     '''
 
-  sceneId = (prelude, code) ->
-    "\nint sceneId(in vec3 #{rayOrigin}) {\n  int id = -1;\n#{prelude}  #{code};\n  return id;\n}\n\n"
+  sceneId = (prelude, code, id) ->
+    "\nint sceneId(in vec3 #{rayOrigin}) {\n#{prelude}  #{code};\n  return #{code.materialId};\n}\n\n"
 
   sceneMaterial = (materials) ->
     binarySearch = (start, end) ->

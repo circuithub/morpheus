@@ -72,8 +72,9 @@ translate({ offset: [0.0, 0.4, 0.0] },
 ),
 cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
 sphere({ radius: 0.3 })
+.material({ color: [0.5, 1.0, 0.0] })
+.wedge({ axis: 1, from: 35, to: 75 })
 .material({ color: [1.0, 0.0, 0.0] })
-.wedge({ axis: 1, from: 0, to: 35 })
 .translate({ offset: [0.0, -0.2, 0.0] })
       </textarea>
     </form>

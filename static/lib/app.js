@@ -1366,22 +1366,20 @@
     result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
     return result;
   }), (function(a, b, flags) {
-    var memoA, memoB, result;
-    glslCompiler.preludePush(flags.glslPrelude, String(a), 'float');
-    memoA = glslCompiler.preludePop(flags.glslPrelude);
-    glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
-    memoB = glslCompiler.preludePop(flags.glslPrelude);
-    result = new toStringPrototype("" + memoA + " < " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")");
-    result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
+    var id, memoA, memoB, result;
+    memoA = glslCompiler.preludeAdd(flags.glslPrelude, String(a), 'float');
+    memoB = glslCompiler.preludeAdd(flags.glslPrelude, String(b), 'float');
+    id = glslCompiler.preludeAdd(flags.glslPrelude, '-1', 'int');
+    result = new toStringPrototype("" + memoA + " < " + memoB + "? (" + id + " = " + a.materialId + ", " + memoA + ") : (" + id + " = " + b.materialId + ", " + memoB + ")");
+    result.materialId = id;
     return result;
   }), (function(a, b, flags) {
-    var memoA, memoB, result;
-    glslCompiler.preludePush(flags.glslPrelude, String(a), 'float');
-    memoA = glslCompiler.preludePop(flags.glslPrelude);
-    glslCompiler.preludePush(flags.glslPrelude, String(b), 'float');
-    memoB = glslCompiler.preludePop(flags.glslPrelude);
-    result = new toStringPrototype("" + memoA + " > " + memoB + "? (id = " + a.materialId + ", " + memoA + ") : (id = " + b.materialId + ", " + memoB + ")");
-    result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1];
+    var id, memoA, memoB, result;
+    memoA = glslCompiler.preludeAdd(flags.glslPrelude, String(a), 'float');
+    memoB = glslCompiler.preludeAdd(flags.glslPrelude, String(b), 'float');
+    id = glslCompiler.preludeAdd(flags.glslPrelude, '-1', 'int');
+    result = new toStringPrototype("" + memoA + " > " + memoB + "? (" + id + " = " + a.materialId + ", " + memoA + ") : (" + id + " = " + b.materialId + ", " + memoB + ")");
+    result.materialId = id;
     return result;
   }));
 
@@ -1396,8 +1394,8 @@
     };
     sceneRayDist = 'float sceneRayDist(in vec3 ro, in vec3 rd) {\n  return 0.0;\n}\n';
     sceneNormal = 'vec3 sceneNormal(in vec3 p) {\n  const float eps = 0.0001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n';
-    sceneId = function(prelude, code) {
-      return "\nint sceneId(in vec3 " + rayOrigin + ") {\n  int id = -1;\n" + prelude + "  " + code + ";\n  return id;\n}\n\n";
+    sceneId = function(prelude, code, id) {
+      return "\nint sceneId(in vec3 " + rayOrigin + ") {\n" + prelude + "  " + code + ";\n  return " + code.materialId + ";\n}\n\n";
     };
     sceneMaterial = function(materials) {
       var binarySearch, i, m, result, _ref;
