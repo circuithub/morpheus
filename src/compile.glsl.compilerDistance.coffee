@@ -274,11 +274,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
     cylinder: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       planeCoords = ['yz','xz','xy'][node.attr.axis]
-      node.code = primitiveCallback "length(#{ro}.#{planeCoords}) - #{node.attr.radius}", flags
+      if not flags.invert
+        node.code = primitiveCallback (glsl.sub "length(#{ro}.#{planeCoords})", node.attr.radius), flags
+      else
+        node.code = primitiveCallback (glsl.sub node.attr.radius, "length(#{ro}.#{planeCoords})"), flags
       stack[0].nodes.push node
     sphere: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      node.code = primitiveCallback "length(#{ro}) - #{node.attr.radius}", flags
+      if not flags.invert
+        node.code = primitiveCallback (glsl.sub "length(#{ro})", node.attr.radius), flags
+      else
+        node.code = primitiveCallback (glsl.sub node.attr.radius, "length(#{ro})"), flags
       stack[0].nodes.push node
     material: (stack, node, flags) ->
       flags.materialIdStack.pop()

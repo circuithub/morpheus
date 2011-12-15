@@ -1322,13 +1322,21 @@
         var planeCoords, ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         planeCoords = ['yz', 'xz', 'xy'][node.attr.axis];
-        node.code = primitiveCallback("length(" + ro + "." + planeCoords + ") - " + node.attr.radius, flags);
+        if (!flags.invert) {
+          node.code = primitiveCallback(glsl.sub("length(" + ro + "." + planeCoords + ")", node.attr.radius), flags);
+        } else {
+          node.code = primitiveCallback(glsl.sub(node.attr.radius, "length(" + ro + "." + planeCoords + ")"), flags);
+        }
         return stack[0].nodes.push(node);
       },
       sphere: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        node.code = primitiveCallback("length(" + ro + ") - " + node.attr.radius, flags);
+        if (!flags.invert) {
+          node.code = primitiveCallback(glsl.sub("length(" + ro + ")", node.attr.radius), flags);
+        } else {
+          node.code = primitiveCallback(glsl.sub(node.attr.radius, "length(" + ro + ")"), flags);
+        }
         return stack[0].nodes.push(node);
       },
       material: function(stack, node, flags) {
