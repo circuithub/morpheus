@@ -8,10 +8,13 @@ compileCSM = (csmSourceCode, callback) ->
   variablesSource = csmSourceCode.match /var[^;]*;/g
   csmSourceCode = (csmSourceCode.replace /var[^;]*;/g, '').trim()
 
-  variables = (v.split 'var' for v in variablesSource).flatten()
-  variables = (v.split ',' for v in variables).flatten()
-  variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
-  variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
+  if variablesSource?
+    variables = (v.split 'var' for v in variablesSource).flatten()
+    variables = (v.split ',' for v in variables).flatten()
+    variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
+    variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
+  else
+    variables = []
 
   # Concatenate the sandbox source code
   sandboxSourceCode =
@@ -24,7 +27,7 @@ compileCSM = (csmSourceCode, callback) ->
 
       try {
 
-    ''' + "\n#{variablesSource.join '\n'}\n" +
+    ''' + (if variablesSource then "\n#{variablesSource.join '\n'}\n" else "") +
     '''
 
       /* BEGIN SOURCE */
