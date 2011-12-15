@@ -263,9 +263,12 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
             continue # Search for preceding intersect/union node
           else
             # This may occur in special cases where we cannot do normal corner compilation
-            # (Such as a separate transformations on the plane itself)
+            # (Such as a separate transformations on the plane itself - with a wedge node for example)
             ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-            node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+            if not flags.invert
+              node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+            else
+              node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
         break
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->

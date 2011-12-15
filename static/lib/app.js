@@ -1308,7 +1308,11 @@
               continue;
             default:
               ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-              node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+              if (!flags.invert) {
+                node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+              } else {
+                node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+              }
           }
           break;
         }
