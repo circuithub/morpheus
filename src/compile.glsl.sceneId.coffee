@@ -9,22 +9,20 @@ glslSceneId =
     (
       (a,b,flags) -> 
         # First memoize values and then generate a ternary if operation
-        glslCompiler.preludePush flags.glslPrelude, (String a), 'float'
-        memoA = glslCompiler.preludePop flags.glslPrelude
-        glslCompiler.preludePush flags.glslPrelude, (String b), 'float'
-        memoB = glslCompiler.preludePop flags.glslPrelude
-        result = new toStringPrototype "#{memoA} < #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
-        result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
+        memoA = glslCompiler.preludeAdd flags.glslPrelude, (String a), 'float'
+        memoB = glslCompiler.preludeAdd flags.glslPrelude, (String b), 'float'
+        id = glslCompiler.preludeAdd flags.glslPrelude, '-1', 'int'
+        result = new toStringPrototype "#{memoA} < #{memoB}? (#{id} = #{a.materialId}, #{memoA}) : (#{id} = #{b.materialId}, #{memoB})"
+        result.materialId = id
         result
     ),
     (
       (a,b,flags) -> 
         # First memoize values and then generate a ternary if operation
-        glslCompiler.preludePush flags.glslPrelude, (String a), 'float'
-        memoA = glslCompiler.preludePop flags.glslPrelude
-        glslCompiler.preludePush flags.glslPrelude, (String b), 'float'
-        memoB = glslCompiler.preludePop flags.glslPrelude
-        result = new toStringPrototype "#{memoA} > #{memoB}? (id = #{a.materialId}, #{memoA}) : (id = #{b.materialId}, #{memoB})"
-        result.materialId = flags.materialIdStack[flags.materialIdStack.length - 1]
+        memoA = glslCompiler.preludeAdd flags.glslPrelude, (String a), 'float'
+        memoB = glslCompiler.preludeAdd flags.glslPrelude, (String b), 'float'
+        id = glslCompiler.preludeAdd flags.glslPrelude, '-1', 'int'
+        result = new toStringPrototype "#{memoA} > #{memoB}? (#{id} = #{a.materialId}, #{memoA}) : (#{id} = #{b.materialId}, #{memoB})"
+        result.materialId = id
         result
     )
