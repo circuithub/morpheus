@@ -5,6 +5,7 @@ async  = require 'async'
 
 appFiles  = [
   # omit src/ and .coffee to make the below lines a little shorter
+  'directives'
   'scenejs.nodeattr'
   'scenejs.conversion'
   'scenejs.orbitlookat'

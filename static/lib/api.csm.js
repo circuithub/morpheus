@@ -1,8 +1,6 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
-"use strict";
-
 (function() {
   var __slice = Array.prototype.slice;
 

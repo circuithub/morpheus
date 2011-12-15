@@ -1,9 +1,10 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
-"use strict";
-
 (function() {
+
+  "use strict";
+
   var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
