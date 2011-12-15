@@ -1405,7 +1405,7 @@
         if (diff === 1) {
           return "m" + start;
         } else {
-          mid = Math.floor(diff * 0.5);
+          mid = start + Math.floor(diff * 0.5);
           return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
         }
       };

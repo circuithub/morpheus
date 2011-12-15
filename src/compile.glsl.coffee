@@ -57,7 +57,7 @@ compileGLSL = (abstractSolidModel) ->
       if diff == 1
         "m#{start}"
       else
-        mid = Math.floor (diff * 0.5)
+        mid = start + Math.floor (diff * 0.5)
         "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
 
     result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
