@@ -80,10 +80,13 @@ compileGLSL = (abstractSolidModel) ->
       vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
       vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
-      float dist = 0.0;
-      //float minDist = (1.0/0.0); // infinity
+      float dist = (1.0/0.0);
+      //float prevDist = (1.0/0.0);
+      //float bias = 0.0; // corrective bias for the step size
+      //float minDist = (1.0/0.0);
       for(int i = 0; i < steps; i++) {
         //dist = sceneRayDist(rayOrigin, rayDir);
+        //prevDist = dist;
         dist = sceneDist(rayOrigin);
         //minDist = min(minDist, dist);
         if (dist <= 0.0) {
@@ -91,11 +94,13 @@ compileGLSL = (abstractSolidModel) ->
           break;
         }
         prevRayOrigin = rayOrigin;
+        //rayOrigin += (max(dist, threshold) + bias) * rayDir;
         rayOrigin += max(dist, threshold) * rayDir;
         if (clamp(rayOrigin, vec3(-1.0), vec3(1.0)) != rayOrigin) { break; }
       }
       vec3 absRayOrigin = abs(rayOrigin);
       //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
+      //if(!hit && prevDist >= dist) { discard; }
       if(!hit) { discard; }
       //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
       //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
