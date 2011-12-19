@@ -75,7 +75,7 @@ compileGLSL = (abstractSolidModel) ->
     '''
     void main(void) {
       const int steps = 64;
-      const float threshold = 0.01;
+      const float threshold = 0.005;
       vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);
       vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
       bool hit = false;
