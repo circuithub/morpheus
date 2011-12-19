@@ -38,7 +38,7 @@ compileGLSL = (abstractSolidModel) ->
     # p = position (ray hit position)
     '''
     vec3 sceneNormal(in vec3 p) {
-      const float eps = 0.0001;
+      const float eps = 0.00001;
       vec3 n;
       n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );
       n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );
@@ -78,26 +78,32 @@ compileGLSL = (abstractSolidModel) ->
       const float threshold = 0.005;
       vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);
       vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
+      vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
       float dist = 0.0;
+      //float minDist = (1.0/0.0); // infinity
       for(int i = 0; i < steps; i++) {
         //dist = sceneRayDist(rayOrigin, rayDir);
         dist = sceneDist(rayOrigin);
-        if (dist < threshold) {
+        //minDist = min(minDist, dist);
+        if (dist <= 0.0) {
           hit = true;
           break;
         }
-        rayOrigin += dist * rayDir;
+        prevRayOrigin = rayOrigin;
+        rayOrigin += max(sceneDist(rayOrigin), threshold) * rayDir;
         if (clamp(rayOrigin, vec3(-1.0), vec3(1.0)) != rayOrigin) { break; }
       }
+      vec3 absRayOrigin = abs(rayOrigin);
+      //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
       if(!hit) { discard; }
       //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
       //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
-      vec3 diffuseColor = sceneMaterial(rayOrigin);
+      vec3 diffuseColor = sceneMaterial(prevRayOrigin);
       //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
       const vec3 lightPos = vec3(1.5,1.5, 4.0);
-      vec3 ldir = normalize(lightPos - rayOrigin);
-      vec3 diffuse = diffuseColor * dot(sceneNormal(rayOrigin), ldir);
+      vec3 ldir = normalize(lightPos - prevRayOrigin);
+      vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);
       gl_FragColor = vec4(diffuse, 1.0);
     }
     
