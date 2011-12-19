@@ -858,6 +858,27 @@
         return "" + a + " * " + b;
       }
     },
+    div: function(a, b) {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return a / b;
+      } else if (typeof a === 'number') {
+        switch (a) {
+          case 0:
+            return 0;
+          default:
+            return "" + ((a | 0) === a ? a + '.0' : a) + " / " + b;
+        }
+      } else if (typeof b === 'number') {
+        switch (b) {
+          case 0:
+            return "" + a + " / 0.0";
+          default:
+            return "" + a + " / " + ((b | 0) === b ? b + '.0' : b);
+        }
+      } else {
+        return "" + a + " / " + b;
+      }
+    },
     add: function(a, b) {
       if (typeof a === 'number' && typeof b === 'number') {
         return a + b;
@@ -1004,7 +1025,7 @@
     return name;
   };
 
-  glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback) {
+  glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback, modifyCallback) {
     var compileCompositeNode, compileCorner, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
     preDispatch = {
@@ -1080,7 +1101,19 @@
           return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components + ")");
         }
       },
-      scale: function(stack, node, flags) {},
+      scale: function(stack, node, flags) {
+        var i, ro;
+        node.halfSpaces = [];
+        for (i = 0; i <= 5; i++) {
+          node.halfSpaces.push(null);
+        }
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        if (Array.isArray(node.attr.value)) {
+          return mecha.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
+        } else {
+          return glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.value));
+        }
+      },
       mirror: function(stack, node, flags) {
         var a, axes, axesCodes, i, ro, _i, _len, _ref;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -1224,7 +1257,6 @@
           switch (node.type) {
             case 'translate':
             case 'rotate':
-            case 'scale':
             case 'mirror':
             case 'invert':
             case 'material':
@@ -1319,6 +1351,17 @@
         }
         return stack[0].nodes.push(node);
       },
+      scale: function(stack, node, flags) {
+        if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
+          compileCompositeNode('Scale', minCallback, stack, node, flags);
+        } else if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_INTERSECT) {
+          compileCompositeNode('Scale', maxCallback, stack, node, flags);
+        }
+        if (!Array.isArray(node.attr.value)) {
+          node.code = modifyCallback(node.code, glsl.mul("(" + node.code + ")", node.attr.value));
+        }
+        return stack[0].nodes.push(node);
+      },
       mirror: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
         return stack[0].nodes.push(node);
@@ -1332,34 +1375,34 @@
         translateOffset = 0.0;
         for (_i = 0, _len = stack.length; _i < _len; _i++) {
           s = stack[_i];
-          switch (s.type) {
-            case 'intersect':
-            case 'union':
-              index = node.attr.axis + (flags.invert ? 3 : 0);
-              val = node.attr.val + translateOffset;
-              if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
-                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
-                  s.halfSpaces[index] = val;
-                }
-              } else {
-                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
-                  s.halfSpaces[index] = val;
-                }
+          if (s.halfSpaces != null) {
+            index = node.attr.axis + (flags.invert ? 3 : 0);
+            val = node.attr.val + translateOffset;
+            if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
+              if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
+                s.halfSpaces[index] = val;
               }
-              break;
-            case 'translate':
-              translateOffset += s.attr.offset[node.attr.axis];
-              continue;
-            case 'invert':
-            case 'mirror':
-              continue;
-            default:
-              ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-              if (!flags.invert) {
-                node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
-              } else {
-                node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+            } else {
+              if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
+                s.halfSpaces[index] = val;
               }
+            }
+          } else {
+            switch (s.type) {
+              case 'translate':
+                translateOffset += s.attr.offset[node.attr.axis];
+                continue;
+              case 'invert':
+              case 'mirror':
+                continue;
+              default:
+                ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+                if (!flags.invert) {
+                  node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+                } else {
+                  node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+                }
+            }
           }
           break;
         }
@@ -1405,6 +1448,8 @@
     return "min(" + a + ", " + b + ")";
   }), (function(a, b) {
     return "max(" + a + ", " + b + ")";
+  }), (function(oldVal, newVal) {
+    return newVal;
   }));
 
   glslSceneId = glslCompilerDistance((function(a, flags) {
@@ -1427,6 +1472,11 @@
     id = glslCompiler.preludeAdd(flags.glslPrelude, '-1', 'int');
     result = new toStringPrototype("" + memoA + " > " + memoB + "? (" + id + " = " + a.materialId + ", " + memoA + ") : (" + id + " = " + b.materialId + ", " + memoB + ")");
     result.materialId = id;
+    return result;
+  }), (function(oldVal, newVal) {
+    var result;
+    result = new toStringPrototype(newVal);
+    result.materialId = oldVal.materialId;
     return result;
   }));
 

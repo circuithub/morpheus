@@ -25,4 +25,11 @@ glslSceneId =
         result = new toStringPrototype "#{memoA} > #{memoB}? (#{id} = #{a.materialId}, #{memoA}) : (#{id} = #{b.materialId}, #{memoB})"
         result.materialId = id
         result
+    ),
+    (
+      (oldVal, newVal) -> 
+        result = new toStringPrototype newVal
+        result.materialId = oldVal.materialId
+        result
     )
+

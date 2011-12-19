@@ -1,5 +1,5 @@
 # Compile the GLSL distance function
-glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
+glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallback) ->
   rayOrigin = 'ro'
   preDispatch = 
     invert: (stack, node, flags) ->
@@ -52,7 +52,13 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         ]
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
     scale: (stack, node, flags) ->
-      # TODO...
+      node.halfSpaces = []
+      node.halfSpaces.push null for i in [0..5]
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      if Array.isArray node.attr.value
+        mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
+      else
+        glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.value)
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -165,7 +171,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','rotate','scale','mirror','invert','material','chamfer','bevel'
+            when 'translate','rotate','mirror','invert','material','chamfer','bevel'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -242,6 +248,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         mecha.logInternalError "GLSL Compiler: Rotate node is empty."
         return
       stack[0].nodes.push node
+    scale: (stack, node, flags) ->
+      if flags.composition[flags.composition.length-1] == glslCompiler.COMPOSITION_UNION
+        compileCompositeNode 'Scale', minCallback, stack, node, flags
+      else if flags.composition[flags.composition.length-1] == glslCompiler.COMPOSITION_INTERSECT
+        compileCompositeNode 'Scale', maxCallback, stack, node, flags
+      if not Array.isArray node.attr.value
+        node.code = modifyCallback node.code, (glsl.mul "(#{node.code})", node.attr.value)
+      stack[0].nodes.push node
     mirror: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
@@ -253,30 +267,31 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback) ->
         return
       translateOffset = 0.0
       for s in stack
-        switch s.type
-          when 'intersect', 'union' #, 'chamfer', 'bevel' # Note: halfspaces shouldn't be nested inside chamfer/bevel... (anymore)
-            # Assign to the halfspace bins for corner compilation
-            index = node.attr.axis + (if flags.invert then 3 else 0)
-            val = node.attr.val + translateOffset
-            if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
-              if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
-                s.halfSpaces[index] = val
-            else
-              if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
-                s.halfSpaces[index] = val
-          when 'translate'
-            translateOffset += s.attr.offset[node.attr.axis]
-            continue # Search for preceding intersect/union node 
-          when 'invert', 'mirror'
-            continue # Search for preceding intersect/union node
+        if s.halfSpaces?
+          # Assign to the halfspace bins for corner compilation
+          index = node.attr.axis + (if flags.invert then 3 else 0)
+          val = node.attr.val + translateOffset
+          if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
+            if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
+              s.halfSpaces[index] = val
           else
-            # This may occur in special cases where we cannot do normal corner compilation
-            # (Such as a separate transformations on the plane itself - with a wedge node for example)
-            ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-            if not flags.invert
-              node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+            if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
+              s.halfSpaces[index] = val
+        else
+          switch s.type
+            when 'translate'
+              translateOffset += s.attr.offset[node.attr.axis]
+              continue # Search for preceding intersect/union node 
+            when 'invert', 'mirror'
+              continue # Search for preceding intersect/union node
             else
-              node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+              # This may occur in special cases where we cannot do normal corner compilation
+              # (Such as a separate transformations on the plane itself - with a wedge node for example)
+              ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+              if not flags.invert
+                node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+              else
+                node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
         break
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->

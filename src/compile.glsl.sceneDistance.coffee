@@ -8,5 +8,8 @@ glslSceneDistance =
     ), 
     (
       (a,b) -> "max(#{a}, #{b})"
+    ),
+    (
+      (oldVal, newVal) -> newVal
     )
 
