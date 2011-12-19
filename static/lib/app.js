@@ -1030,41 +1030,37 @@
     rayOrigin = 'ro';
     preDispatch = {
       invert: function(stack, node, flags) {
-        return flags.invert = !flags.invert;
+        flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var i, _results;
+        var i;
         flags.composition.push(glslCompiler.COMPOSITION_UNION);
         node.halfSpaces = [];
-        _results = [];
         for (i = 0; i <= 5; i++) {
-          _results.push(node.halfSpaces.push(null));
+          node.halfSpaces.push(null);
         }
-        return _results;
       },
       intersect: function(stack, node, flags) {
-        var i, _results;
+        var i;
         flags.composition.push(glslCompiler.COMPOSITION_INTERSECT);
         node.halfSpaces = [];
-        _results = [];
         for (i = 0; i <= 5; i++) {
-          _results.push(node.halfSpaces.push(null));
+          node.halfSpaces.push(null);
         }
-        return _results;
       },
       chamfer: function(stack, node, flags) {},
       bevel: function(stack, node, flags) {},
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        return glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset + ")");
+        glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset + ")");
       },
       rotate: function(stack, node, flags) {
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
           mat = SceneJS_math_rotationMat3v(-math_degToRad * node.attr.angle, node.attr.axis);
-          return glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
+          glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
           sinAngle = Math.sin(-math_degToRad * node.attr.angle);
@@ -1098,7 +1094,7 @@
               }
             })()
           ];
-          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components + ")");
+          glslCompiler.preludePush(flags.glslPrelude, "vec3(" + components + ")");
         }
       },
       scale: function(stack, node, flags) {
@@ -1109,9 +1105,9 @@
         }
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.value)) {
-          return mecha.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
+          mecha.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
         } else {
-          return glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.value));
+          glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.value));
         }
       },
       mirror: function(stack, node, flags) {
@@ -1124,7 +1120,7 @@
           axes[a] = true;
         }
         if (axes[0] && axes[1] && axes[2]) {
-          return glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
+          glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
         } else {
           axesCodes = (function() {
             var _results;
@@ -1134,12 +1130,12 @@
             }
             return _results;
           })();
-          return glslCompiler.preludePush(flags.glslPrelude, "vec3(" + axesCodes + ")");
+          glslCompiler.preludePush(flags.glslPrelude, "vec3(" + axesCodes + ")");
         }
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);
-        return flags.materials.push("vec3(" + node.attr.color + ")");
+        flags.materials.push("vec3(" + node.attr.color + ")");
       },
       "default": function(stack, node, flags) {}
     };
@@ -1360,6 +1356,7 @@
         if (!Array.isArray(node.attr.value)) {
           node.code = modifyCallback(node.code, glsl.mul("(" + node.code + ")", node.attr.value));
         }
+        glslCompiler.preludePop(flags.glslPrelude);
         return stack[0].nodes.push(node);
       },
       mirror: function(stack, node, flags) {

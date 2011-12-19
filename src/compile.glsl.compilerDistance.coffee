@@ -4,24 +4,30 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
   preDispatch = 
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
+      return
     union: (stack, node, flags) ->
       flags.composition.push glslCompiler.COMPOSITION_UNION
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
+      return
     intersect: (stack, node, flags) ->
       flags.composition.push glslCompiler.COMPOSITION_INTERSECT
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
+      return
     chamfer: (stack, node, flags) ->
       #node.halfSpaces = []
       #node.halfSpaces.push null for i in [0..5]
+      return
     bevel: (stack, node, flags) ->
       #node.halfSpaces = []
       #node.halfSpaces.push null for i in [0..5]
+      return
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset})"
+      return
     rotate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       # Note that we're using the right-hand rules for basis vectors as well as rotations as is the standard convention in physics and math
@@ -51,6 +57,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
               else        "#{ro}.z"
         ]
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
+      return
     scale: (stack, node, flags) ->
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
@@ -59,6 +66,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
         glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.value)
+      return
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -69,9 +77,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       else
         axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
+      return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
       flags.materials.push "vec3(#{node.attr.color})"
+      return
     default: (stack, node, flags) ->
       return
 
@@ -255,6 +265,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         compileCompositeNode 'Scale', maxCallback, stack, node, flags
       if not Array.isArray node.attr.value
         node.code = modifyCallback node.code, (glsl.mul "(#{node.code})", node.attr.value)
+      glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
     mirror: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
