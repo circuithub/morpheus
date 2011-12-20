@@ -93,13 +93,21 @@ do () ->
   extend window, dispatch
 
   # Parameters
-  window.range = (start, end) ->
-    param: 'range'
-    start: start
-    end: end
+  globalParamIndex = 0
+    
+  window.range = (defaultArg, start, end, step) ->
+    paramIndex = paramIndex
+    ++globalParamIndex
+    return {
+      param: 'range'
+      paramIndex: paramIndex
+      start: start
+      end: end
+      step: step
+      defaultArg: defaultArg
+    }
 
   window.number = (defaultArg) ->
     param: 'param'
     defaultArg: defaultArg
-
 

@@ -5,7 +5,7 @@
   var __slice = Array.prototype.slice;
 
   (function() {
-    var Api, dispatch, extend;
+    var Api, dispatch, extend, globalParamIndex;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -170,11 +170,18 @@
       };
     };
     extend(window, dispatch);
-    window.range = function(start, end) {
+    globalParamIndex = 0;
+    window.range = function(defaultArg, start, end, step) {
+      var paramIndex;
+      paramIndex = paramIndex;
+      ++globalParamIndex;
       return {
         param: 'range',
+        paramIndex: paramIndex,
         start: start,
-        end: end
+        end: end,
+        step: step,
+        defaultArg: defaultArg
       };
     };
     return window.number = function(defaultArg) {
