@@ -94,20 +94,58 @@ do () ->
 
   # Parameters
   globalParamIndex = 0
+  
+  class Parameter
+    constructor: (attr) ->
+      @attr = attr
+      @str = "u#{attr.paramIndex}"
+    toString: () -> @str
+    index: (arg) ->
+      if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @str = "#{@str}[#{arg}]"
+      else
+        throw "Argument to index must be an integer"
+      return this
+    mul: (arg) ->
+      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @str = "(#{@str}) * #{arg}.0"
+      else
+        @str = "(#{@str}) * #{arg}"
+      return this
+    div: (arg) ->
+      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @str = "(#{@str}) / #{arg}.0"
+      else
+        @str = "(#{@str}) / #{arg}"
+      return this
+    add: (arg) ->
+      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @str = "(#{@str}) + #{arg}.0"
+      else
+        @str = "(#{@str}) + #{arg}"
+      return this
+    sub: (arg) ->
+      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @str = "(#{@str}) - #{arg}.0"
+      else
+        @str = "(#{@str}) - #{arg}"
+      return this
     
   window.range = (defaultArg, start, end, step) ->
-    paramIndex = paramIndex
+    paramIndex = globalParamIndex
     ++globalParamIndex
-    return {
+    (new Parameter
       param: 'range'
+      type: 'float'
       paramIndex: paramIndex
       start: start
       end: end
       step: step
       defaultArg: defaultArg
-    }
+    )
 
   window.number = (defaultArg) ->
     param: 'param'
+    type: 'float'
     defaultArg: defaultArg
 

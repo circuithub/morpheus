@@ -5,7 +5,7 @@
   var __slice = Array.prototype.slice;
 
   (function() {
-    var Api, dispatch, extend, globalParamIndex;
+    var Api, Parameter, dispatch, extend, globalParamIndex;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -171,22 +171,83 @@
     };
     extend(window, dispatch);
     globalParamIndex = 0;
+    Parameter = (function() {
+
+      function Parameter(attr) {
+        this.attr = attr;
+        this.str = "u" + attr.paramIndex;
+      }
+
+      Parameter.prototype.toString = function() {
+        return this.str;
+      };
+
+      Parameter.prototype.index = function(arg) {
+        if (typeof arg === 'number' && (arg | 0) === arg) {
+          this.str = "" + this.str + "[" + arg + "]";
+        } else {
+          throw "Argument to index must be an integer";
+        }
+        return this;
+      };
+
+      Parameter.prototype.mul = function(arg) {
+        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          this.str = "(" + this.str + ") * " + arg + ".0";
+        } else {
+          this.str = "(" + this.str + ") * " + arg;
+        }
+        return this;
+      };
+
+      Parameter.prototype.div = function(arg) {
+        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          this.str = "(" + this.str + ") / " + arg + ".0";
+        } else {
+          this.str = "(" + this.str + ") / " + arg;
+        }
+        return this;
+      };
+
+      Parameter.prototype.add = function(arg) {
+        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          this.str = "(" + this.str + ") + " + arg + ".0";
+        } else {
+          this.str = "(" + this.str + ") + " + arg;
+        }
+        return this;
+      };
+
+      Parameter.prototype.sub = function(arg) {
+        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          this.str = "(" + this.str + ") - " + arg + ".0";
+        } else {
+          this.str = "(" + this.str + ") - " + arg;
+        }
+        return this;
+      };
+
+      return Parameter;
+
+    })();
     window.range = function(defaultArg, start, end, step) {
       var paramIndex;
-      paramIndex = paramIndex;
+      paramIndex = globalParamIndex;
       ++globalParamIndex;
-      return {
+      return new Parameter({
         param: 'range',
+        type: 'float',
         paramIndex: paramIndex,
         start: start,
         end: end,
         step: step,
         defaultArg: defaultArg
-      };
+      });
     };
     return window.number = function(defaultArg) {
       return {
         param: 'param',
+        type: 'float',
         defaultArg: defaultArg
       };
     };
