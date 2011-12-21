@@ -177,6 +177,7 @@
       function Parameter(attr) {
         this.attr = attr;
         this.str = "u" + attr.paramIndex;
+        exportedParameters.push(attr.description);
       }
 
       Parameter.prototype.toString = function() {
@@ -231,12 +232,13 @@
       return Parameter;
 
     })();
-    window.range = function(defaultArg, start, end, step) {
+    window.range = function(description, defaultArg, start, end, step) {
       var paramIndex;
       paramIndex = globalParamIndex;
       ++globalParamIndex;
       return new Parameter({
         param: 'range',
+        description: description,
         type: 'float',
         paramIndex: paramIndex,
         start: start,
@@ -245,9 +247,10 @@
         defaultArg: defaultArg
       });
     };
-    return window.number = function(defaultArg) {
+    return window.number = function(description, defaultArg) {
       return {
         param: 'param',
+        description: description,
         type: 'float',
         defaultArg: defaultArg
       };

@@ -5,7 +5,7 @@
 
   "use strict";
 
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, translateSugaredJS, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -177,51 +177,13 @@
 
   })();
 
+  translateSugaredJS = function(csmSourceCode) {};
+
   compileCSM = function(csmSourceCode, callback) {
-    var requestId, sandboxSourceCode, v, variables, variablesSource;
+    var requestId, sandboxSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    if (variablesSource != null) {
-      variables = ((function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = variablesSource.length; _i < _len; _i++) {
-          v = variablesSource[_i];
-          _results.push(v.split('var'));
-        }
-        return _results;
-      })()).flatten();
-      variables = ((function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = variables.length; _i < _len; _i++) {
-          v = variables[_i];
-          _results.push(v.split(','));
-        }
-        return _results;
-      })()).flatten();
-      variables = (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = variables.length; _i < _len; _i++) {
-          v = variables[_i];
-          if ((v.search('=')) !== -1) _results.push((v.split('='))[0]);
-        }
-        return _results;
-      })();
-      variables = (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = variables.length; _i < _len; _i++) {
-          v = variables[_i];
-          if ((v.search(/\(\)\=\,/)) === -1) _results.push(v.trim());
-        }
-        return _results;
-      })();
-    } else {
-      variables = [];
-    }
-    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene(' + ("  " + variables + ",\n  " + csmSourceCode + "\n") + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
     console.log(sandboxSourceCode);
     return requestId = JSandbox.eval({
       data: sandboxSourceCode,

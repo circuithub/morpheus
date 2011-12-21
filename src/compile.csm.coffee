@@ -23,6 +23,8 @@ compileCSM = (csmSourceCode, callback) ->
     "use strict";
     (function(){
       /* BEGIN API */
+      
+      var exportedParameters = [];
 
     ''' + "\n#{state.api.sourceCode}\n" +
     '''
@@ -32,8 +34,8 @@ compileCSM = (csmSourceCode, callback) ->
     ''' + (if variablesSource then "\n#{variablesSource.join '\n'}\n" else "") +
     '''
       /* BEGIN SOURCE */
-      return scene(
-    ''' + "  #{variables},\n  #{csmSourceCode}\n" +
+      return scene({ params: exportedParameters },
+    ''' + csmSourceCode +
     '''
       );
       } catch(err) {

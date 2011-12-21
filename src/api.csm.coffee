@@ -100,6 +100,7 @@ do () ->
     constructor: (attr) ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
+      exportedParameters.push attr.description
     toString: () -> @str
     index: (arg) ->
       if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
@@ -132,11 +133,12 @@ do () ->
         @str = "(#{@str}) - #{arg}"
       return this
     
-  window.range = (defaultArg, start, end, step) ->
+  window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
     (new Parameter
       param: 'range'
+      description: description
       type: 'float'
       paramIndex: paramIndex
       start: start
@@ -145,8 +147,9 @@ do () ->
       defaultArg: defaultArg
     )
 
-  window.number = (defaultArg) ->
+  window.number = (description, defaultArg) ->
     param: 'param'
+    description: description
     type: 'float'
     defaultArg: defaultArg
 
