@@ -177,7 +177,9 @@
 
   })();
 
-  translateSugaredJS = function(csmSourceCode) {};
+  translateSugaredJS = function(csmSourceCode) {
+    return csmSourceCode;
+  };
 
   compileCSM = function(csmSourceCode, callback) {
     var requestId, sandboxSourceCode, variablesSource;

@@ -3,5 +3,6 @@
 # If desired, it can be replaced by another source translator in order to use
 # a different syntax.
 translateSugaredJS = (csmSourceCode) ->
-  
+  #csmAST = parseJS.parse csmSourceCode
+  csmSourceCode 
   
