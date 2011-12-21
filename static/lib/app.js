@@ -221,7 +221,7 @@
     } else {
       variables = [];
     }
-    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '\n/* BEGIN SOURCE */\nreturn scene(\n' + csmSourceCode + '  \n  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene(' + ("  " + variables + ",\n  " + csmSourceCode + "\n") + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
     console.log(sandboxSourceCode);
     return requestId = JSandbox.eval({
       data: sandboxSourceCode,

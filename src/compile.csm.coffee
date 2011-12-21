@@ -2,19 +2,20 @@
 compileCSM = (csmSourceCode, callback) ->
   #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
 
+  
   # Extract all parameters from the source
   # (Note: if desired this could be optimized quite a bit)
-
   variablesSource = csmSourceCode.match /var[^;]*;/g
   csmSourceCode = (csmSourceCode.replace /var[^;]*;/g, '').trim()
 
-  if variablesSource?
-    variables = (v.split 'var' for v in variablesSource).flatten()
-    variables = (v.split ',' for v in variables).flatten()
-    variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
-    variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
-  else
-    variables = []
+  # TODO: variables source code is no longer needed
+  #if variablesSource?
+  #  variables = (v.split 'var' for v in variablesSource).flatten()
+  #  variables = (v.split ',' for v in variables).flatten()
+  #  variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
+  #  variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
+  #else
+  #  variables = []
 
   # Concatenate the sandbox source code
   sandboxSourceCode =
@@ -30,13 +31,10 @@ compileCSM = (csmSourceCode, callback) ->
 
     ''' + (if variablesSource then "\n#{variablesSource.join '\n'}\n" else "") +
     '''
-
       /* BEGIN SOURCE */
       return scene(
-      
-    ''' + csmSourceCode +
+    ''' + "  #{variables},\n  #{csmSourceCode}\n" +
     '''
-      
       );
       } catch(err) {
         return String(err);

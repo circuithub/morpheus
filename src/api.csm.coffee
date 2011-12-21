@@ -84,10 +84,11 @@ do () ->
       nodes: nodes
 
   # Put API functions into the global namespace
-  window.scene = (nodes...) ->
+  window.scene = (attr, nodes...) ->
     strip = (nodes) ->
       { type: n.type, attr: n.attr, nodes: strip n.nodes } for n in nodes
     type: 'scene'
+    attr: attr
     nodes: strip nodes
 
   extend window, dispatch
