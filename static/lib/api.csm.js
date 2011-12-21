@@ -5,7 +5,7 @@
   var __slice = Array.prototype.slice;
 
   (function() {
-    var Api, Parameter, dispatch, extend, globalParamIndex;
+    var Api, Dispatcher, Parameter, dispatch, extend, globalParamIndex;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -14,12 +14,15 @@
       }
       return obj;
     };
-    dispatch = {};
+    Dispatcher = function() {};
+    dispatch = new Dispatcher;
     Api = function(f) {
       return function() {
         var obj;
         obj = extend(Object.create(dispatch), f.apply(null, arguments));
-        if (typeof this !== "undefined" && this !== null) obj.nodes.unshift(this);
+        if ((typeof this !== "undefined" && this !== null) && this instanceof Dispatcher) {
+          obj.nodes.unshift(this);
+        }
         return obj;
       };
     };

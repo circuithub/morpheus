@@ -4,7 +4,6 @@
 # Every API function is a variadic function that takes some attributes as its first argument and (optionally) a tail list of nodes to compose
 
 do () ->
-
   # Internal utilities
   extend = (obj, mixin) ->
     for name, method of mixin
@@ -12,12 +11,13 @@ do () ->
     return obj
 
   # Fluid API builder
-  dispatch = {}
+  Dispatcher = ->
+  dispatch = new Dispatcher # {}
   
   Api = (f) ->
     return () -> 
       obj = extend (Object.create dispatch), (f arguments...)
-      obj.nodes.unshift this if this?
+      obj.nodes.unshift this if this? and this instanceof Dispatcher
       return obj
 
   # API dispatcher
