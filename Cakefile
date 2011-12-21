@@ -16,6 +16,7 @@ appFiles  = [
   'math'
   'util.tostring'
   #'api.csm'
+  'translate.sugaredjs'
   'compile.csm'
   'compile.asm.api'
   'compile.asm.generics'
