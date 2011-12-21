@@ -19,29 +19,13 @@
     /* General styling */
     
     /* Application styling */
-    #source-panel {
-      position: relative;
-      float: left;
-      width: 502px;
-      height: 512px;
-      margin: 0 10px;
-    }
-    #source-code {
-      display: block;
-      width: 100%;
-      height: 480px;
-      resize: none;
-    }
-    #source-compile {
-      position: absolute;
-      right: 0;
-    }
+
   </style>
 </head>
 <body>
   <script src="../static/lib/api.csm.js"></script>
   <script>
-    console.log(scene(
+    console.log(scene({ parameters: [] },
       translate(
         { offset: [0.0, 0.4, 0.0] },
         intersect(
