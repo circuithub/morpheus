@@ -189,7 +189,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       cornersState = 
         codes: []
-        hs: node.halfSpaces.shallowClone()
+        hs: shallowClone node.halfSpaces
       
       # Determine whether the composite should be chamfered / beveled in some way
       chamferRadius = 0

@@ -3,9 +3,9 @@
 asm =
   union: (nodes...) -> 
     type: 'union'
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   intersect: (nodes...) -> 
-    flattenedNodes = nodes.flatten()
+    flattenedNodes = flatten nodes
     result =
       type: 'intersect'
       nodes: (n for n in flattenedNodes when n.type != 'intersect')
@@ -17,27 +17,27 @@ asm =
   #  nodes: nodes
   invert: (nodes...) ->
     type: 'invert'
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   mirror: (attr, nodes...) ->
     type: 'mirror'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   translate:  (attr, nodes...) ->
     type: 'translate'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   rotate: (attr, nodes...) ->
     type: 'rotate'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   scale: (attr, nodes...) ->
     type: 'scale'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   material:  (attr, nodes...) ->
     type: 'material'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   halfspace: (attr) ->
     type: 'halfspace'
     attr: attr
@@ -50,9 +50,9 @@ asm =
   chamfer: (attr, nodes...) ->
     type: 'chamfer'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
   bevel: (attr, nodes...) ->
     type: 'bevel'
     attr: attr
-    nodes: nodes.flatten()
+    nodes: flatten nodes
 

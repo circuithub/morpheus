@@ -5,7 +5,7 @@
 
   "use strict";
 
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, toStringPrototype, translateSugaredJS, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, shallowClone, state, toStringPrototype, translateSugaredJS, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
   var __slice = Array.prototype.slice;
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -142,21 +142,21 @@
     return console.log.apply(console, arguments);
   } : function() {});
 
-  Array.prototype.flatten = function() {
-    var x, _ref;
+  flatten = function(array) {
+    var a, _ref;
     return (_ref = []).concat.apply(_ref, (function() {
       var _i, _len, _results;
       _results = [];
-      for (_i = 0, _len = this.length; _i < _len; _i++) {
-        x = this[_i];
-        _results.push(Array.isArray(x) ? x.flatten() : [x]);
+      for (_i = 0, _len = array.length; _i < _len; _i++) {
+        a = array[_i];
+        _results.push(Array.isArray(a) ? flatten(a) : [a]);
       }
       return _results;
-    }).call(this));
+    })());
   };
 
-  Array.prototype.shallowClone = function() {
-    return this.slice(0);
+  shallowClone = function(array) {
+    return array.slice(0);
   };
 
   Math.clamp = function(s, min, max) {
@@ -205,13 +205,13 @@
       nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       return {
         type: 'union',
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     intersect: function() {
       var flattenedNodes, n, nodes, result, _i, _len;
       nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      flattenedNodes = nodes.flatten();
+      flattenedNodes = flatten(nodes);
       result = {
         type: 'intersect',
         nodes: (function() {
@@ -235,7 +235,7 @@
       nodes = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       return {
         type: 'invert',
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     mirror: function() {
@@ -244,7 +244,7 @@
       return {
         type: 'mirror',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     translate: function() {
@@ -253,7 +253,7 @@
       return {
         type: 'translate',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     rotate: function() {
@@ -262,7 +262,7 @@
       return {
         type: 'rotate',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     scale: function() {
@@ -271,7 +271,7 @@
       return {
         type: 'scale',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     material: function() {
@@ -280,7 +280,7 @@
       return {
         type: 'material',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     halfspace: function(attr) {
@@ -307,7 +307,7 @@
       return {
         type: 'chamfer',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     },
     bevel: function() {
@@ -316,7 +316,7 @@
       return {
         type: 'bevel',
         attr: attr,
-        nodes: nodes.flatten()
+        nodes: flatten(nodes)
       };
     }
   };
@@ -1234,7 +1234,7 @@
       ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
       cornersState = {
         codes: [],
-        hs: node.halfSpaces.shallowClone()
+        hs: shallowClone(node.halfSpaces)
       };
       chamferRadius = 0;
       bevelRadius = 0;

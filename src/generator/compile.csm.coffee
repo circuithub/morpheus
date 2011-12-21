@@ -10,8 +10,8 @@ compileCSM = (csmSourceCode, callback) ->
 
   # TODO: variables source code is no longer needed
   #if variablesSource?
-  #  variables = (v.split 'var' for v in variablesSource).flatten()
-  #  variables = (v.split ',' for v in variables).flatten()
+  #  variables = flatten (v.split 'var' for v in variablesSource)
+  #  variables = flatten (v.split ',' for v in variables)
   #  variables = ((v.split '=')[0] for v in variables when (v.search '=') != -1)
   #  variables = (v.trim() for v in variables when (v.search /\(\)\=\,/) == -1)
   #else

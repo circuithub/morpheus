@@ -1,15 +1,7 @@
-# Additional array routines not found in standard JavaScript or SceneJS
+# Additional array routines not found in standard JavaScript
 
-# TODO: These modifications polute the global Array object, we need to limit this to a local copy of Array.
+flatten = (array) ->
+  [].concat ((if Array.isArray a then (flatten a) else [a]) for a in array)...
 
-#Array.prototype.flatten = (a) ->
-#	a.reduce ((xs, x) -> xs.concat flatten x if Array.isArray x else xs.concat [x]), []
-
-Array.prototype.flatten = () ->
-  [].concat ((if Array.isArray x then x.flatten() else [x]) for x in this)...
-
-#Array.prototype.flatten = (xs) ->
-#  (x... if Array.isArray x else x) for x in xs
-
-Array.prototype.shallowClone = () ->
-  this.slice 0
+shallowClone = (array) ->
+  array.slice 0
