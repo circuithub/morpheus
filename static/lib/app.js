@@ -163,6 +163,10 @@
     return Math.min(Math.max(s, min), max);
   };
 
+  translateSugaredJS = function(csmSourceCode) {
+    return csmSourceCode;
+  };
+
   toStringPrototype = (function() {
 
     function toStringPrototype(str) {
@@ -176,10 +180,6 @@
     return toStringPrototype;
 
   })();
-
-  translateSugaredJS = function(csmSourceCode) {
-    return csmSourceCode;
-  };
 
   compileCSM = function(csmSourceCode, callback) {
     var requestId, sandboxSourceCode, variablesSource;

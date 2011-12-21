@@ -5,18 +5,17 @@ async  = require 'async'
 
 appFiles  = [
   # omit src/ and .coffee to make the below lines a little shorter
-  'directives'
+  'common/directives'
   'renderer/scenejs.nodeattr'
   'renderer/scenejs.conversion'
   'renderer/scenejs.orbitlookat'
   'renderer/scenejs.zoomlookat'
   'mecha'
   'mecha.log'
-  'array'
-  'math'
-  'util.tostring'
-  #'api.csm'
+  'common/array'
+  'common/math'
   'editor/translate.sugaredjs'
+  'generator/util.tostring'
   'generator/compile.csm'
   'generator/compile.asm.api'
   'generator/compile.asm.generics'
@@ -85,7 +84,7 @@ task 'build', "Build single application file from source files", ->
           # Concatenate the header file
           fs.readFile 'static/lib/app.js', 'utf8', (err, appjsContents) ->
             throw err if err
-            fs.readFile 'src/header.js', 'utf8', (err, headerjsContents) ->
+            fs.readFile 'src/common/header.js', 'utf8', (err, headerjsContents) ->
               throw err if err
               # Write out the result
               fs.writeFile 'static/lib/app.js', headerjsContents + appjsContents, 'utf8', (err) ->
@@ -106,13 +105,13 @@ task 'build', "Build single application file from source files", ->
     ,
       (callback) ->
         # Translate the CSM API separately (compile into a separate file)
-        exec "coffee -o static/lib -c src/api.csm.coffee", (err, stdout, stderr) ->
+        exec "coffee -o static/lib -c src/api/api.csm.coffee", (err, stdout, stderr) ->
           throw err if err
           console.log stdout + stderr
           # Concatenate the header file
           fs.readFile 'static/lib/api.csm.js', 'utf8', (err, appjsContents) ->
             throw err if err
-            fs.readFile 'src/header.js', 'utf8', (err, headerjsContents) ->
+            fs.readFile 'src/common/header.js', 'utf8', (err, headerjsContents) ->
               throw err if err
               # Write out the result
               fs.writeFile 'static/lib/api.csm.js', headerjsContents + appjsContents, 'utf8', (err) ->
