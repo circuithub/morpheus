@@ -137,6 +137,9 @@ Build scripts
 buildMecha = -> 
   args = arguments
   -> ((concatFiles mechaFiles) (buildText 'mecha')) args...
+buildApi = -> 
+  args = arguments
+  -> # TODO...
 buildGenerator = -> 
   args = arguments 
   -> ((concatFiles generatorFiles) (buildText 'mecha-generator')) args...
@@ -146,6 +149,17 @@ buildGui = ->
 buildEditor = ->
   args = arguments
   -> ((concatFiles editorFiles) (buildText 'mecha-editor')) args...
+minify = ->
+  path.exists 'node_modules/.bin/uglifyjs', (exists) ->
+    files = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-editor']
+    tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
+    for file in files then do (file) ->
+      path.exists "static/lib/#{file}.js", (exists) ->
+        if exists
+          exec "#{tool} static/lib/#{file}.js > static/lib/#{file}.min.js", (err, stdout, stderr) ->
+            throw err if err
+            console.log stdout + stderr
+            console.log "...Done (#{file}.min.js)"
 
 ###
 Tasks
@@ -154,6 +168,10 @@ Tasks
 task 'build', "Build the entire mecha module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   buildMecha()()
+
+task 'build-api', "Build the API module", ->
+  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+  buildApi()()
 
 task 'build-generator', "Build the generator module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
@@ -169,7 +187,7 @@ task 'build-editor', "Build the editor module", ->
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildMecha buildGenerator buildGui buildEditor())()
+  (buildMecha buildGenerator buildGui buildEditor minify)()
 
 #buildApi = (callback) ->
 #  # Translate the CSM API separately (compile into a separate file)
@@ -206,25 +224,7 @@ task 'fetch:async', "Fetch the async library", ->
     console.log "Done."
 
 task 'minify', "Minify the resulting application file after build", ->
-  path.exists 'node_modules/.bin/uglifyjs', (exists) ->
-    if exists
-      exec "node_modules/.bin/uglifyjs static/lib/app.js > static/lib/app.min.js", (err, stdout, stderr) ->
-        throw err if err
-        console.log stdout + stderr
-        console.log "...Done (app.min.js)"
-      exec "node_modules/.bin/uglifyjs static/lib/api.csm.js > static/lib/api.csm.min.js", (err, stdout, stderr) ->
-        throw err if err
-        console.log stdout + stderr
-        console.log "...Done (api.csm.min.js)"
-    else
-      exec "uglifyjs static/lib/app.js > static/lib/app.min.js", (err, stdout, stderr) ->
-        throw err if err
-        console.log stdout + stderr
-        console.log "...Done (app.min.js)"
-      exec "uglifyjs static/lib/api.csm.js > static/lib/api.csm.min.js", (err, stdout, stderr) ->
-        throw err if err
-        console.log stdout + stderr
-        console.log "...Done (api.csm.min.js)"
+  minify()
 
 task 'clean', "Cleanup all build files and distribution files", ->
   exec "rm -rf build;rm static/lib/app.js;rm static/lib/app.min.js;rm static/lib/api.csm.js;rm static/lib/api.csm.min.js", (err, stdout, stderr) ->
