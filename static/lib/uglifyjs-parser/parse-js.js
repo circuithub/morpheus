@@ -1322,7 +1322,7 @@ var warn = function() {};
 
 /* -----[ Exports ]----- */
 
-var exports = (typeof exports != 'undefined'? exports : {});
+var exports = exports || {};
 exports.tokenizer = tokenizer;
 exports.parse = parse;
 exports.slice = slice;
