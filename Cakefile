@@ -47,6 +47,7 @@ mechaFiles  = [
 
 apiFiles = [
   'api/api.csm'
+  'api/exports'
 ]
 
 generatorFiles  = [
@@ -68,6 +69,7 @@ generatorFiles  = [
   'generator/compile.glsl.sceneDistance'
   'generator/compile.glsl.sceneId'
   'generator/compile.glsl'
+  'generator/exports'
 ]
 
 guiFiles  = [
@@ -86,12 +88,14 @@ guiFiles  = [
   'gui/events.register'
   'gui/events.idle'
   'gui/events.init'
+  'gui/exports'
 ]
 
 editorFiles = [
   'common/directives'
   'mecha.log'
   'editor/translate.sugaredjs'
+  'editor/exports'
 ]
 
 ###
@@ -107,7 +111,19 @@ Function.prototype.partial = ->
 Build helpers
 ###
 
-buildText = (filename) -> (text) -> (callback) ->
+concatHeader = (filename, module, callback) ->
+  fs.readFile "static/lib/#{filename}.js", 'utf8', (err, fileContents) ->
+    throw err if err
+    fs.readFile "src/common/header.js", 'utf8', (err, commonHeaderContents) ->
+      throw err if err
+      if module?
+        fs.readFile "src/#{module}/header.js", 'utf8', (err, headerContents) ->
+          throw err if err
+          callback (commonHeaderContents + headerContents + fileContents) if callback?
+      else
+        callback (commonHeaderContents + fileContents) if callback?
+
+buildText = (filename, module) -> (text) -> (callback) ->
   fs.writeFile "build/#{filename}.coffee", text.join('\n\n'), 'utf8', (err) ->
     throw err if err
     exec "coffee -o static/lib -c build/#{filename}.coffee", (err, stdout, stderr) ->
@@ -116,15 +132,12 @@ buildText = (filename) -> (text) -> (callback) ->
       fs.unlink "build/#{filename}.coffee", (err) ->
         throw err if err
         # Concatenate the header file
-        fs.readFile "static/lib/#{filename}.js", 'utf8', (err, appjsContents) ->
-          throw err if err
-          fs.readFile "src/common/header.js", 'utf8', (err, headerjsContents) ->
+        concatHeader filename, module, (text) ->
+          # Write out the result
+          fs.writeFile "static/lib/#{filename}.js", text, 'utf8', (err) ->
             throw err if err
-            # Write out the result
-            fs.writeFile "static/lib/#{filename}.js", headerjsContents + appjsContents, 'utf8', (err) ->
-              throw err if err
-              console.log "...Done (#{filename}.js)"
-              callback() if callback?
+            console.log "...Done (#{filename}.js)"
+            callback() if callback?
 
 concatFiles = (files) -> (callback) ->
   contents = new Array files.length
@@ -135,7 +148,7 @@ concatFiles = (files) -> (callback) ->
       fs.readFile "src/#{file}.coffee", 'utf8', (err, fileContents) ->
         throw err if err
         contents[index] = fileContents
-        ((callback contents) args...) if --remaining is 0
+        ((callback contents) args...) if --remaining is 0 and callback?
 ###
 Build scripts
 ###
@@ -145,16 +158,16 @@ buildMecha = ->
   -> ((concatFiles mechaFiles) (buildText 'mecha')) args...
 buildApi = -> 
   args = arguments
-  -> ((concatFiles apiFiles) (buildText 'mecha-api')) args...
+  -> ((concatFiles apiFiles) (buildText 'mecha-api', 'api')) args...
 buildGenerator = -> 
   args = arguments 
-  -> ((concatFiles generatorFiles) (buildText 'mecha-generator')) args...
+  -> ((concatFiles generatorFiles) (buildText 'mecha-generator', 'generator')) args...
 buildGui = -> 
   args = arguments
-  -> ((concatFiles guiFiles) (buildText 'mecha-gui')) args...
+  -> ((concatFiles guiFiles) (buildText 'mecha-gui', 'gui')) args...
 buildEditor = ->
   args = arguments
-  -> ((concatFiles editorFiles) (buildText 'mecha-editor')) args...
+  -> ((concatFiles editorFiles) (buildText 'mecha-editor', 'editor')) args...
 minify = ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
@@ -193,22 +206,6 @@ task 'build-editor', "Build the editor module", ->
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   (buildMecha buildApi buildGenerator buildGui buildEditor minify)()
-
-#buildApi = (callback) ->
-#  # Translate the CSM API separately (compile into a separate file)
-#  exec "coffee -o static/lib -c src/api/api.csm.coffee", (err, stdout, stderr) ->
-#    throw err if err
-#    console.log stdout + stderr
-#    # Concatenate the header file
-#    fs.readFile 'static/lib/api.csm.js', 'utf8', (err, appjsContents) ->
-#      throw err if err
-#      fs.readFile 'src/common/header.js', 'utf8', (err, headerjsContents) ->
-#        throw err if err
-#        # Write out the result
-#        fs.writeFile 'static/lib/api.csm.js', headerjsContents + appjsContents, 'utf8', (err) ->
-#          throw err if err
-#          console.log "...Done (api.csm.js)"
-#          callback null, null
 
 task 'fetch:npm', "Fetch the npm package manager", ->
   exec "curl http://npmjs.org/install.sh | sudo sh", (err, stdout, stderr) ->

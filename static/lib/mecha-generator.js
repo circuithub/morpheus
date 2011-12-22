@@ -1,11 +1,14 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
+var mecha = mecha || {};
+
+mecha.generator = 
 (function() {
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileCSM, compileGLSL, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, optimizeASM, shallowClone, toStringPrototype;
+  var asm, compileASM, compileASMBounds, compileCSM, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, optimizeASM, shallowClone, toStringPrototype;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -1384,5 +1387,9 @@
     console.log(vertexShader);
     return [vertexShader, fragmentShader];
   };
+
+  exports = exports != null ? exports : {};
+
+  return exports;
 
 }).call(this);

@@ -1,11 +1,14 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
+var mecha = mecha || {};
+
+mecha.gui = 
 (function() {
 
   "use strict";
 
-  var apiInit, canvasInit, controlsInit, controlsSourceCompile, keyDown, lookAtToQuaternion, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, controlsInit, controlsSourceCompile, exports, keyDown, lookAtToQuaternion, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
 
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
@@ -296,5 +299,9 @@
     registerControlEvents();
     return state.application.initialized = true;
   });
+
+  exports = exports != null ? exports : {};
+
+  return exports;
 
 }).call(this);

@@ -1,6 +1,8 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
+var mecha = mecha || {};
+
 (function() {
 
   "use strict";

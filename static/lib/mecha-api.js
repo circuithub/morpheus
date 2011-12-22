@@ -1,7 +1,11 @@
 /*
  * Copyright 2011, CircuitHub.com
  */
+var mecha = mecha || {};
+
+mecha.api = 
 (function() {
+  var exports;
   var __slice = Array.prototype.slice;
 
   (function() {
@@ -259,5 +263,9 @@
       };
     };
   })();
+
+  exports = exports != null ? exports : {};
+
+  return exports;
 
 }).call(this);
