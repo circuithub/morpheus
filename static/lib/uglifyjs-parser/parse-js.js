@@ -1322,22 +1322,22 @@ var warn = function() {};
 
 /* -----[ Exports ]----- */
 
-var parseJSExports = (typeof exports != 'undefined'? exports : {});
-parseJSExports.tokenizer = tokenizer;
-parseJSExports.parse = parse;
-parseJSExports.slice = slice;
-parseJSExports.curry = curry;
-parseJSExports.member = member;
-parseJSExports.array_to_hash = array_to_hash;
-parseJSExports.PRECEDENCE = PRECEDENCE;
-parseJSExports.KEYWORDS_ATOM = KEYWORDS_ATOM;
-parseJSExports.RESERVED_WORDS = RESERVED_WORDS;
-parseJSExports.KEYWORDS = KEYWORDS;
-parseJSExports.ATOMIC_START_TOKEN = ATOMIC_START_TOKEN;
-parseJSExports.OPERATORS = OPERATORS;
-parseJSExports.is_alphanumeric_char = is_alphanumeric_char;
-parseJSExports.set_logger = function(logger) { warn = logger; };
-return parseJSExports;
+var exports = (typeof exports != 'undefined'? exports : {});
+exports.tokenizer = tokenizer;
+exports.parse = parse;
+exports.slice = slice;
+exports.curry = curry;
+exports.member = member;
+exports.array_to_hash = array_to_hash;
+exports.PRECEDENCE = PRECEDENCE;
+exports.KEYWORDS_ATOM = KEYWORDS_ATOM;
+exports.RESERVED_WORDS = RESERVED_WORDS;
+exports.KEYWORDS = KEYWORDS;
+exports.ATOMIC_START_TOKEN = ATOMIC_START_TOKEN;
+exports.OPERATORS = OPERATORS;
+exports.is_alphanumeric_char = is_alphanumeric_char;
+exports.set_logger = function(logger) { warn = logger; };
+return exports;
 
 })();
 
