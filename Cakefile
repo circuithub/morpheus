@@ -6,6 +6,8 @@ path   = require 'path'
 Files
 ###
 
+mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-editor']
+
 mechaFiles  = [
   'common/directives'
   'common/array'
@@ -41,6 +43,10 @@ mechaFiles  = [
   'gui/events.register'
   'gui/events.idle'
   'gui/events.init'
+]
+
+apiFiles = [
+  'api/api.csm'
 ]
 
 generatorFiles  = [
@@ -139,7 +145,7 @@ buildMecha = ->
   -> ((concatFiles mechaFiles) (buildText 'mecha')) args...
 buildApi = -> 
   args = arguments
-  -> # TODO...
+  -> ((concatFiles apiFiles) (buildText 'mecha-api')) args...
 buildGenerator = -> 
   args = arguments 
   -> ((concatFiles generatorFiles) (buildText 'mecha-generator')) args...
@@ -151,9 +157,8 @@ buildEditor = ->
   -> ((concatFiles editorFiles) (buildText 'mecha-editor')) args...
 minify = ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
-    files = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-editor']
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
-    for file in files then do (file) ->
+    for file in mechaModules then do (file) ->
       path.exists "static/lib/#{file}.js", (exists) ->
         if exists
           exec "#{tool} static/lib/#{file}.js > static/lib/#{file}.min.js", (err, stdout, stderr) ->
@@ -187,7 +192,7 @@ task 'build-editor', "Build the editor module", ->
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildMecha buildGenerator buildGui buildEditor minify)()
+  (buildMecha buildApi buildGenerator buildGui buildEditor minify)()
 
 #buildApi = (callback) ->
 #  # Translate the CSM API separately (compile into a separate file)
@@ -227,7 +232,10 @@ task 'minify', "Minify the resulting application file after build", ->
   minify()
 
 task 'clean', "Cleanup all build files and distribution files", ->
-  exec "rm -rf build;rm static/lib/app.js;rm static/lib/app.min.js;rm static/lib/api.csm.js;rm static/lib/api.csm.min.js", (err, stdout, stderr) ->
-    console.log stdout + stderr
-    console.log "...Done (clean)"
+  exec "rm -rf build"
+  remaining = mechaModules.length
+  for file in mechaModules
+    exec "rm static/lib/#{file}.js", (err, stdout, stderr) ->
+      #console.log stdout + stderr
+      console.log "...Done (clean)" if --remaining is 0
 
