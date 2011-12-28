@@ -8,41 +8,10 @@ Files
 
 mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-editor']
 
-mechaFiles  = [
-  'common/directives'
-  'common/array'
-  'common/math'
-  'renderer/scenejs.nodeattr'
-  'renderer/scenejs.conversion'
-  'renderer/scenejs.orbitlookat'
-  'renderer/scenejs.zoomlookat'
-  'mecha'
-  'mecha.log'
-  'editor/translate.sugaredjs'
-  'generator/util.tostring'
-  'generator/compile.csm'
-  'generator/compile.asm.api'
-  'generator/compile.asm.generics'
-  'generator/compile.asm.optimize'
-  'generator/compile.asm.bounds'
-  'generator/compile.asm'
-  'generator/compile.glsl.api'
-  'generator/compile.glsl.library'
-  'generator/compile.glsl.compiler'
-  'generator/compile.glsl.compilerDistance'
-  'generator/compile.glsl.sceneDistance'
-  'generator/compile.glsl.sceneId'
-  'generator/compile.glsl'
-  'constants'
-  'state'
-  'gui/mouse'
-  'gui/events.window'
-  'gui/events.mouse'
-  'gui/events.keyboard'
-  'gui/events.controls'
-  'gui/events.register'
-  'gui/events.idle'
-  'gui/events.init'
+mechaFiles = [
+  'mecha-generator'
+  'mecha-gui'
+  'mecha-editor'
 ]
 
 apiFiles = [
@@ -54,9 +23,9 @@ generatorFiles  = [
   'common/directives'
   'common/array'
   'common/math'
-  'mecha.log'
+  'common/mecha.log'
   'generator/util.tostring'
-  'generator/compile.csm'
+  'generator/translate.csm'
   'generator/compile.asm.api'
   'generator/compile.asm.generics'
   'generator/compile.asm.optimize'
@@ -75,11 +44,13 @@ generatorFiles  = [
 guiFiles  = [
   'common/directives'
   'common/math'
+  'common/mecha.log'
   'renderer/scenejs.nodeattr'
   'renderer/scenejs.conversion'
   'renderer/scenejs.orbitlookat'
   'renderer/scenejs.zoomlookat'
-  'mecha.log'
+  'gui/constants'
+  'gui/state'
   'gui/mouse'
   'gui/events.window'
   'gui/events.mouse'
@@ -93,7 +64,7 @@ guiFiles  = [
 
 editorFiles = [
   'common/directives'
-  'mecha.log'
+  'common/mecha.log'
   'editor/translate.sugaredjs'
   'editor/exports'
 ]
@@ -155,7 +126,25 @@ Build scripts
 
 buildMecha = -> 
   args = arguments
-  -> ((concatFiles mechaFiles) (buildText 'mecha')) args...
+  ->
+    writeJSFile = (filename) -> (text) -> (callback) ->
+      fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
+        throw err if err
+        console.log "...Done (#{filename}.js)"
+        callback() if callback?
+
+    concatJSFiles = (files) -> (callback) ->
+      contents = new Array files.length
+      remaining = files.length
+      () ->
+        args = arguments
+        for file, index in files then do (file, index) ->
+          fs.readFile "static/lib/#{file}.js", 'utf8', (err, fileContents) ->
+            throw err if err
+            contents[index] = fileContents
+            ((callback contents) args...) if --remaining is 0 and callback?
+
+    ((concatJSFiles mechaFiles) (writeJSFile 'mecha')) args...
 buildApi = -> 
   args = arguments
   -> ((concatFiles apiFiles) (buildText 'mecha-api', 'api')) args...
@@ -183,9 +172,9 @@ minify = ->
 Tasks
 ###
 
-task 'build', "Build the entire mecha module", ->
-  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildMecha()()
+#task 'build', "Build the entire mecha module", ->
+#  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+#  buildMecha()()
 
 task 'build-api', "Build the API module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
@@ -205,7 +194,7 @@ task 'build-editor', "Build the editor module", ->
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildMecha buildApi buildGenerator buildGui buildEditor minify)()
+  (buildApi buildGenerator buildGui buildEditor buildMecha minify)()
 
 task 'fetch:npm', "Fetch the npm package manager", ->
   exec "curl http://npmjs.org/install.sh | sudo sh", (err, stdout, stderr) ->

@@ -1,3 +1,3 @@
-exports = if exports? then exports else {}
+exports = exports ? {}
 return exports
 

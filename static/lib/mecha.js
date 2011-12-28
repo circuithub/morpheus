@@ -3,11 +3,12 @@
  */
 var mecha = mecha || {};
 
+mecha.generator = 
 (function() {
 
   "use strict";
 
-  var apiInit, asm, canvasInit, compileASM, compileASMBounds, compileCSM, compileGLSL, constants, controlsInit, controlsSourceCompile, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, keyDown, lookAtToQuaternion, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mecha, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, optimizeASM, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, shallowClone, state, toStringPrototype, translateSugaredJS, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -27,131 +28,17 @@ var mecha = mecha || {};
     return array.slice(0);
   };
 
+  math_sqrt2 = Math.sqrt(2.0);
+
+  math_invsqrt2 = 1.0 / math_sqrt2;
+
+  math_degToRad = Math.PI / 180.0;
+
+  math_radToDeg = 180.0 / Math.PI;
+
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
-
-  modifySubAttr = function(node, attr, subAttr, value) {
-    var attrRecord;
-    attrRecord = node.get(attr);
-    attrRecord[subAttr] = value;
-    return node.set(attr, attrRecord);
-  };
-
-  recordToVec3 = function(record) {
-    return [record.x, record.y, record.z];
-  };
-
-  recordToVec4 = function(record) {
-    return [record.x, record.y, record.z, record.w];
-  };
-
-  vec3ToRecord = function(vec) {
-    return {
-      x: vec[0],
-      y: vec[1],
-      z: vec[2]
-    };
-  };
-
-  vec4ToRecord = function(vec) {
-    return {
-      x: vec[0],
-      y: vec[1],
-      z: vec[2],
-      w: vec[3]
-    };
-  };
-
-  lookAtToQuaternion = function(lookAt) {
-    var eye, look, up, x, y, z;
-    eye = recordToVec3(lookAt.eye);
-    look = recordToVec3(lookAt.look);
-    up = recordToVec3(lookAt.up);
-    x = [0.0, 0.0, 0.0];
-    y = [0.0, 0.0, 0.0];
-    z = [0.0, 0.0, 0.0];
-    SceneJS_math_subVec3(look, eye, z);
-    SceneJS_math_cross3Vec3(up, z, x);
-    SceneJS_math_cross3Vec3(z, x, y);
-    SceneJS_math_normalizeVec3(x);
-    SceneJS_math_normalizeVec3(y);
-    SceneJS_math_normalizeVec3(z);
-    return SceneJS_math_newQuaternionFromMat3(x.concat(y, z));
-  };
-
-  orbitLookAt = function(dAngles, orbitUp, lookAt) {
-    var axis, dAngle, eye0, eye0len, eye0norm, eye1, look, result, rotMat, tangent0, tangent0norm, tangent1, tangentError, up0, up0norm, up1;
-    if (dAngles[0] === 0.0 && dAngles[1] === 0.0) {
-      return {
-        eye: lookAt.eye,
-        up: lookAt.up
-      };
-    }
-    eye0 = recordToVec3(lookAt.eye);
-    up0 = recordToVec3(lookAt.up);
-    look = recordToVec3(lookAt.look);
-    eye0len = SceneJS_math_lenVec3(eye0);
-    eye0norm = [0.0, 0.0, 0.0];
-    SceneJS_math_mulVec3Scalar(eye0, 1.0 / eye0len, eye0norm);
-    tangent0 = [0.0, 0.0, 0.0];
-    SceneJS_math_cross3Vec3(up0, eye0, tangent0);
-    tangent0norm = SceneJS_math_normalizeVec3(tangent0);
-    up0norm = [0.0, 0.0, 0.0];
-    SceneJS_math_cross3Vec3(eye0norm, tangent0norm, up0norm);
-    axis = [tangent0norm[0] * -dAngles[1] + up0norm[0] * -dAngles[0], tangent0norm[1] * -dAngles[1] + up0norm[1] * -dAngles[0], tangent0norm[2] * -dAngles[1] + up0norm[2] * -dAngles[0]];
-    dAngle = SceneJS_math_lenVec2(dAngles);
-    rotMat = SceneJS_math_rotationMat4v(dAngle, axis);
-    eye1 = SceneJS_math_transformVector3(rotMat, eye0);
-    tangent1 = SceneJS_math_transformVector3(rotMat, tangent0);
-    tangentError = [0.0, 0.0, 0.0];
-    SceneJS_math_mulVec3(tangent1, orbitUp, tangentError);
-    SceneJS_math_subVec3(tangent1, tangentError);
-    up1 = [0.0, 0.0, 0.0];
-    SceneJS_math_cross3Vec3(eye1, tangent1, up1);
-    return result = {
-      eye: vec3ToRecord(eye1),
-      look: lookAt.look,
-      up: vec3ToRecord(up1)
-    };
-  };
-
-  orbitLookAtNode = function(node, dAngles, orbitUp) {
-    return node.set(orbitLookAt(dAngles, orbitUp, {
-      eye: node.get('eye'),
-      look: node.get('look'),
-      up: node.get('up')
-    }));
-  };
-
-  zoomLookAt = function(distance, limits, lookAt) {
-    var eye0, eye0len, eye1, eye1len, look, result;
-    eye0 = recordToVec3(lookAt.eye);
-    look = recordToVec3(lookAt.look);
-    eye0len = SceneJS_math_lenVec3(eye0);
-    if (limits != null) {
-      eye1len = Math.clamp(eye0len + distance, limits[0], limits[1]);
-    } else {
-      eye1len = eye0len + distance;
-    }
-    eye1 = [0.0, 0.0, 0.0];
-    SceneJS_math_mulVec3Scalar(eye0, eye1len / eye0len, eye1);
-    return result = {
-      eye: vec3ToRecord(eye1),
-      look: lookAt.look,
-      up: lookAt.up
-    };
-  };
-
-  zoomLookAtNode = function(node, distance, limits) {
-    return node.set(zoomLookAt(distance, limits, {
-      eye: node.get('eye'),
-      look: node.get('look'),
-      up: node.get('up')
-    }));
-  };
-
-  mecha = {};
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
@@ -164,10 +51,6 @@ var mecha = mecha || {};
   mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
-
-  translateSugaredJS = function(csmSourceCode) {
-    return csmSourceCode;
-  };
 
   toStringPrototype = (function() {
 
@@ -183,22 +66,12 @@ var mecha = mecha || {};
 
   })();
 
-  compileCSM = function(csmSourceCode, callback) {
-    var requestId, sandboxSourceCode, variablesSource;
+  translateCSM = function(apiSourceCode, csmSourceCode) {
+    var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
-    console.log(sandboxSourceCode);
-    return requestId = JSandbox.eval({
-      data: sandboxSourceCode,
-      callback: function(result) {
-        console.log(result);
-        return callback(result);
-      },
-      onerror: function(data, request) {
-        return mecha.logInternalError("Error compiling the solid model.");
-      }
-    });
+    jsSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + apiSourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    return jsSourceCode;
   };
 
   asm = {
@@ -1513,6 +1386,31 @@ var mecha = mecha || {};
     return [vertexShader, fragmentShader];
   };
 
+  exports = exports != null ? exports : {};
+
+  exports.translateCSM = translateCSM;
+
+  exports.compileASM = compileASM;
+
+  exports.compileGLSL = compileGLSL;
+
+  return exports;
+
+}).call(this);
+
+
+/*
+ * Copyright 2011, CircuitHub.com
+ */
+var mecha = mecha || {};
+
+mecha.gui = 
+(function() {
+
+  "use strict";
+
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, exports, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+
   math_sqrt2 = Math.sqrt(2.0);
 
   math_invsqrt2 = 1.0 / math_sqrt2;
@@ -1520,6 +1418,142 @@ var mecha = mecha || {};
   math_degToRad = Math.PI / 180.0;
 
   math_radToDeg = 180.0 / Math.PI;
+
+  Math.clamp = function(s, min, max) {
+    return Math.min(Math.max(s, min), max);
+  };
+
+  mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  modifySubAttr = function(node, attr, subAttr, value) {
+    var attrRecord;
+    attrRecord = node.get(attr);
+    attrRecord[subAttr] = value;
+    return node.set(attr, attrRecord);
+  };
+
+  recordToVec3 = function(record) {
+    return [record.x, record.y, record.z];
+  };
+
+  recordToVec4 = function(record) {
+    return [record.x, record.y, record.z, record.w];
+  };
+
+  vec3ToRecord = function(vec) {
+    return {
+      x: vec[0],
+      y: vec[1],
+      z: vec[2]
+    };
+  };
+
+  vec4ToRecord = function(vec) {
+    return {
+      x: vec[0],
+      y: vec[1],
+      z: vec[2],
+      w: vec[3]
+    };
+  };
+
+  lookAtToQuaternion = function(lookAt) {
+    var eye, look, up, x, y, z;
+    eye = recordToVec3(lookAt.eye);
+    look = recordToVec3(lookAt.look);
+    up = recordToVec3(lookAt.up);
+    x = [0.0, 0.0, 0.0];
+    y = [0.0, 0.0, 0.0];
+    z = [0.0, 0.0, 0.0];
+    SceneJS_math_subVec3(look, eye, z);
+    SceneJS_math_cross3Vec3(up, z, x);
+    SceneJS_math_cross3Vec3(z, x, y);
+    SceneJS_math_normalizeVec3(x);
+    SceneJS_math_normalizeVec3(y);
+    SceneJS_math_normalizeVec3(z);
+    return SceneJS_math_newQuaternionFromMat3(x.concat(y, z));
+  };
+
+  orbitLookAt = function(dAngles, orbitUp, lookAt) {
+    var axis, dAngle, eye0, eye0len, eye0norm, eye1, look, result, rotMat, tangent0, tangent0norm, tangent1, tangentError, up0, up0norm, up1;
+    if (dAngles[0] === 0.0 && dAngles[1] === 0.0) {
+      return {
+        eye: lookAt.eye,
+        up: lookAt.up
+      };
+    }
+    eye0 = recordToVec3(lookAt.eye);
+    up0 = recordToVec3(lookAt.up);
+    look = recordToVec3(lookAt.look);
+    eye0len = SceneJS_math_lenVec3(eye0);
+    eye0norm = [0.0, 0.0, 0.0];
+    SceneJS_math_mulVec3Scalar(eye0, 1.0 / eye0len, eye0norm);
+    tangent0 = [0.0, 0.0, 0.0];
+    SceneJS_math_cross3Vec3(up0, eye0, tangent0);
+    tangent0norm = SceneJS_math_normalizeVec3(tangent0);
+    up0norm = [0.0, 0.0, 0.0];
+    SceneJS_math_cross3Vec3(eye0norm, tangent0norm, up0norm);
+    axis = [tangent0norm[0] * -dAngles[1] + up0norm[0] * -dAngles[0], tangent0norm[1] * -dAngles[1] + up0norm[1] * -dAngles[0], tangent0norm[2] * -dAngles[1] + up0norm[2] * -dAngles[0]];
+    dAngle = SceneJS_math_lenVec2(dAngles);
+    rotMat = SceneJS_math_rotationMat4v(dAngle, axis);
+    eye1 = SceneJS_math_transformVector3(rotMat, eye0);
+    tangent1 = SceneJS_math_transformVector3(rotMat, tangent0);
+    tangentError = [0.0, 0.0, 0.0];
+    SceneJS_math_mulVec3(tangent1, orbitUp, tangentError);
+    SceneJS_math_subVec3(tangent1, tangentError);
+    up1 = [0.0, 0.0, 0.0];
+    SceneJS_math_cross3Vec3(eye1, tangent1, up1);
+    return result = {
+      eye: vec3ToRecord(eye1),
+      look: lookAt.look,
+      up: vec3ToRecord(up1)
+    };
+  };
+
+  orbitLookAtNode = function(node, dAngles, orbitUp) {
+    return node.set(orbitLookAt(dAngles, orbitUp, {
+      eye: node.get('eye'),
+      look: node.get('look'),
+      up: node.get('up')
+    }));
+  };
+
+  zoomLookAt = function(distance, limits, lookAt) {
+    var eye0, eye0len, eye1, eye1len, look, result;
+    eye0 = recordToVec3(lookAt.eye);
+    look = recordToVec3(lookAt.look);
+    eye0len = SceneJS_math_lenVec3(eye0);
+    if (limits != null) {
+      eye1len = Math.clamp(eye0len + distance, limits[0], limits[1]);
+    } else {
+      eye1len = eye0len + distance;
+    }
+    eye1 = [0.0, 0.0, 0.0];
+    SceneJS_math_mulVec3Scalar(eye0, eye1len / eye0len, eye1);
+    return result = {
+      eye: vec3ToRecord(eye1),
+      look: lookAt.look,
+      up: lookAt.up
+    };
+  };
+
+  zoomLookAtNode = function(node, distance, limits) {
+    return node.set(zoomLookAt(distance, limits, {
+      eye: node.get('eye'),
+      look: node.get('look'),
+      up: node.get('up')
+    }));
+  };
 
   constants = {
     canvas: {
@@ -1664,21 +1698,29 @@ var mecha = mecha || {};
   };
 
   sceneInit = function() {
-    return compileCSM(($('#source-code')).val(), function(result) {
-      var shaderDef, shaders;
-      shaders = compileGLSL(compileASM(result));
-      shaderDef = {
-        type: 'shader',
-        id: 'main-shader',
-        shaders: [
-          {
-            stage: 'fragment',
-            code: shaders[1]
-          }
-        ],
-        vars: {}
-      };
-      return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+    var csmSourceCode, requestId;
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, ($('#source-code')).val());
+    return requestId = JSandbox.eval({
+      data: csmSourceCode,
+      callback: function(result) {
+        var shaderDef, shaders;
+        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
+        shaderDef = {
+          type: 'shader',
+          id: 'main-shader',
+          shaders: [
+            {
+              stage: 'fragment',
+              code: shaders[1]
+            }
+          ],
+          vars: {}
+        };
+        return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+      },
+      onerror: function(data, request) {
+        return mecha.logInternalError("Error compiling the solid model.");
+      }
     });
   };
 
@@ -1707,5 +1749,44 @@ var mecha = mecha || {};
     registerControlEvents();
     return state.application.initialized = true;
   });
+
+  exports = exports != null ? exports : {};
+
+  return exports;
+
+}).call(this);
+
+
+/*
+ * Copyright 2011, CircuitHub.com
+ */
+var mecha = mecha || {};
+
+mecha.editor = 
+(function() {
+
+  "use strict";
+
+  var exports, translateSugaredJS;
+
+  mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  translateSugaredJS = function(csmSourceCode) {
+    return csmSourceCode;
+  };
+
+  exports = exports != null ? exports : {};
+
+  return exports;
 
 }).call(this);

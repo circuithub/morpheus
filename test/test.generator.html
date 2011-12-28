@@ -23,9 +23,26 @@
   </style>
 </head>
 <body>
+  <script src="../static/lib/mecha-api.js"></script>
   <script src="../static/lib/mecha-generator.js"></script>
   <script>
-
+    var csm = scene({ parameters: [] },
+      translate(
+        { offset: [0.0, 0.4, 0.0] },
+        intersect(
+          box({ dimensions: [0.2, 0.5, 0.2] }),
+          translate({ offset: [0.3, 0.0, 0.0] },
+            box({ dimensions: [0.5, 0.2, 0.2] })
+          )
+        )
+      ),
+      cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
+      sphere({ radius: 0.3 }).translate({ offset: [0.0, -0.2, 0.0] })
+    ),
+    asm = mecha.generator.compileASM(csm),
+    glsl = mecha.generator.compileGLSL(asm);
+    console.log(asm);
+    console.log(glsl);
   </script>
 </body>
 </html>

@@ -7,9 +7,14 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = () ->
-  compileCSM ($ '#source-code').val(), 
-    (result) ->
-      shaders = compileGLSL compileASM result
+
+  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, ($ '#source-code').val()
+
+  # Run the script inside a webworker sandbox
+  requestId = JSandbox.eval 
+    data: csmSourceCode
+    callback: (result) ->
+      shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
       shaderDef =
         type: 'shader',
         id: 'main-shader',
@@ -22,6 +27,10 @@ sceneInit = () ->
         ]
         vars: {}
       (state.scene.findNode 'cube-mat').insert 'node', shaderDef
+    onerror: (data,request) ->
+      #console.log prefix + source + postfix
+      mecha.logInternalError "Error compiling the solid model."
+      #console.log data
 
 # Initialize html controls for interacting with mecha
 controlsInit = () ->

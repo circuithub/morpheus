@@ -1,7 +1,6 @@
-# Compile the source code into a concrete solid model
-compileCSM = (csmSourceCode, callback) ->
+# Translate the CSM source code into a valid javascript program
+translateCSM = (apiSourceCode, csmSourceCode) ->
   #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
-
   
   # Extract all parameters from the source
   # (Note: if desired this could be optimized quite a bit)
@@ -18,7 +17,7 @@ compileCSM = (csmSourceCode, callback) ->
   #  variables = []
 
   # Concatenate the sandbox source code
-  sandboxSourceCode =
+  jsSourceCode =
     '''
     "use strict";
     (function(){
@@ -26,7 +25,7 @@ compileCSM = (csmSourceCode, callback) ->
       
       var exportedParameters = [];
 
-    ''' + "\n#{state.api.sourceCode}\n" +
+    ''' + "\n#{apiSourceCode}\n" +
     '''
 
       try {
@@ -43,19 +42,6 @@ compileCSM = (csmSourceCode, callback) ->
       }
     })();
     '''
-  
-  console.log sandboxSourceCode
 
-  # Run the script inside a webworker sandbox
-  requestId = JSandbox.eval 
-    data: sandboxSourceCode
-    callback: (result) ->
-      # TEMPORARY
-      console.log result
-      #console.log "Success"
-      callback result
-    onerror: (data,request) ->
-      #console.log prefix + source + postfix
-      mecha.logInternalError "Error compiling the solid model."
-      #console.log data
-  
+  return jsSourceCode
+

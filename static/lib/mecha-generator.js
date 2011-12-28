@@ -8,7 +8,7 @@ mecha.generator =
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileCSM, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, optimizeASM, shallowClone, toStringPrototype;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -27,6 +27,14 @@ mecha.generator =
   shallowClone = function(array) {
     return array.slice(0);
   };
+
+  math_sqrt2 = Math.sqrt(2.0);
+
+  math_invsqrt2 = 1.0 / math_sqrt2;
+
+  math_degToRad = Math.PI / 180.0;
+
+  math_radToDeg = 180.0 / Math.PI;
 
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
@@ -58,22 +66,12 @@ mecha.generator =
 
   })();
 
-  compileCSM = function(csmSourceCode, callback) {
-    var requestId, sandboxSourceCode, variablesSource;
+  translateCSM = function(apiSourceCode, csmSourceCode) {
+    var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    sandboxSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + state.api.sourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
-    console.log(sandboxSourceCode);
-    return requestId = JSandbox.eval({
-      data: sandboxSourceCode,
-      callback: function(result) {
-        console.log(result);
-        return callback(result);
-      },
-      onerror: function(data, request) {
-        return mecha.logInternalError("Error compiling the solid model.");
-      }
-    });
+    jsSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + apiSourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    return jsSourceCode;
   };
 
   asm = {
@@ -1389,6 +1387,12 @@ mecha.generator =
   };
 
   exports = exports != null ? exports : {};
+
+  exports.translateCSM = translateCSM;
+
+  exports.compileASM = compileASM;
+
+  exports.compileGLSL = compileGLSL;
 
   return exports;
 

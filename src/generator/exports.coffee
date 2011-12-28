@@ -1,3 +1,6 @@
-exports = if exports? then exports else {}
+exports = exports ? {}
+exports.translateCSM = translateCSM
+exports.compileASM = compileASM
+exports.compileGLSL = compileGLSL
 return exports
 

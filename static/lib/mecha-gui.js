@@ -8,11 +8,31 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, controlsInit, controlsSourceCompile, exports, keyDown, lookAtToQuaternion, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, exports, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+
+  math_sqrt2 = Math.sqrt(2.0);
+
+  math_invsqrt2 = 1.0 / math_sqrt2;
+
+  math_degToRad = Math.PI / 180.0;
+
+  math_radToDeg = 180.0 / Math.PI;
 
   Math.clamp = function(s, min, max) {
     return Math.min(Math.max(s, min), max);
   };
+
+  mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
 
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -134,17 +154,38 @@ mecha.gui =
     }));
   };
 
-  mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
-  } : function() {});
+  constants = {
+    canvas: {
+      defaultSize: [512, 512]
+    },
+    camera: {
+      maxOrbitSpeed: Math.PI * 0.1,
+      orbitSpeedFactor: 0.02,
+      zoomSpeedFactor: 0.5
+    }
+  };
 
-  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
-  } : function() {});
-
-  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
-  } : function() {});
+  state = {
+    scene: SceneJS.scene('Scene'),
+    canvas: document.getElementById('scenejsCanvas'),
+    viewport: {
+      domElement: document.getElementById('viewport'),
+      mouse: {
+        last: [0, 0],
+        leftDown: false,
+        middleDown: false,
+        leftDragDistance: 0,
+        middleDragDistance: 0
+      }
+    },
+    api: {
+      url: null,
+      sourceCode: null
+    },
+    application: {
+      initialized: false
+    }
+  };
 
   mouseCoordsWithinElement = function(event) {
     var coords, element, totalOffsetLeft, totalOffsetTop;
@@ -256,21 +297,29 @@ mecha.gui =
   };
 
   sceneInit = function() {
-    return compileCSM(($('#source-code')).val(), function(result) {
-      var shaderDef, shaders;
-      shaders = compileGLSL(compileASM(result));
-      shaderDef = {
-        type: 'shader',
-        id: 'main-shader',
-        shaders: [
-          {
-            stage: 'fragment',
-            code: shaders[1]
-          }
-        ],
-        vars: {}
-      };
-      return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+    var csmSourceCode, requestId;
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, ($('#source-code')).val());
+    return requestId = JSandbox.eval({
+      data: csmSourceCode,
+      callback: function(result) {
+        var shaderDef, shaders;
+        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
+        shaderDef = {
+          type: 'shader',
+          id: 'main-shader',
+          shaders: [
+            {
+              stage: 'fragment',
+              code: shaders[1]
+            }
+          ],
+          vars: {}
+        };
+        return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+      },
+      onerror: function(data, request) {
+        return mecha.logInternalError("Error compiling the solid model.");
+      }
     });
   };
 
