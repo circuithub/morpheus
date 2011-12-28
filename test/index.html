@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<!--
+      Mecha - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Mecha - Tests</title>
+  <meta name='description' content='Collection of tests for Mecha'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- Stylesheet -->
+  <style type='text/css' media='screen'>
+    #sandbox, #sidepane {
+      vertical-align: top;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='main-layout'>
+    <iframe id='sandbox' name='sandbox' src='test.scene0.html' width='1050' height='600'></iframe>
+    <div id='sidepane'>
+      <h3>Modules</h3>
+      <ul>
+        <li><a href='test.api.html' target='sandbox'>API</a></li>
+        <li><a href='test.generator.html' target='sandbox'>Generator</a></li>
+      </ul>
+      <h3>Models</h3>
+      <ul>
+        <li><a href='test.scene0.html' target='sandbox'>Scene0</a></li>
+        <li><a href='test.BGA.html' target='sandbox'>BGA</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+</body>
+</html>
