@@ -10,8 +10,8 @@ mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-edit
 
 mechaFiles = [
   'mecha-generator'
-  'mecha-gui'
   'mecha-editor'
+  'mecha-gui'
 ]
 
 apiFiles = [
@@ -66,6 +66,7 @@ editorFiles = [
   'common/directives'
   'common/mecha.log'
   'editor/translate.sugaredjs'
+  'editor/create'
   'editor/exports'
 ]
 
