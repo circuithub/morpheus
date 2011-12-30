@@ -12,6 +12,26 @@
   <meta name='author' content='Your Name'>
   <link rel="shortcut icon" href="/favicon.ico">
 
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+// See https://gist.github.com/82b35723a7b65f558356
+
+var chipDimensions = range("Chip Dimensions", [0.2,0.2,0.5], [20.0,20.0,5.0]), // assuming we're working in centimeters
+    ballsX = range("Balls (X)", 1, 10, 1),
+    ballsY = range("Balls (Y)", 1, 10, 1),
+    ballPitch  = range("Ball Pitch", 0.1, 5.0), // Could also calculate this relative to chipDimensions...
+    ballRadius = range("Ball Radius", 0.1, 1.0),
+    holeRadius = range("Hole Radius", 0.1, 1.0);
+
+// Draw the chip body (with a hole)
+difference(
+  box({ dimensions: chipDimensions }),
+  cylinder({ radius: holeRadius })
+  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
+)
+.material({ color: [0.1, 0.1, 0.1] })
+  </script>
+
   <!-- Stylesheet -->
   <style type='text/css' media='screen'>
     /* Resets */
@@ -27,7 +47,7 @@
     }
     
     /* Application styling */
-    #source-panel {
+    #mecha-editor {
       position: relative;
       float: left;
       width: 502px;
@@ -53,35 +73,8 @@
   <div id='scenejsLog' style='display:block;'></div>
 
   <div id='main-layout'>
-    <form id='source-panel'>
-      <!-- Putting the compile button on top for now because it's easier to reach with the development tools at the bottom -->
-      <span><input id='source-autocompile' name='source-autocompile' type='checkbox' disabled='disabled'><label for='source-autocompile'>Auto-compile</label></span>
-      <input id='source-compile' name='source-compile' type='button' value='Compile'>
-      <textarea id='source-code' name='source-code'>
-// See https://gist.github.com/82b35723a7b65f558356
-
-var chipDimensions = range("Chip Dimensions", [0.2,0.2,0.5], [20.0,20.0,5.0]), // assuming we're working in centimeters
-    ballsX = range("Balls (X)", 1, 10, 1),
-    ballsY = range("Balls (Y)", 1, 10, 1),
-    ballPitch  = range("Ball Pitch", 0.1, 5.0), // Could also calculate this relative to chipDimensions...
-    ballRadius = range("Ball Radius", 0.1, 1.0),
-    holeRadius = range("Hole Radius", 0.1, 1.0);
-
-// Draw the chip body (with a hole)
-difference(
-  box({ dimensions: chipDimensions }),
-  cylinder({ radius: holeRadius })
-  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
-)
-.material({ color: [0.1, 0.1, 0.1] })
-      </textarea>
-    </form>
-    <div id='viewport'>
-      <!-- -->
-      <canvas id='scenejsCanvas' width='512' height='512'>
-        <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
-      </canvas>
-      <!-- -->
+    <form id='mecha-editor'></form>
+    <div id='mecha-gui'>
     </div>
   </div>
 
@@ -95,36 +88,23 @@ difference(
 
   <script src='//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js'></script>
   <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.6.2.min.js'><\/script>")</script>
-  <!-- JQuery UI --
-  <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js'></script>
-  <script>window.jQuery.ui || document.write("<script src='../static/lib/jquery/jquery-ui-1.8.15.custom.min.js'><\/script>")</script>
-  <!-- -->
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.math.js'></script>
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.math.extra.js'></script>
-  <!-- DEVELOPMENT -->
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.js'></script>
-  <!-- PRODUCTION --
-  <script src='../static/lib/scenejs-2.0.0.0/scenejs.min.js'></script>
-  <!-- -->
   <link rel="jsandbox" href="../static/lib/jsandbox/jsandbox-worker.js">
-  <!-- DEVELOPMENT -->
   <link rel="api" href="../static/lib/mecha-api.js">
-  <!-- PRODUCTION --
-  <link rel="api" href="../static/lib/mecha-api.min.js">
-  <!-- -->
   <script src='../static/lib/jsandbox/jsandbox.js'></script>
   <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
   
-  <!-- Resources -->
-
-  <script src='../static/models/cube.js'></script>
-
   <!-- Application logic -->
 
-  <!-- DEVELOPMENT -->
   <script src='../static/lib/mecha.js'></script>
-  <!-- PRODUCTION --
-  <script src='../static/lib/mecha.min.js'></script>
-  <!-- -->
+
+  <script>
+    window.onload = function(){
+      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+      mecha.gui.create('mecha-gui');
+    };
+  </script>
 </body>
 </html>

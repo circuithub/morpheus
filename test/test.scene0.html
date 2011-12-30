@@ -12,6 +12,33 @@
   <meta name='author' content='Your Name'>
   <link rel="shortcut icon" href="/favicon.ico">
 
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+var a = range(0,10);
+
+translate({ offset: [0.0, 0.4, 0.0] },
+  union(
+    box({ dimensions: [0.2, 0.5, 0.2] })
+    .bevel({ radius: 0.05 })
+    .scale({ value: 0.9 })
+    .material({ color: [0.7, 0.8, 0.0] }),
+    box({ dimensions: [0.5, 0.2, 0.2] })
+    .translate({ offset: [0.3, 0.0, 0.3] })
+    .chamfer({ radius: 0.05 })
+    .rotate({ axis: [1.0, 1.0, 0.0], angle: 20.0 })
+    .mirror({ axes: [0] })
+    .material({ color: [0.8, 0.7, 0.0] })
+  )
+),
+cylinder({ axis: 1, radius: 0.2, length: 0.5 })
+.material({ color: [0.6, 0.7, 1.0] }),
+sphere({ radius: 0.3 })
+.material({ color: [0.5, 1.0, 0.0] })
+.wedge({ axis: 1, from: 35, to: 75 })
+.material({ color: [1.0, 0.0, 0.0] })
+.translate({ offset: [0.0, -0.2, 0.0] })
+  </script>
+
   <!-- Stylesheet -->
   <style type='text/css' media='screen'>
     /* Resets */
@@ -27,7 +54,7 @@
     }
     
     /* Application styling */
-    #source-panel {
+    #mecha-editor {
       position: relative;
       float: left;
       width: 502px;
@@ -53,42 +80,8 @@
   <div id='scenejsLog' style='display:block;'></div>
 
   <div id='main-layout'>
-    <form id='source-panel'>
-      <!-- Putting the compile button on top for now because it's easier to reach with the development tools at the bottom -->
-      <span><input id='source-autocompile' name='source-autocompile' type='checkbox' disabled='disabled'><label for='source-autocompile'>Auto-compile</label></span>
-      <input id='source-compile' name='source-compile' type='button' value='Compile'>
-      <textarea id='source-code' name='source-code'>
-var a = range(0,10);
-
-translate({ offset: [0.0, 0.4, 0.0] },
-  union(
-    box({ dimensions: [0.2, 0.5, 0.2] })
-    .bevel({ radius: 0.05 })
-    .scale({ value: 0.9 })
-    .material({ color: [0.7, 0.8, 0.0] }),
-    box({ dimensions: [0.5, 0.2, 0.2] })
-    .translate({ offset: [0.3, 0.0, 0.3] })
-    .chamfer({ radius: 0.05 })
-    .rotate({ axis: [1.0, 1.0, 0.0], angle: 20.0 })
-    .mirror({ axes: [0] })
-    .material({ color: [0.8, 0.7, 0.0] })
-  )
-),
-cylinder({ axis: 1, radius: 0.2, length: 0.5 })
-.material({ color: [0.6, 0.7, 1.0] }),
-sphere({ radius: 0.3 })
-.material({ color: [0.5, 1.0, 0.0] })
-.wedge({ axis: 1, from: 35, to: 75 })
-.material({ color: [1.0, 0.0, 0.0] })
-.translate({ offset: [0.0, -0.2, 0.0] })
-      </textarea>
-    </form>
-    <div id='viewport'>
-      <!-- -->
-      <canvas id='scenejsCanvas' width='512' height='512'>
-        <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
-      </canvas>
-      <!-- -->
+    <form id='mecha-editor'></form>
+    <div id='mecha-gui'>
     </div>
   </div>
 
@@ -102,36 +95,24 @@ sphere({ radius: 0.3 })
 
   <script src='//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js'></script>
   <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.6.2.min.js'><\/script>")</script>
-  <!-- JQuery UI --
-  <script src='//ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js'></script>
-  <script>window.jQuery.ui || document.write("<script src='../static/lib/jquery/jquery-ui-1.8.15.custom.min.js'><\/script>")</script>
-  <!-- -->
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.math.js'></script>
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.math.extra.js'></script>
-  <!-- DEVELOPMENT -->
   <script src='../static/lib/scenejs-2.0.0.0/scenejs.js'></script>
-  <!-- PRODUCTION --
-  <script src='../static/lib/scenejs-2.0.0.0/scenejs.min.js'></script>
-  <!-- -->
   <link rel="jsandbox" href="../static/lib/jsandbox/jsandbox-worker.js">
-  <!-- DEVELOPMENT -->
   <link rel="api" href="../static/lib/mecha-api.js">
-  <!-- PRODUCTION --
-  <link rel="api" href="../static/lib/mecha-api.min.js">
-  <!-- -->
   <script src='../static/lib/jsandbox/jsandbox.js'></script>
   <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
   
-  <!-- Resources -->
-
-  <script src='../static/models/cube.js'></script>
-
   <!-- Application logic -->
 
-  <!-- DEVELOPMENT -->
   <script src='../static/lib/mecha.js'></script>
-  <!-- PRODUCTION --
-  <script src='../static/lib/mecha.min.js'></script>
-  <!-- -->
+
+  <script>
+    window.onload = function(){
+      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+      mecha.gui.create('mecha-gui');
+    };
+  </script>
 </body>
 </html>
+
