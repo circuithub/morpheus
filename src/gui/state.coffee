@@ -2,10 +2,10 @@
 # No global state is allowed to exist outside of this structure
 
 state =
-  scene: SceneJS.scene 'Scene'
-  canvas: document.getElementById 'scenejsCanvas'
+  scene: null
+  canvas: null
   viewport: 
-    domElement: document.getElementById 'viewport'
+    domElement: null
     mouse:
       last: [0, 0]
       leftDown: false

@@ -6,11 +6,12 @@ path   = require 'path'
 Files
 ###
 
-mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-gui', 'mecha-editor']
+mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-editor', 'mecha-renderer', 'mecha-gui']
 
 mechaFiles = [
   'mecha-generator'
   'mecha-editor'
+  'mecha-renderer'
   'mecha-gui'
 ]
 
@@ -59,7 +60,20 @@ guiFiles  = [
   'gui/events.register'
   'gui/events.idle'
   'gui/events.init'
+  'gui/create'
   'gui/exports'
+]
+
+rendererFiles  = [
+  'common/directives'
+  'common/math'
+  'common/mecha.log'
+  'renderer/scenejs.nodeattr'
+  'renderer/scenejs.conversion'
+  'renderer/scenejs.orbitlookat'
+  'renderer/scenejs.zoomlookat'
+  'renderer/scene'
+  'renderer/exports'
 ]
 
 editorFiles = [
@@ -152,12 +166,15 @@ buildApi = ->
 buildGenerator = -> 
   args = arguments 
   -> ((concatFiles generatorFiles) (buildText 'mecha-generator', 'generator')) args...
-buildGui = -> 
-  args = arguments
-  -> ((concatFiles guiFiles) (buildText 'mecha-gui', 'gui')) args...
 buildEditor = ->
   args = arguments
   -> ((concatFiles editorFiles) (buildText 'mecha-editor', 'editor')) args...
+buildRenderer = -> 
+  args = arguments
+  -> ((concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer')) args...
+buildGui = -> 
+  args = arguments
+  -> ((concatFiles guiFiles) (buildText 'mecha-gui', 'gui')) args...
 minify = ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
@@ -185,17 +202,21 @@ task 'build-generator', "Build the generator module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   buildGenerator()()
 
-task 'build-gui', "Build the gui module", ->
-  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildGui()()
-
 task 'build-editor', "Build the editor module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   buildEditor()()
 
+task 'build-renderer', "Build the renderer module", ->
+  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+  buildRenderer()()
+
+task 'build-gui', "Build the gui module", ->
+  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+  buildGui()()
+
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildGui buildEditor buildMecha minify)()
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
 task 'fetch:npm', "Fetch the npm package manager", ->
   exec "curl http://npmjs.org/install.sh | sudo sh", (err, stdout, stderr) ->

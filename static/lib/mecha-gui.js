@@ -8,7 +8,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, exports, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -26,12 +26,16 @@ mecha.gui =
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
   } : function() {});
 
-  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
+    return console.warn.apply(console, arguments);
   } : function() {});
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -166,10 +170,10 @@ mecha.gui =
   };
 
   state = {
-    scene: SceneJS.scene('Scene'),
-    canvas: document.getElementById('scenejsCanvas'),
+    scene: null,
+    canvas: null,
     viewport: {
-      domElement: document.getElementById('viewport'),
+      domElement: null,
       mouse: {
         last: [0, 0],
         leftDown: false,
@@ -335,21 +339,47 @@ mecha.gui =
     });
   };
 
-  canvasInit();
-
-  state.scene.start({
-    idleFunc: sceneIdle
-  });
-
-  $(function() {
+  init = function(containerEl, canvasEl) {
+    state.viewport.domElement = containerEl;
+    state.canvas = canvasEl;
+    mecha.renderer.createScene();
+    state.scene = SceneJS.scene('Scene');
+    state.scene.start({
+      idleFunc: sceneIdle
+    });
+    canvasInit();
     apiInit();
     controlsInit();
     registerDOMEvents();
     registerControlEvents();
     return state.application.initialized = true;
-  });
+  };
+
+  create = function(container) {
+    var containerEl, errorHtml;
+    errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
+    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+      containerEl.innerHTML = errorHtml;
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, expected type 'string' or dom element of type 'DIV'.");
+      return false;
+    }
+    if (container === null) {
+      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+    } else {
+      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+    }
+    if (containerEl === null) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
+      return false;
+    }
+    containerEl.innerHTML = "<canvas id='scenejsCanvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>";
+    init(containerEl, document.getElementById('scenejsCanvas'));
+    return true;
+  };
 
   exports = exports != null ? exports : {};
+
+  exports.create = create;
 
   return exports;
 

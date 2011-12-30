@@ -7,7 +7,6 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = () ->
-
   csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, ($ '#source-code').val()
 
   # Run the script inside a webworker sandbox
@@ -50,14 +49,16 @@ apiInit = () ->
     .error () -> 
       mecha.log "Error loading API script"
 
-# Start rendering as soon as possible
-canvasInit()
-#TODO: sceneInit()
-state.scene.start
-  idleFunc: sceneIdle
-
 # Initialize the gui controls and register events once the rest of the document has completely loaded
-$ () -> 
+init = (containerEl, canvasEl) ->
+  state.viewport.domElement = containerEl
+  state.canvas = canvasEl
+  mecha.renderer.createScene()
+  state.scene = SceneJS.scene 'Scene'
+  state.scene.start
+    idleFunc: sceneIdle
+  canvasInit()
+  #TODO: sceneInit()
   apiInit()
   controlsInit()
   registerDOMEvents()

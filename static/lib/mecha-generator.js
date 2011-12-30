@@ -44,12 +44,16 @@ mecha.generator =
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
   } : function() {});
 
-  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
-    return console.log.apply(console, arguments);
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
+    return console.warn.apply(console, arguments);
   } : function() {});
 
   toStringPrototype = (function() {
