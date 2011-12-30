@@ -82,7 +82,7 @@
 
   <script>
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), "box({ dimensions: [0.2,0.2,0.5] })");
+      mecha.editor.create(document.getElementById('mecha-editor'), "box({ dimensions: [0.4,0.4,0.5] }).chamfer({ radius: 0.05 })");
       mecha.gui.create('mecha-gui');
     };
   </script>
