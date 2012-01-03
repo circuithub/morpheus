@@ -88,15 +88,15 @@ editorFiles = [
 Generic functions
 ###
 
-Function.prototype.partial = ->
+Function.prototype.partial = (args0...) ->
   fn = this
-  args = Array.prototype.slice.call arguments
-  -> fn.apply this, (args.concat (Array.prototype.slice.call arguments))
+  (args1...) -> this.fn (args0.concat args1)...
 
 ###
 Build helpers
 ###
 
+# (String, String, Maybe (() -> IO)) -> IO
 concatHeader = (filename, module, callback) ->
   fs.readFile "static/lib/#{filename}.js", 'utf8', (err, fileContents) ->
     throw err if err
@@ -109,7 +109,8 @@ concatHeader = (filename, module, callback) ->
       else
         callback (commonHeaderContents + fileContents) if callback?
 
-buildText = (filename, module) -> (text) -> (callback) ->
+# (String, String) -> Maybe (() -> IO) -> String -> IO
+buildText = (filename, module) -> (callback) -> (text) ->
   fs.writeFile "build/#{filename}.coffee", text.join('\n\n'), 'utf8', (err) ->
     throw err if err
     exec "coffee -o static/lib -c build/#{filename}.coffee", (err, stdout, stderr) ->
@@ -125,49 +126,54 @@ buildText = (filename, module) -> (text) -> (callback) ->
             console.log "...Done (#{filename}.js)"
             callback() if callback?
 
-concatFiles = (files) -> (callback) ->
+# [String] -> Maybe (String -> () -> IO) -> () -> IO
+concatFiles = (files) -> (callback) -> ->
   contents = new Array files.length
   remaining = files.length
-  () ->
-    args = arguments
-    for file, index in files then do (file, index) ->
-      fs.readFile "src/#{file}.coffee", 'utf8', (err, fileContents) ->
-        throw err if err
-        contents[index] = fileContents
-        ((callback contents) args...) if --remaining is 0 and callback?
+  for file, index in files then do (file, index) ->
+    fs.readFile "src/#{file}.coffee", 'utf8', (err, fileContents) ->
+      throw err if err
+      contents[index] = fileContents
+      (callback contents) if --remaining is 0 and callback?
+
 ###
 Build scripts
 ###
 
-buildMecha = -> (args...) ->
-  writeJSFile = (filename) -> (text) -> (callback) ->
+# Maybe (() -> IO) -> () -> IO
+buildMecha = (callback) -> ->
+  # String -> Maybe (() -> IO) -> String -> IO
+  writeJSFile = (filename) -> (callback) -> (text) ->
     fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
       throw err if err
       console.log "...Done (#{filename}.js)"
       callback() if callback?
 
-  concatJSFiles = (files) -> (callback) ->
+  # [String] -> (String -> IO) -> () -> IO
+  concatJSFiles = (files) -> (callback) -> ->
     contents = new Array files.length
     remaining = files.length
-    () ->
-      args = arguments
-      for file, index in files then do (file, index) ->
-        fs.readFile "static/lib/#{file}.js", 'utf8', (err, fileContents) ->
-          throw err if err
-          contents[index] = fileContents
-          ((callback contents) args...) if --remaining is 0 and callback?
+    for file, index in files then do (file, index) ->
+      fs.readFile "static/lib/#{file}.js", 'utf8', (err, fileContents) ->
+        throw err if err
+        contents[index] = fileContents
+        (callback contents) if --remaining is 0 and callback?
 
-  ((concatJSFiles mechaFiles) (writeJSFile 'mecha')) args...
-buildApi = -> (args...) ->
- ((concatFiles apiFiles) (buildText 'mecha-api', 'api')) args...
-buildGenerator = -> (args...) ->
-  ((concatFiles generatorFiles) (buildText 'mecha-generator', 'generator')) args...
-buildEditor = -> (args...) ->
-  ((concatFiles editorFiles) (buildText 'mecha-editor', 'editor')) args...
-buildRenderer = -> (args...) ->
-  ((concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer')) args...
-buildGui = -> (args...) ->
-  ((concatFiles guiFiles) (buildText 'mecha-gui', 'gui')) args...
+  (concatJSFiles mechaFiles) (writeJSFile 'mecha') callback
+
+# Maybe (() -> IO) -> () -> IO
+buildApi = (callback) ->
+  (concatFiles apiFiles) (buildText 'mecha-api', 'api') callback
+buildGenerator = (callback) ->
+  (concatFiles generatorFiles) (buildText 'mecha-generator', 'generator') callback
+buildEditor = (callback) ->
+  (concatFiles editorFiles) (buildText 'mecha-editor', 'editor') callback
+buildRenderer = (callback) ->
+  (concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer') callback
+buildGui = (callback) ->
+  (concatFiles guiFiles) (buildText 'mecha-gui', 'gui') callback
+
+# () -> IO
 minify = ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
