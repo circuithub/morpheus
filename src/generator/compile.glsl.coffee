@@ -96,7 +96,7 @@ compileGLSL = (abstractSolidModel) ->
         prevRayOrigin = rayOrigin;
         //rayOrigin += (max(dist, threshold) + bias) * rayDir;
         rayOrigin += max(dist, threshold) * rayDir;
-        if (clamp(rayOrigin, vec3(-1.0), vec3(1.0)) != rayOrigin) { break; }
+        if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }
       }
       vec3 absRayOrigin = abs(rayOrigin);
       //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
