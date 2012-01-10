@@ -149,8 +149,8 @@ buildMecha = (callback) -> ->
       console.log "...Done (#{filename}.js)"
       callback() if callback?
 
-  # [String] -> (String -> IO) -> () -> IO
-  concatJSFiles = (files) -> (callback) -> ->
+  # [String] -> (String -> IO) -> IO
+  concatJSFiles = (files) -> (callback) ->
     contents = new Array files.length
     remaining = files.length
     for file, index in files then do (file, index) ->
@@ -158,7 +158,7 @@ buildMecha = (callback) -> ->
         throw err if err
         contents[index] = fileContents
         (callback contents) if --remaining is 0 and callback?
-
+  
   (concatJSFiles mechaFiles) (writeJSFile 'mecha') callback
 
 # Maybe (() -> IO) -> () -> IO
