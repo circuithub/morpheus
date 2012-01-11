@@ -773,7 +773,7 @@ var glQuery = (function() {
           // }
           // context.linkProgram(shaderProgram);
           logError("Internal Error: shaderProgram(WebGLShader, ...) is not yet supported by glQuery.");
-          return
+          return;
         }
         // Add an index to the shader program (We can't index the shader locations by shader program 
         // when the shader program is an instance of WebGLProgram because toString simply gives
@@ -791,7 +791,11 @@ var glQuery = (function() {
           }
           for (var i = 0; i < activeUniforms; ++i) {
             var uniform = context.getActiveUniform(shaderProgram, i);
-            locations.uniforms[uniform.name] = context.getUniformLocation(shaderProgram, uniform.name);
+            locations.uniforms[uniform.name] = { 
+              location: context.getUniformLocation(shaderProgram, uniform.name),
+              size: uniform.size,
+              type: uniform.type
+            };
           }
         }
         // Add shader program associations to tags
@@ -914,8 +918,12 @@ var glQuery = (function() {
       }
       // Store the command
       for (var i = 0; i < selector.length; ++i) {
-        var commandsStruct = (typeof tagCommands[selector[i]] === 'undefined'? (tagCommands[selector[i]] = {}) : tagCommands[selector[i]]);
-        commandsStruct[command.uniform] = args;
+        var commandsStruct = (typeof tagCommands[selector[i]] === 'undefined'? (tagCommands[selector[i]] = {}) : tagCommands[selector[i]]),
+        uniformTable = commandsStruct[command.uniform];
+        if(uniformTable == null)
+          uniformTable = commandsStruct[command.uniform] = {};
+        //commandsStruct[command.uniform] = args;
+        uniformTable[args[0]] = args.slice(1);
       }
     },
     // insert: 9
@@ -988,21 +996,51 @@ var glQuery = (function() {
       logDebug("eval command: vertexAttrib4");
     },
     // uniform: 8
-    function(context, renderState, args) {
-      logDebug("eval command: uniform");
-      var uniformFunctions = [
-        WebGLRenderingContext.prototype.uniform1f,
-        WebGLRenderingContext.prototype.uniform2f,
-        WebGLRenderingContext.prototype.uniform3f
-      ];
-      var locations = (renderState.shaderProgram != null? shaderLocations[renderState.shaderProgram._glquery_id] : null);
-      if (locations != null) {
-        var uniformLocation = (typeof args[0] == 'number'? args[0] : locations.uniforms[args[0]]);
-        if (uniformLocation != null) {
-          uniformFunctions[args.length - 2].apply(context, [uniformLocation].concat(args.slice(1)));
+    (function() {
+      var uniformEval = {};
+      uniformEval[gl.FLOAT] = WebGLRenderingContext.prototype.uniform1f;
+      uniformEval[gl.FLOAT_VEC2] = WebGLRenderingContext.prototype.uniform2f;
+      uniformEval[gl.FLOAT_VEC3] = WebGLRenderingContext.prototype.uniform3f;
+      uniformEval[gl.FLOAT_VEC4] = WebGLRenderingContext.prototype.uniform4f;
+      uniformEval[gl.INT] = WebGLRenderingContext.prototype.uniform1i;
+      uniformEval[gl.INT_VEC2] = WebGLRenderingContext.prototype.uniform2i;
+      uniformEval[gl.INT_VEC3] = WebGLRenderingContext.prototype.uniform3i;
+      uniformEval[gl.INT_VEC4] = WebGLRenderingContext.prototype.uniform4i;
+      uniformEval[gl.BOOL] = WebGLRenderingContext.prototype.uniform1i;
+      uniformEval[gl.BOOL_VEC2] = WebGLRenderingContext.prototype.uniform2i;
+      uniformEval[gl.BOOL_VEC3] = WebGLRenderingContext.prototype.uniform3i;
+      uniformEval[gl.BOOL_VEC4] = WebGLRenderingContext.prototype.uniform4i;
+      uniformEval[gl.FLOAT_MAT2] = function(location, value, transpose) { this.uniformMatrix2fv(location, transpose != null? transpose : false, value); };
+      uniformEval[gl.FLOAT_MAT3] = function(location, value, transpose) { this.uniformMatrix3fv(location, transpose != null? transpose : false, value); };
+      uniformEval[gl.FLOAT_MAT4] = function(location, value, transpose) { this.uniformMatrix4fv(location, transpose != null? transpose : false, value); };
+      //uniformEval[gl.SAMPLER_2D] =
+      //uniformEval[gl.SAMPLER_CUBE] = 
+
+      return function(context, renderState, args) {
+        logDebug("eval command: uniform");
+        // TODO: Detect uniformMatrix (supplied without the special transpose flag?)
+        // I.e. use attributes stored by getLocation?
+        var locations = (renderState.shaderProgram != null? shaderLocations[renderState.shaderProgram._glquery_id] : null);
+        if (locations != null) {
+          // TODO: How to get the uniform info if it is already given as a UniformLocation object?
+          //       Can we query/cache it in a fast way?
+          //       Probably need to set up benchmark for this...
+          for (var uniformName in args) { // args is a table of uniforms
+            /* Not supported: WebGLUniformLocation - (because uniform locations are specific to some shader program)
+            if (key instanceof WebGLUniformLocation) {
+              console.log(uniformLocation);	
+              uniformLocation = args[0];
+              // TODO: uniformInfo = locations.uniforms[args[0]];
+            }*/
+            var uniformInfo = locations.uniforms[uniformName],
+            uniformLocation = uniformInfo.location,
+            uniformArgs = args[uniformName];
+            if (uniformLocation != null && uniformInfo != null)
+              uniformEval[uniformInfo.type].apply(context, [uniformLocation].concat(uniformArgs));
+          }
         }
-      }
-    }
+      };
+    })()
   ];
 
   //assert(commandDispatch.length === command.length, "Internal Error: Number of commands in commandDispatch is incorrect.");
