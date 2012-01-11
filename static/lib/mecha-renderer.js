@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -37,6 +37,8 @@ mecha.renderer =
   mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
     return console.warn.apply(console, arguments);
   } : function() {});
+
+  gl = glQuery;
 
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -158,156 +160,19 @@ mecha.renderer =
     }));
   };
 
-  createScene = function() {
-    return SceneJS.createScene({
-      type: 'scene',
-      id: 'Scene',
-      canvasId: 'scenejsCanvas',
-      loggingElementId: 'scenejsLog',
-      flags: {
-        backfaces: false
-      },
-      nodes: [
-        {
-          type: 'library',
-          nodes: [
-            {
-              type: 'material',
-              coreId: 'cube-mat',
-              baseColor: {
-                r: 0.64,
-                b: 0.64,
-                g: 0.64
-              },
-              emit: 0.0
-            }, {
-              type: 'geometry',
-              coreId: 'cube-mesh',
-              primitive: 'triangles',
-              resource: 'cube-mesh',
-              positions: [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0],
-              normals: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-              indices: [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23]
-            }
-          ]
-        }, {
-          type: 'lookAt',
-          id: 'main-lookAt',
-          eye: {
-            y: -10.0,
-            x: 10.0,
-            z: 5.0
-          },
-          look: {
-            y: 0.0,
-            x: 0.0,
-            z: 0.0
-          },
-          up: {
-            y: 0.0,
-            x: 0.0,
-            z: 1.0
-          },
-          nodes: [
-            {
-              type: 'camera',
-              id: 'main-camera',
-              optics: {
-                type: 'perspective',
-                far: 100.0,
-                near: 0.1,
-                aspect: 1.0,
-                fovy: 27.6380627952
-              },
-              nodes: [
-                {
-                  type: 'renderer',
-                  id: 'main-renderer',
-                  clear: {
-                    color: true,
-                    depth: true,
-                    stencil: false
-                  },
-                  clearColor: {
-                    r: 0.4,
-                    b: 0.4,
-                    g: 0.4
-                  },
-                  nodes: [
-                    {
-                      type: 'matrix',
-                      id: 'light0-transform',
-                      elements: [-0.290864378214, 0.955171227455, -0.055189050734, 0.0, -0.771100878716, -0.199883162975, 0.604524791241, 0.0, 0.566393375397, 0.218391060829, 0.794672250748, 0.0, 4.07624483109, 1.00545394421, 5.90386199951, 1.0],
-                      nodes: [
-                        {
-                          type: 'light',
-                          id: 'light0',
-                          color: {
-                            r: 1.0,
-                            b: 1.0,
-                            g: 1.0
-                          },
-                          pos: {
-                            y: 0.0,
-                            x: 0.0,
-                            z: 0.0
-                          },
-                          quadraticAttenuation: 0.000555556,
-                          linearAttenuation: 0.0,
-                          mode: 'point',
-                          constantAttenuation: 1.0
-                        }
-                      ]
-                    }, {
-                      type: 'matrix',
-                      id: 'light1-transform',
-                      elements: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.32968401909, -2.12760996819, 2.74223303795, 1.0],
-                      nodes: [
-                        {
-                          type: 'light',
-                          id: 'light1',
-                          color: {
-                            r: 1.0,
-                            b: 1.0,
-                            g: 1.0
-                          },
-                          pos: {
-                            y: 0.0,
-                            x: 0.0,
-                            z: 0.0
-                          },
-                          quadraticAttenuation: 0.0008,
-                          linearAttenuation: 0.0,
-                          mode: 'point',
-                          constantAttenuation: 1.0
-                        }
-                      ]
-                    }, {
-                      type: 'matrix',
-                      id: 'cube-transform',
-                      elements: [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0],
-                      nodes: [
-                        {
-                          type: 'material',
-                          coreId: 'cube-mat',
-                          id: 'cube-mat',
-                          nodes: [
-                            {
-                              type: 'geometry',
-                              coreId: 'cube-mesh'
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    });
+  createScene = function(context) {
+    var ibo, indices, positions, vbo;
+    positions = [0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5];
+    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+    vbo = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, vbo);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
+    ibo = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
+    return gl.scene({
+      'scene': ''
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4Identity()).triangles();
   };
 
   exports = exports != null ? exports : {};

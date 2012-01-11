@@ -53,10 +53,8 @@ apiInit = () ->
 init = (containerEl, canvasEl) ->
   state.viewport.domElement = containerEl
   state.canvas = canvasEl
-  mecha.renderer.createScene()
-  state.scene = SceneJS.scene 'Scene'
-  state.scene.start
-    idleFunc: sceneIdle
+  if state.canvas?
+    state.scene = mecha.renderer.createScene state.canvas.getContext 'experimental-webgl'
   canvasInit()
   #TODO: sceneInit()
   apiInit()
