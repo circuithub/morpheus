@@ -116,7 +116,7 @@ var glQuery = (function() {
   };
 
   // Cross-browser initialization
-  window.requestAnimationFrame = (function(){
+  gl.requestAnimationFrame = (function(){
     return window.requestAnimationFrame
         || window.webkitRequestAnimationFrame
         || window.mozRequestAnimationFrame
@@ -125,7 +125,7 @@ var glQuery = (function() {
         || function(callback, element){ window.setTimeout(callback, 1000 / 60); };
   })();
 
-  window.cancelRequestAnimationFrame = (function(){
+  gl.cancelRequestAnimationFrame = (function(){
     return window.cancelRequestAnimationFrame
         || window.webkitCancelRequestAnimationFrame
         || window.mozCancelRequestAnimationFrame
@@ -1298,7 +1298,7 @@ var glQuery = (function() {
           return function callback() {
             self.ctx.clear(self.clearMask);
             gl(self.rootId).render(self.ctx);
-            self.nextFrame = window.requestAnimationFrame(callback, self.ctx.canvas);
+            self.nextFrame = gl.requestAnimationFrame(callback, self.ctx.canvas);
           };
         }
       };
@@ -1308,7 +1308,7 @@ var glQuery = (function() {
           if (rootId != null) {
             if (!assertType(rootId, 'string', 'canvas.start', 'rootId')) return this;
             self.rootId = rootId;
-            self.nextFrame = window.requestAnimationFrame(self.callback(), self.ctx.canvas);
+            self.nextFrame = gl.requestAnimationFrame(self.callback(), self.ctx.canvas);
           }
           return this;
         },
