@@ -217,7 +217,7 @@ mecha.renderer =
       return self.nextFrame = window.requestAnimationFrame(callback, canvas);
     };
     state.context.viewport(0, 0, canvas.width, canvas.height);
-    state.context.clearColor(0.0, 0.0, 0.0, 1.0);
+    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
     state.nextFrame = window.requestAnimationFrame(callback, canvas);
   };
 
