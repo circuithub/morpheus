@@ -14,7 +14,9 @@ compileGLSL = (abstractSolidModel) ->
     const float Infinity = (1.0/0.0);
     //uniform vec3 eye;
     //varying vec3 eyeVec;
+    uniform mat4 view;
     varying vec3 modelPosition;
+    //varying vec3 viewPosition;
     
     '''
 
@@ -79,8 +81,12 @@ compileGLSL = (abstractSolidModel) ->
       const float threshold = 0.005;
       // TODO: rayOrigin is not correct - probably need coordinates in local space...
       vec3 rayOrigin = modelPosition;
-      //vec3 rayDir = (/*SCENEJS_uMMatrix * */ -eyeVec);
-      vec3 rayDir = normalize(gl_FragCoord.xyz); // TODO: correct?
+      //vec3 rayDir = -eyeVec;
+      //vec3 rayDir = normalize(gl_FragCoord.xyz); // TODO: correct?
+      //vec3 rayDir = normalize(modelPosition - );
+      //vec3 rayDir = normalize(viewPosition);
+      //vec3 rayDir = normalize(view[3].xyz);
+      vec3 rayDir = normalize(vec3(-10.0));
       vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
       float dist = Infinity;
@@ -127,9 +133,11 @@ compileGLSL = (abstractSolidModel) ->
     uniform mat4 view;
     attribute vec3 position;
     varying vec3 modelPosition;
+    //varying vec3 viewPosition;
 
     void main(void) {
       modelPosition = position;
+      //viewPosition = (view * vec4(position, 1.0)).xyz;
       gl_Position = projection * view * vec4(position, 1.0);
     }
     
