@@ -188,11 +188,19 @@ mecha.renderer =
     fs = state.context.createShader(state.context.FRAGMENT_SHADER);
     state.context.shaderSource(vs, shaders[0]);
     state.context.shaderSource(fs, shaders[1]);
-    state.context.compileShader(vs);
-    state.context.compileShader(fs);
     program = state.context.createProgram();
-    state.context.attachShader(program, vs);
-    state.context.attachShader(program, fs);
+    state.context.compileShader(vs);
+    if (state.context.getShaderParameter(vs, state.context.COMPILE_STATUS)) {
+      state.context.attachShader(program, vs);
+    } else {
+      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(vs)));
+    }
+    state.context.compileShader(fs);
+    if (state.context.getShaderParameter(fs, state.context.COMPILE_STATUS)) {
+      state.context.attachShader(program, fs);
+    } else {
+      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(fs)));
+    }
     state.context.linkProgram(program);
     return (gl('scene')).shaderProgram(program);
   };

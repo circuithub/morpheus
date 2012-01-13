@@ -785,6 +785,7 @@ var glQuery = (function() {
         shaderProgram._glquery_id = shaderProgramCounter;
         ++shaderProgramCounter;
         // Cache all associated shader locations (attributes and uniforms)
+        //context.useProgram(shaderProgram);
         if (shaderLocations[shaderProgram._glquery_id] == null) {
           var activeAttributes = context.getProgramParameter(shaderProgram, context.ACTIVE_ATTRIBUTES),
           activeUniforms = context.getProgramParameter(shaderProgram, context.ACTIVE_UNIFORMS),

@@ -11,9 +11,9 @@ compileGLSL = (abstractSolidModel) ->
     #ifdef GL_ES
       precision highp float;
     #endif
-    uniform vec3 SCENEJS_uEye;                  // World-space eye position
-    varying vec3 SCENEJS_vEyeVec;               // Output world-space eye vector
-    varying vec4 SCENEJS_vWorldVertex;          // Varying for fragment clip or world pos hook
+    const float Infinity = (1.0/0.0);
+    uniform vec3 eye;
+    varying vec3 eyeVec;
     
     '''
 
@@ -76,11 +76,11 @@ compileGLSL = (abstractSolidModel) ->
     void main(void) {
       const int steps = 64;
       const float threshold = 0.005;
-      vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -SCENEJS_vEyeVec);
-      vec3 rayOrigin = SCENEJS_vWorldVertex.xyz;
+      vec3 rayDir = /*normalize*/(/*SCENEJS_uMMatrix * */ -eyeVec);
+      vec3 rayOrigin = gl_FragCoord.xyz;
       vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
-      float dist = (1.0/0.0);
+      float dist = Infinity;
       //float prevDist = (1.0/0.0);
       //float bias = 0.0; // corrective bias for the step size
       //float minDist = (1.0/0.0);
@@ -116,15 +116,16 @@ compileGLSL = (abstractSolidModel) ->
   
   vertexShaderMain = (bounds) ->
     # TODO: Possibly change these to uniforms later to avoid recompilation
+    "const float Infinity = (1.0/0.0);\n" +
     "const vec3 sceneScale = vec3(#{bounds[1][0] - bounds[0][0]}, #{bounds[1][1] - bounds[0][1]}, #{bounds[1][2] - bounds[0][2]});\n" +
     "const vec3 sceneTranslation = vec3(#{bounds[0][0] + bounds[1][0]}, #{bounds[0][1] + bounds[1][1]}, #{bounds[0][2] + bounds[1][2]});\n" +
     '''
     uniform mat4 projection;
-    uniform mat4 modelView;
+    uniform mat4 view;
     attribute vec3 position;
 
     void main(void) {
-      gl_Position = projection * modelView * vec4(position, 1.0);
+      gl_Position = projection * view * vec4(position, 1.0);
     }
     
     '''
