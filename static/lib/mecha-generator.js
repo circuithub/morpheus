@@ -8,7 +8,7 @@ mecha.generator =
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -55,6 +55,8 @@ mecha.generator =
   mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
     return console.warn.apply(console, arguments);
   } : function() {});
+
+  gl = glQueryMath;
 
   toStringPrototype = (function() {
 
@@ -902,7 +904,7 @@ mecha.generator =
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          mat = SceneJS_math_rotationMat3v(-math_degToRad * node.attr.angle, node.attr.axis);
+          mat = gl.setMatrix3AxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);

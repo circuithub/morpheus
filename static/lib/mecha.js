@@ -8,7 +8,7 @@ mecha.generator =
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -55,6 +55,8 @@ mecha.generator =
   mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
     return console.warn.apply(console, arguments);
   } : function() {});
+
+  gl = glQueryMath;
 
   toStringPrototype = (function() {
 
@@ -902,7 +904,7 @@ mecha.generator =
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          mat = SceneJS_math_rotationMat3v(-math_degToRad * node.attr.angle, node.attr.axis);
+          mat = gl.setMatrix3AxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
@@ -1459,7 +1461,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, sceneShaders, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -1633,6 +1635,21 @@ mecha.renderer =
     }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4Identity()).triangles();
   };
 
+  sceneShaders = function(shaders) {
+    var fs, program, vs;
+    vs = state.context.createShader(state.context.VERTEX_SHADER);
+    fs = state.context.createShader(state.context.FRAGMENT_SHADER);
+    state.context.shaderSource(vs, shaders[0]);
+    state.context.shaderSource(fs, shaders[1]);
+    state.context.compileShader(vs);
+    state.context.compileShader(fs);
+    program = state.context.createProgram();
+    state.context.attachShader(program, vs);
+    state.context.attachShader(program, fs);
+    state.context.linkProgram(program);
+    return (gl('scene')).shaderProgram(program);
+  };
+
   runScene = function(canvas, idleCallback) {
     var callback;
     callback = function() {
@@ -1655,6 +1672,8 @@ mecha.renderer =
 
   exports.runScene = runScene;
 
+  exports.sceneShaders = sceneShaders;
+
   return exports;
 
 }).call(this);
@@ -1670,7 +1689,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, gl, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -1819,6 +1838,8 @@ mecha.gui =
       up: node.get('up')
     }));
   };
+
+  gl = glQuery;
 
   constants = {
     canvas: {
@@ -1973,7 +1994,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
-        return (gl('scene')).shaderProgram(shaders[0], shaders[1]);
+        return mecha.renderer.sceneShaders(shaders);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");

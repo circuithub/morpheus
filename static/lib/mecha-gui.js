@@ -8,7 +8,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, gl, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -157,6 +157,8 @@ mecha.gui =
       up: node.get('up')
     }));
   };
+
+  gl = glQuery;
 
   constants = {
     canvas: {
@@ -311,7 +313,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
-        return (gl('scene')).shaderProgram(shaders[0], shaders[1]);
+        return mecha.renderer.sceneShaders(shaders);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");

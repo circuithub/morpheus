@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, sceneShaders, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -182,6 +182,21 @@ mecha.renderer =
     }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4Identity()).triangles();
   };
 
+  sceneShaders = function(shaders) {
+    var fs, program, vs;
+    vs = state.context.createShader(state.context.VERTEX_SHADER);
+    fs = state.context.createShader(state.context.FRAGMENT_SHADER);
+    state.context.shaderSource(vs, shaders[0]);
+    state.context.shaderSource(fs, shaders[1]);
+    state.context.compileShader(vs);
+    state.context.compileShader(fs);
+    program = state.context.createProgram();
+    state.context.attachShader(program, vs);
+    state.context.attachShader(program, fs);
+    state.context.linkProgram(program);
+    return (gl('scene')).shaderProgram(program);
+  };
+
   runScene = function(canvas, idleCallback) {
     var callback;
     callback = function() {
@@ -203,6 +218,8 @@ mecha.renderer =
   exports.createScene = createScene;
 
   exports.runScene = runScene;
+
+  exports.sceneShaders = sceneShaders;
 
   return exports;
 

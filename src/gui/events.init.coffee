@@ -14,7 +14,7 @@ sceneInit = () ->
     data: csmSourceCode
     callback: (result) ->
       shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
-      (gl 'scene').shaderProgram shaders[0], shaders[1]
+      mecha.renderer.sceneShaders shaders 
     onerror: (data,request) ->
       #console.log prefix + source + postfix
       mecha.logInternalError "Error compiling the solid model."

@@ -39,6 +39,19 @@ createScene = (context) ->
   .uniform('view', gl.setMatrix4Identity())
   .triangles()
 
+sceneShaders = (shaders) ->
+  vs = state.context.createShader state.context.VERTEX_SHADER
+  fs = state.context.createShader state.context.FRAGMENT_SHADER
+  state.context.shaderSource vs, shaders[0]
+  state.context.shaderSource fs, shaders[1]
+  state.context.compileShader vs
+  state.context.compileShader fs
+  program = state.context.createProgram()
+  state.context.attachShader program, vs
+  state.context.attachShader program, fs
+  state.context.linkProgram program
+  (gl 'scene').shaderProgram program
+
 runScene = (canvas, idleCallback) ->
   # Run the scene with an idle callback function
   callback = ->
