@@ -1,5 +1,9 @@
 # Create the scene
 createScene = (context) ->
+  # Store the context in the state
+  # TODO: support multiple contexts in future?
+  state.context = context  
+
   # Initialize buffers
   positions = [
      0.5, 0.5,-0.5,   0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,
@@ -34,4 +38,23 @@ createScene = (context) ->
   .vertexElem(ibo, 6*6, gl.UNSIGNED_SHORT, 0)
   .uniform('view', gl.setMatrix4Identity())
   .triangles()
+
+runScene = (canvas, idleCallback) ->
+  # Run the scene with an idle callback function
+  callback = ->
+    if gl.update()
+      state.context.clear state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT
+      (gl 'scene').render state.context
+      self.nextFrame = window.requestAnimationFrame callback, canvas
+    else
+      #idleCallback()
+      #callback()
+      self.nextFrame = window.requestAnimationFrame callback, canvas
+  
+  # Setup 
+  state.context.viewport 0, 0, canvas.width, canvas.height
+  state.context.clearColor 0.0, 0.0, 0.0, 1.0
+
+  state.nextFrame = window.requestAnimationFrame callback, canvas
+  return
 

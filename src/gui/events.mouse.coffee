@@ -31,6 +31,7 @@ mouseUp = (event) ->
       state.viewport.mouse.middleDragDistance = 0
 
 mouseMove = (event) ->
+  ###
   # TODO: Get an accurate time measurement since the last mouseMove event
   # Get the delta position of the mouse over this frame
   delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]]
@@ -54,6 +55,7 @@ mouseMove = (event) ->
     orbitLookAtNode (state.scene.findNode 'main-lookAt'), orbitAngles, [0.0,0.0,1.0]
 
   state.viewport.mouse.last = [event.clientX, event.clientY]
+  ###
 
 mouseWheel = (event) ->
   # TODO: When the camera projection mode is ortho then this will need to scale the view

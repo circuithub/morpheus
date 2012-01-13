@@ -14,18 +14,7 @@ sceneInit = () ->
     data: csmSourceCode
     callback: (result) ->
       shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
-      shaderDef =
-        type: 'shader',
-        id: 'main-shader',
-        shaders: [
-        #  stage: 'vertex',
-        #  code: shaders[0]
-        #,
-          stage: 'fragment',
-          code: shaders[1]
-        ]
-        vars: {}
-      (state.scene.findNode 'cube-mat').insert 'node', shaderDef
+      (gl 'scene').shaderProgram shaders[0], shaders[1]
     onerror: (data,request) ->
       #console.log prefix + source + postfix
       mecha.logInternalError "Error compiling the solid model."
@@ -36,16 +25,14 @@ controlsInit = () ->
   
 
 # Initialize the CSM API (by loading the code from the given url)
-apiInit = () ->
+apiInit = (callback) ->
   # Get the API code
   state.api.url = ($ "link[rel='api']").attr 'href'
   ($.get encodeURIComponent state.api.url, undefined, undefined, 'text')
     .success (data, textStatus, jqXHR) -> 
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
-      #TODO: This should probably be called elsewhere in the future!
-      #TODO: In fact: it causes chrome's debugger to crash
-      #sceneInit()
+      callback() if callback?
     .error () -> 
       mecha.log "Error loading API script"
 
@@ -55,9 +42,9 @@ init = (containerEl, canvasEl) ->
   state.canvas = canvasEl
   if state.canvas?
     state.scene = mecha.renderer.createScene state.canvas.getContext 'experimental-webgl'
+    mecha.renderer.runScene state.canvas, (->)
   canvasInit()
-  #TODO: sceneInit()
-  apiInit()
+  apiInit sceneInit
   controlsInit()
   registerDOMEvents()
   registerControlEvents()

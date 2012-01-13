@@ -243,28 +243,31 @@ mecha.gui =
   };
 
   mouseMove = function(event) {
-    var delta, deltaLength, orbitAngles;
-    delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
-    deltaLength = SceneJS_math_lenVec2(delta);
-    if (state.viewport.mouse.leftDown) {
-      state.viewport.mouse.leftDragDistance += deltaLength;
-    }
-    if (state.viewport.mouse.middleDown) {
-      state.viewport.mouse.middleDragDistance += deltaLength;
-    }
-    if (state.viewport.mouse.leftDown && event.which === 1) {
-      orbitAngles = [0.0, 0.0];
-      SceneJS_math_mulVec2Scalar(delta, constants.camera.orbitSpeedFactor / deltaLength, orbitAngles);
-      orbitAngles = [Math.clamp(orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed), Math.clamp(orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed)];
-      if ((isNaN(orbitAngles[0])) || (Math.abs(orbitAngles[0])) === Infinity) {
-        orbitAngles[0] = 0.0;
-      }
-      if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
-        orbitAngles[1] = 0.0;
-      }
-      orbitLookAtNode(state.scene.findNode('main-lookAt'), orbitAngles, [0.0, 0.0, 1.0]);
-    }
-    return state.viewport.mouse.last = [event.clientX, event.clientY];
+    /*
+      # TODO: Get an accurate time measurement since the last mouseMove event
+      # Get the delta position of the mouse over this frame
+      delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]]
+      deltaLength = SceneJS_math_lenVec2 delta
+    
+      # Activate the appropriate mouse dragging mode
+      state.viewport.mouse.leftDragDistance += deltaLength if state.viewport.mouse.leftDown
+      state.viewport.mouse.middleDragDistance += deltaLength if state.viewport.mouse.middleDown
+    
+      if state.viewport.mouse.leftDown and event.which == 1
+        # Calculate the orbit angle to apply to the lookAt
+        orbitAngles = [0.0,0.0]
+        SceneJS_math_mulVec2Scalar delta, constants.camera.orbitSpeedFactor / deltaLength, orbitAngles
+        orbitAngles = [
+          Math.clamp orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed
+          Math.clamp orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed
+        ]
+        # Guard against bad delta values
+        orbitAngles[0] = 0.0 if (isNaN orbitAngles[0]) or (Math.abs orbitAngles[0]) == Infinity
+        orbitAngles[1] = 0.0 if (isNaN orbitAngles[1]) or (Math.abs orbitAngles[1]) == Infinity
+        orbitLookAtNode (state.scene.findNode 'main-lookAt'), orbitAngles, [0.0,0.0,1.0]
+    
+      state.viewport.mouse.last = [event.clientX, event.clientY]
+    */
   };
 
   mouseWheel = function(event) {
@@ -306,20 +309,9 @@ mecha.gui =
     return requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
-        var shaderDef, shaders;
+        var shaders;
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
-        shaderDef = {
-          type: 'shader',
-          id: 'main-shader',
-          shaders: [
-            {
-              stage: 'fragment',
-              code: shaders[1]
-            }
-          ],
-          vars: {}
-        };
-        return (state.scene.findNode('cube-mat')).insert('node', shaderDef);
+        return (gl('scene')).shaderProgram(shaders[0], shaders[1]);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");
@@ -329,11 +321,12 @@ mecha.gui =
 
   controlsInit = function() {};
 
-  apiInit = function() {
+  apiInit = function(callback) {
     state.api.url = ($("link[rel='api']")).attr('href');
     return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
-      return mecha.log("Loaded " + state.api.url);
+      mecha.log("Loaded " + state.api.url);
+      if (callback != null) return callback();
     }).error(function() {
       return mecha.log("Error loading API script");
     });
@@ -344,9 +337,10 @@ mecha.gui =
     state.canvas = canvasEl;
     if (state.canvas != null) {
       state.scene = mecha.renderer.createScene(state.canvas.getContext('experimental-webgl'));
+      mecha.renderer.runScene(state.canvas, (function() {}));
     }
     canvasInit();
-    apiInit();
+    apiInit(sceneInit);
     controlsInit();
     registerDOMEvents();
     registerControlEvents();

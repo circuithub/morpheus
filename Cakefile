@@ -69,6 +69,7 @@ rendererFiles  = [
   'common/math'
   'common/mecha.log'
   'renderer/core'
+  'renderer/state'
   'renderer/scenejs.nodeattr'
   'renderer/scenejs.conversion'
   'renderer/scenejs.orbitlookat'

@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -39,6 +39,12 @@ mecha.renderer =
   } : function() {});
 
   gl = glQuery;
+
+  state = {
+    canvas: null,
+    context: null,
+    nextFrame: null
+  };
 
   modifySubAttr = function(node, attr, subAttr, value) {
     var attrRecord;
@@ -162,6 +168,7 @@ mecha.renderer =
 
   createScene = function(context) {
     var ibo, indices, positions, vbo;
+    state.context = context;
     positions = [0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5];
     indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
     vbo = context.createBuffer();
@@ -175,9 +182,27 @@ mecha.renderer =
     }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4Identity()).triangles();
   };
 
+  runScene = function(canvas, idleCallback) {
+    var callback;
+    callback = function() {
+      if (gl.update()) {
+        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
+        (gl('scene')).render(state.context);
+        return self.nextFrame = window.requestAnimationFrame(callback, canvas);
+      } else {
+        return self.nextFrame = window.requestAnimationFrame(callback, canvas);
+      }
+    };
+    state.context.viewport(0, 0, canvas.width, canvas.height);
+    state.context.clearColor(0.0, 0.0, 0.0, 1.0);
+    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+  };
+
   exports = exports != null ? exports : {};
 
   exports.createScene = createScene;
+
+  exports.runScene = runScene;
 
   return exports;
 
