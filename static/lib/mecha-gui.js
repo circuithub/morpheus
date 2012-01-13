@@ -318,7 +318,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
-        return mecha.renderer.sceneShaders(['attribute vec3 position;\nuniform mat4 view;\nuniform mat4 projection;\nvoid main(void) {\n  gl_Position = projection * view * vec4(position, 1.0);\n}', '#ifdef GL_ES\nprecision highp float;\n#endif\nvoid main(void) {\n  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n}']);
+        return mecha.renderer.sceneShaders(shaders);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");
