@@ -45,11 +45,9 @@ runScene = (canvas, idleCallback) ->
     if gl.update()
       state.context.clear state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT
       (gl 'scene').render state.context
-      self.nextFrame = window.requestAnimationFrame callback, canvas
     else
-      #idleCallback()
-      #callback()
-      self.nextFrame = window.requestAnimationFrame callback, canvas
+      idleCallback()
+    self.nextFrame = window.requestAnimationFrame callback, canvas
   
   # Setup 
   state.context.viewport 0, 0, canvas.width, canvas.height
