@@ -1630,9 +1630,9 @@ mecha.renderer =
     ibo = context.createBuffer();
     context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
-    return gl.scene({
+    gl.scene({
       'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4Identity()).triangles();
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4LookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0])).uniform('projection', gl.setMatrix4Ortho(-1.0, 1.0, -1.0, 1.0, 0.1, 100.0)).triangles();
   };
 
   sceneShaders = function(shaders) {
@@ -1655,7 +1655,7 @@ mecha.renderer =
       mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(fs)));
     }
     state.context.linkProgram(program);
-    return (gl('scene')).shaderProgram(program);
+    (gl('scene')).shaderProgram(program);
   };
 
   runScene = function(canvas, idleCallback) {
@@ -2007,7 +2007,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
-        return mecha.renderer.sceneShaders(shaders);
+        return mecha.renderer.sceneShaders(['attribute vec3 position;\nuniform mat4 view;\nuniform mat4 projection;\nvoid main(void) {\n  gl_Position = projection * view * vec4(position, 1.0);\n}', '#ifdef GL_ES\nprecision highp float;\n#endif\nvoid main(void) {\n  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n}']);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");

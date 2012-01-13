@@ -14,11 +14,28 @@ sceneInit = () ->
     data: csmSourceCode
     callback: (result) ->
       shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
-      mecha.renderer.sceneShaders shaders 
+      #mecha.renderer.sceneShaders shaders 
+      mecha.renderer.sceneShaders [
+        '''
+        attribute vec3 position;
+        uniform mat4 view;
+        uniform mat4 projection;
+        void main(void) {
+          gl_Position = projection * view * vec4(position, 1.0);
+        }
+        '''
+      ,
+        '''
+        #ifdef GL_ES
+        precision highp float;
+        #endif
+        void main(void) {
+          gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+        '''
+      ]
     onerror: (data,request) ->
-      #console.log prefix + source + postfix
       mecha.logInternalError "Error compiling the solid model."
-      #console.log data
 
 # Initialize html controls for interacting with mecha
 controlsInit = () ->

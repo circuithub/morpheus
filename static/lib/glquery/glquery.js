@@ -1059,6 +1059,11 @@ var glQuery = (function() {
       key = c[0],
       selector = c[1],
       commandArgs = c[2];
+      // TODO: Test performance against `dirtyTags = dirtyTags.concat(selector);`
+      //       This way likely results in better garbage collector behaviour
+      //       But also, what about `dirtyTags += selector;`?
+      for (var j = 0; j < selector.length; ++j)
+        dirtyTags.push(selector[j]);
       commandDispatch[key](context, selector, commandArgs);
     }
     commands.length = 0;
