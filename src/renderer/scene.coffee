@@ -36,7 +36,7 @@ createScene = (context) ->
   gl.scene({ 'scene': '' })
   .vertexAttrib('position', vbo, 9*8, gl.FLOAT, 3, false, 0, 0)
   .vertexElem(ibo, 6*6, gl.UNSIGNED_SHORT, 0)
-  .uniform('view', gl.setMatrix4LookAt([10.0,10.0,10.0], [0.0,0.0,0.0], [0.0,1.0,0.0]))
+  .uniform('view', gl.setMatrix4LookAt([10.0,10.0,10.0], [0.0,0.0,0.0], [0.0,0.0,1.0]))
   .uniform('projection', gl.setMatrix4Ortho(-1.0, 1.0, -1.0, 1.0, 0.1, 100.0))
   .triangles()
   return
