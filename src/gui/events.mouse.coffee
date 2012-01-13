@@ -12,10 +12,11 @@ mouseDown = (event) ->
     when 1 then state.viewport.mouse.leftDown = true
     when 2 then state.viewport.mouse.middleDown = true
 
-  # Pick the object under the mouse
+  ### Pick the object under the mouse
   if event.which == 1 # Left mouse button
     coords = mouseCoordsWithinElement event
     state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]
+  ###
 
 mouseUp = (event) ->
   if not state.scene?  
@@ -58,6 +59,7 @@ mouseMove = (event) ->
   ###
 
 mouseWheel = (event) ->
+  ###
   # TODO: When the camera projection mode is ortho then this will need to scale the view
   # See http://www.javascriptkit.com/javatutors/onmousewheel.shtml
   # But also note, unfortunately firefox actually appears to give different values of event.detail some times.
@@ -66,4 +68,5 @@ mouseWheel = (event) ->
 
   zoomDistance = delta * constants.camera.zoomSpeedFactor #* zoomLimits[1] 
   zoomLookAtNode (state.scene.findNode 'main-lookAt'), zoomDistance #, zoomLimits
+  ###
 

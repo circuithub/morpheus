@@ -216,20 +216,19 @@ mecha.gui =
   windowResize = function() {};
 
   mouseDown = function(event) {
-    var coords;
     if (!(state.scene != null)) return;
     state.viewport.mouse.last = [event.clientX, event.clientY];
     switch (event.which) {
       case 1:
-        state.viewport.mouse.leftDown = true;
-        break;
+        return state.viewport.mouse.leftDown = true;
       case 2:
-        state.viewport.mouse.middleDown = true;
+        return state.viewport.mouse.middleDown = true;
     }
-    if (event.which === 1) {
-      coords = mouseCoordsWithinElement(event);
-      return state.viewport.mouse.pickRecord = state.scene.pick(coords[0], coords[1]);
-    }
+    /* Pick the object under the mouse
+    if event.which == 1 # Left mouse button
+      coords = mouseCoordsWithinElement event
+      state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]
+    */
   };
 
   mouseUp = function(event) {
@@ -273,10 +272,16 @@ mecha.gui =
   };
 
   mouseWheel = function(event) {
-    var delta, zoomDistance;
-    delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
-    zoomDistance = delta * constants.camera.zoomSpeedFactor;
-    return zoomLookAtNode(state.scene.findNode('main-lookAt'), zoomDistance);
+    /*
+      # TODO: When the camera projection mode is ortho then this will need to scale the view
+      # See http://www.javascriptkit.com/javatutors/onmousewheel.shtml
+      # But also note, unfortunately firefox actually appears to give different values of event.detail some times.
+      # It is likely that this is due to a user having changed his scroll speed settings, thus we'll clamp the value to 1 or -1
+      delta = if event.wheelDelta? then event.wheelDelta / -120.0 else Math.clamp event.detail, -1.0, 1.0
+    
+      zoomDistance = delta * constants.camera.zoomSpeedFactor #* zoomLimits[1] 
+      zoomLookAtNode (state.scene.findNode 'main-lookAt'), zoomDistance #, zoomLimits
+    */
   };
 
   keyDown = function(event) {};
