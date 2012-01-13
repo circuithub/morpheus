@@ -79,14 +79,8 @@ compileGLSL = (abstractSolidModel) ->
     void main(void) {
       const int steps = 64;
       const float threshold = 0.005;
-      // TODO: rayOrigin is not correct - probably need coordinates in local space...
       vec3 rayOrigin = modelPosition;
-      //vec3 rayDir = -eyeVec;
-      //vec3 rayDir = normalize(gl_FragCoord.xyz); // TODO: correct?
-      //vec3 rayDir = normalize(modelPosition - );
-      //vec3 rayDir = normalize(viewPosition);
-      //vec3 rayDir = normalize(view[3].xyz);
-      vec3 rayDir = normalize(vec3(-10.0));
+      vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;
       vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
       float dist = Infinity;
