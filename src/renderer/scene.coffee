@@ -5,15 +5,16 @@ createScene = (context) ->
   state.context = context  
 
   # Initialize buffers
+  # TODO: Use the model boundaries to set up the box bounds
   positions = [
-     0.5, 0.5,-0.5,   0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,
-    -0.5, 0.5,-0.5,   0.5, 0.5, 0.5,   0.5,-0.5, 0.5,
-    -0.5,-0.5, 0.5,  -0.5, 0.5, 0.5,   0.5, 0.5,-0.5,
-     0.5, 0.5, 0.5,   0.5,-0.5, 0.5,   0.5,-0.5,-0.5,
-     0.5,-0.5,-0.5,   0.5,-0.5, 0.5,  -0.5,-0.5, 0.5,
-    -0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,  -0.5,-0.5, 0.5,
-    -0.5, 0.5, 0.5,  -0.5, 0.5,-0.5,   0.5, 0.5, 0.5,
-     0.5, 0.5,-0.5,  -0.5, 0.5,-0.5,  -0.5, 0.5, 0.5
+     1.0, 1.0,-1.0,   1.0,-1.0,-1.0,  -1.0,-1.0,-1.0,
+    -1.0, 1.0,-1.0,   1.0, 1.0, 1.0,   1.0,-1.0, 1.0,
+    -1.0,-1.0, 1.0,  -1.0, 1.0, 1.0,   1.0, 1.0,-1.0,
+     1.0, 1.0, 1.0,   1.0,-1.0, 1.0,   1.0,-1.0,-1.0,
+     1.0,-1.0,-1.0,   1.0,-1.0, 1.0,  -1.0,-1.0, 1.0,
+    -1.0,-1.0,-1.0,  -1.0,-1.0,-1.0,  -1.0,-1.0, 1.0,
+    -1.0, 1.0, 1.0,  -1.0, 1.0,-1.0,   1.0, 1.0, 1.0,
+     1.0, 1.0,-1.0,  -1.0, 1.0,-1.0,  -1.0, 1.0, 1.0
   ]
   indices = [
      0, 1, 2,   0, 2, 3,
@@ -33,11 +34,12 @@ createScene = (context) ->
   context.bufferData context.ELEMENT_ARRAY_BUFFER, (new Uint16Array indices), context.STATIC_DRAW
   
   # Create the scene
+  # TODO: Use the model boundaries to set up the projection parameters and the camera distance
   gl.scene({ 'scene': '' })
   .vertexAttrib('position', vbo, 9*8, gl.FLOAT, 3, false, 0, 0)
   .vertexElem(ibo, 6*6, gl.UNSIGNED_SHORT, 0)
   .uniform('view', gl.setMatrix4LookAt([10.0,10.0,10.0], [0.0,0.0,0.0], [0.0,0.0,1.0]))
-  .uniform('projection', gl.setMatrix4Ortho(-1.0, 1.0, -1.0, 1.0, 0.1, 100.0))
+  .uniform('projection', gl.setMatrix4Ortho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0))
   .triangles()
   return
 
