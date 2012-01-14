@@ -9,7 +9,7 @@ mecha.api =
   var __slice = Array.prototype.slice;
 
   (function() {
-    var Api, Dispatcher, Parameter, dispatch, extend, globalParamIndex;
+    var Api, Dispatcher, Parameter, dispatch, extend, globalParamIndex, mechaTypeof;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -17,6 +17,17 @@ mecha.api =
         obj[name] = method;
       }
       return obj;
+    };
+    mechaTypeof = function(value) {
+      if (Array.isArray(value)) {
+        if (value.length <= 4) {
+          return "vec" + value.length;
+        } else {
+          return "unknown";
+        }
+      } else {
+        return "float";
+      }
     };
     Dispatcher = function() {};
     dispatch = new Dispatcher;
@@ -262,7 +273,7 @@ mecha.api =
       return new Parameter({
         param: 'range',
         description: description,
-        type: 'float',
+        type: mechaTypeof(defaultArg),
         paramIndex: paramIndex,
         start: start,
         end: end,
@@ -274,7 +285,7 @@ mecha.api =
       return {
         param: 'param',
         description: description,
-        type: 'float',
+        type: mechaTypeof(defaultArg),
         defaultArg: defaultArg
       };
     };

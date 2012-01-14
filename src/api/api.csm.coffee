@@ -10,6 +10,13 @@ do () ->
       obj[name] = method
     return obj
 
+  mechaTypeof = (value) -> 
+    if Array.isArray value
+      if value.length <= 4 then "vec#{value.length}" else "unknown"
+    else
+      # TODO: Support int for loops
+      "float"
+
   # Fluid API builder
   Dispatcher = ->
   dispatch = new Dispatcher
@@ -143,14 +150,14 @@ do () ->
       else
         @str = "(#{@str}) - #{arg}"
       return this
-    
+  
   window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
     (new Parameter
       param: 'range'
       description: description
-      type: 'float'
+      type: mechaTypeof defaultArg
       paramIndex: paramIndex
       start: start
       end: end
@@ -161,6 +168,6 @@ do () ->
   window.number = (description, defaultArg) ->
     param: 'param'
     description: description
-    type: 'float'
+    type: mechaTypeof defaultArg
     defaultArg: defaultArg
 
