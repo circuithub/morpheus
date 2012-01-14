@@ -25,10 +25,15 @@ compileGLSL = (abstractSolidModel) ->
     ###
 
     # TODO: Possibly change some of these to constants to uniforms later to avoid recompilation
+    sceneTranslation = [
+      if isFinite(bounds[0][0]) and isFinite(bounds[1][0]) then bounds[0][0] + bounds[1][0] else '0.0'
+      if isFinite(bounds[0][1]) and isFinite(bounds[1][1]) then bounds[0][1] + bounds[1][1] else '0.0'
+      if isFinite(bounds[0][2]) and isFinite(bounds[1][2]) then bounds[0][2] + bounds[1][2] else '0.0'
+    ]
     """
     const float Infinity = (1.0/0.0);
     const vec3 sceneScale = vec3(#{bounds[1][0] - bounds[0][0]}, #{bounds[1][1] - bounds[0][1]}, #{bounds[1][2] - bounds[0][2]});
-    const vec3 sceneTranslation = vec3(#{bounds[0][0] + bounds[1][0]}, #{bounds[0][1] + bounds[1][1]}, #{bounds[0][2] + bounds[1][2]});
+    const vec3 sceneTranslation = vec3(#{sceneTranslation});
     uniform mat4 projection;
     uniform mat4 view;
     attribute vec3 position;

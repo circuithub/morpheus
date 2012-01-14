@@ -407,7 +407,9 @@ mecha.generator =
       },
       halfspace: function(stack, node, flags) {
         node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
-        node.bounds[flags.invert ? 1 : 0][node.attr.axis] = node.attr.val;
+        if (typeof node.attr.val === 'string') {} else {
+          node.bounds[flags.invert ? 1 : 0][node.attr.axis] = node.attr.val;
+        }
         return stack[0].nodes.push(node);
       },
       cylinder: function(stack, node, flags) {
@@ -1355,7 +1357,7 @@ mecha.generator =
     console.log("ASM:");
     console.log(abstractSolidModel);
     vertexShader = function() {
-      var bounds, boundsResult;
+      var bounds, boundsResult, sceneTranslation;
       boundsResult = compileASMBounds(abstractSolidModel);
       if (boundsResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
@@ -1365,7 +1367,8 @@ mecha.generator =
       console.log "Bounds Result:"
       console.log boundsResult
       */
-      return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + (bounds[0][0] + bounds[1][0]) + ", " + (bounds[0][1] + bounds[1][1]) + ", " + (bounds[0][2] + bounds[1][2]) + ");\nuniform mat4 projection;\nuniform mat4 view;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(position, 1.0);\n}\n";
+      sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
+      return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(position, 1.0);\n}\n";
     };
     fragmentShader = function() {
       var distanceResult, idResult, sceneMaterial;

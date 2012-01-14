@@ -63,7 +63,15 @@ compileASMBounds = (abstractSolidModel) ->
       stack[0].nodes.push node
     halfspace: (stack, node, flags) ->
       node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
-      node.bounds[if flags.invert then 1 else 0][node.attr.axis] = node.attr.val
+      if typeof node.attr.val == 'string'
+        # TODO: Handle all parameter boundary combinations (might still not be 100% accurate in special cases...)
+        # E.g. 
+        #if flags.invert
+        #  node.bounds[1][node.attr.axis] = evalParamMin node.attr.val
+        #else
+        #  node.bounds[0][node.attr.axis] = evalParamMax node.attr.val
+      else
+        node.bounds[if flags.invert then 1 else 0][node.attr.axis] = node.attr.val
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
       node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
