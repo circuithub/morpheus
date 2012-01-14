@@ -318,7 +318,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         console.log(result);
-        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
+        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), result.attr.params);
         return mecha.renderer.sceneShaders(shaders);
       },
       onerror: function(data, request) {

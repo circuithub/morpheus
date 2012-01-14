@@ -2,7 +2,7 @@
 
 # TODO: Would be nice if CoffeeScript supported '''#{tag}''' syntax
 
-compileGLSL = (abstractSolidModel) ->
+compileGLSL = (abstractSolidModel, params) ->
   rayOrigin = 'ro'
   rayDirection = 'rd'
   usePerspectiveProjection = false
@@ -88,6 +88,9 @@ compileGLSL = (abstractSolidModel) ->
       result += "}\n\n"
       result
 
+    generateUniforms = (params) ->
+      ("uniform float u#{i}; // #{params[i]}" for i in [0...params.length]).join '\n'
+
     # Shader
 
     """
@@ -98,6 +101,8 @@ compileGLSL = (abstractSolidModel) ->
     uniform mat4 view;
     varying vec3 modelPosition;
     #{if usePerspectiveProjection then "varying vec3 viewPosition;" else ""}
+
+    #{generateUniforms params}
 
     #{glslLibrary.compile distanceResult.flags.glslFunctions}
 

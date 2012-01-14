@@ -1349,7 +1349,7 @@ mecha.generator =
     return result;
   }));
 
-  compileGLSL = function(abstractSolidModel) {
+  compileGLSL = function(abstractSolidModel, params) {
     var fragmentShader, rayDirection, rayOrigin, shaders, usePerspectiveProjection, vertexShader;
     rayOrigin = 'ro';
     rayDirection = 'rd';
@@ -1371,7 +1371,7 @@ mecha.generator =
       return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(position, 1.0);\n}\n";
     };
     fragmentShader = function() {
-      var distanceResult, idResult, sceneMaterial;
+      var distanceResult, generateUniforms, idResult, sceneMaterial;
       distanceResult = glslSceneDistance(abstractSolidModel);
       if (distanceResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
@@ -1411,7 +1411,18 @@ mecha.generator =
         result += "}\n\n";
         return result;
       };
-      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + distanceResult.flags.glslPrelude.code + "  \n  return max(0.0," + distanceResult.nodes[0].code + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + idResult.flags.glslPrelude.code + "\n  " + idResult.nodes[0].code + ";\n  return " + idResult.nodes[0].code.materialId + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  const int steps = 64;\n  const float threshold = 0.005;\n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - prevRayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n";
+      generateUniforms = function(params) {
+        var i;
+        return ((function() {
+          var _ref, _results;
+          _results = [];
+          for (i = 0, _ref = params.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            _results.push("uniform float u" + i + "; // " + params[i]);
+          }
+          return _results;
+        })()).join('\n');
+      };
+      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + distanceResult.flags.glslPrelude.code + "  \n  return max(0.0," + distanceResult.nodes[0].code + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + idResult.flags.glslPrelude.code + "\n  " + idResult.nodes[0].code + ";\n  return " + idResult.nodes[0].code.materialId + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  const int steps = 64;\n  const float threshold = 0.005;\n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n  const vec3 lightPos = vec3(1.5,1.5, 4.0);\n  vec3 ldir = normalize(lightPos - prevRayOrigin);\n  vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);\n  gl_FragColor = vec4(diffuse, 1.0);\n}\n";
     };
     shaders = [vertexShader(), fragmentShader()];
     return shaders;
@@ -2048,7 +2059,7 @@ mecha.gui =
       callback: function(result) {
         var shaders;
         console.log(result);
-        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
+        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), result.attr.params);
         return mecha.renderer.sceneShaders(shaders);
       },
       onerror: function(data, request) {

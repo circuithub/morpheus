@@ -16,7 +16,7 @@ sceneInit = () ->
       ## TEMPORARY
       console.log result
       ##
-      shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
+      shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), result.attr.params
       mecha.renderer.sceneShaders shaders 
     onerror: (data,request) ->
       mecha.logInternalError "Error compiling the solid model."
