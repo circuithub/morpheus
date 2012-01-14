@@ -705,7 +705,16 @@ mecha.generator =
             return "" + ((a | 0) === a ? a + '.0' : a) + " * " + b;
         }
       } else if (typeof b === 'number') {
-        return glsl.mul(b, a);
+        switch (b) {
+          case 0:
+            return 0;
+          case 1:
+            return a;
+          case -1:
+            return "-" + a;
+          default:
+            return "" + a + " * " + ((b | 0) === b ? b + '.0' : b);
+        }
       } else {
         return "" + a + " * " + b;
       }

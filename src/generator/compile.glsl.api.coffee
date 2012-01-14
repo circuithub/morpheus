@@ -19,7 +19,13 @@ glsl =
           # Number must not be integers (bitwise op converts operand to integer)
           "#{if (a | 0) == a then (a + '.0') else a} * #{b}"
     else if typeof b == 'number'
-      glsl.mul b, a
+      switch b
+        when 0 then 0
+        when 1 then a
+        when -1 then "-#{a}"
+        else 
+          # Number must not be integers (bitwise op converts operand to integer)
+          "#{a} * #{if (b | 0) == b then (b + '.0') else b}"
     else 
       "#{a} * #{b}"
     # TODO: handle vectors
