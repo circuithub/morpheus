@@ -18,30 +18,32 @@ translateCSM = (apiSourceCode, csmSourceCode) ->
 
   # Concatenate the sandbox source code
   jsSourceCode =
-    '''
+    """
     "use strict";
     (function(){
       /* BEGIN API */
       
       var exportedParameters = [];
 
-    ''' + "\n#{apiSourceCode}\n" +
-    '''
-
+    #{apiSourceCode}
+    
       try {
 
-    ''' + (if variablesSource then "\n#{variablesSource.join '\n'}\n" else "") +
-    '''
+      /* BEGIN PARAMETERS */
+
+    #{(if variablesSource then variablesSource.join '\n' else "")}
+
       /* BEGIN SOURCE */
       return scene({ params: exportedParameters },
-    ''' + csmSourceCode +
-    '''
+    
+    #{csmSourceCode}
+    
       );
       } catch(err) {
         return String(err);
       }
     })();
-    '''
+    """
 
   return jsSourceCode
 
