@@ -1230,39 +1230,48 @@ mecha.generator =
           mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
           return;
         }
-        translateOffset = 0.0;
-        for (_i = 0, _len = stack.length; _i < _len; _i++) {
-          s = stack[_i];
-          if (s.halfSpaces != null) {
-            index = node.attr.axis + (flags.invert ? 3 : 0);
-            val = node.attr.val + translateOffset;
-            if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
-              if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
-                s.halfSpaces[index] = val;
+        if (typeof node.attr.val === 'string') {
+          ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+          if (!flags.invert) {
+            node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+          } else {
+            node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+          }
+        } else {
+          translateOffset = 0.0;
+          for (_i = 0, _len = stack.length; _i < _len; _i++) {
+            s = stack[_i];
+            if (s.halfSpaces != null) {
+              index = node.attr.axis + (flags.invert ? 3 : 0);
+              val = node.attr.val + translateOffset;
+              if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
+                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
+                  s.halfSpaces[index] = val;
+                }
+              } else {
+                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
+                  s.halfSpaces[index] = val;
+                }
               }
             } else {
-              if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
-                s.halfSpaces[index] = val;
+              switch (s.type) {
+                case 'translate':
+                  translateOffset += s.attr.offset[node.attr.axis];
+                  continue;
+                case 'invert':
+                case 'mirror':
+                  continue;
+                default:
+                  ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+                  if (!flags.invert) {
+                    node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+                  } else {
+                    node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+                  }
               }
             }
-          } else {
-            switch (s.type) {
-              case 'translate':
-                translateOffset += s.attr.offset[node.attr.axis];
-                continue;
-              case 'invert':
-              case 'mirror':
-                continue;
-              default:
-                ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-                if (!flags.invert) {
-                  node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
-                } else {
-                  node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
-                }
-            }
+            break;
           }
-          break;
         }
         return stack[0].nodes.push(node);
       },

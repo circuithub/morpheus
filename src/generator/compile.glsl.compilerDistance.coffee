@@ -41,20 +41,20 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         cosAngle = Math.cos -math_degToRad * node.attr.angle
         sinAngle = Math.sin -math_degToRad * node.attr.angle
         components = [
-            switch node.attr.axis
-              when 0 then "#{ro}.x"
-              when 1 then "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul sinAngle, (ro + '.z'))}"
-              else        "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul (glsl.neg sinAngle), (ro + '.y'))}"
-          ,
-            switch node.attr.axis
-              when 0 then "#{glsl.add (glsl.mul cosAngle, (ro + '.y')), (glsl.mul (glsl.neg sinAngle), (ro + '.z'))}"
-              when 1 then "#{ro}.y"
-              else        "#{glsl.add (glsl.mul sinAngle, (ro + '.x')), (glsl.mul cosAngle, (ro + '.y'))}"
-          ,
-            switch node.attr.axis
-              when 0 then "#{glsl.add (glsl.mul sinAngle, (ro + '.y')), (glsl.mul cosAngle, (ro + '.z'))}"
-              when 1 then "#{glsl.add (glsl.mul (glsl.neg sinAngle), (ro + '.x')), (glsl.mul cosAngle, (ro + '.z'))}"
-              else        "#{ro}.z"
+          switch node.attr.axis
+            when 0 then "#{ro}.x"
+            when 1 then "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul sinAngle, (ro + '.z'))}"
+            else        "#{glsl.add (glsl.mul cosAngle, (ro + '.x')), (glsl.mul (glsl.neg sinAngle), (ro + '.y'))}"
+        ,
+          switch node.attr.axis
+            when 0 then "#{glsl.add (glsl.mul cosAngle, (ro + '.y')), (glsl.mul (glsl.neg sinAngle), (ro + '.z'))}"
+            when 1 then "#{ro}.y"
+            else        "#{glsl.add (glsl.mul sinAngle, (ro + '.x')), (glsl.mul cosAngle, (ro + '.y'))}"
+        ,
+          switch node.attr.axis
+            when 0 then "#{glsl.add (glsl.mul sinAngle, (ro + '.y')), (glsl.mul cosAngle, (ro + '.z'))}"
+            when 1 then "#{glsl.add (glsl.mul (glsl.neg sinAngle), (ro + '.x')), (glsl.mul cosAngle, (ro + '.z'))}"
+            else        "#{ro}.z"
         ]
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
       return
@@ -276,34 +276,44 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       if node.nodes.length != 0
         mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
         return
-      translateOffset = 0.0
-      for s in stack
-        if s.halfSpaces?
-          # Assign to the halfspace bins for corner compilation
-          index = node.attr.axis + (if flags.invert then 3 else 0)
-          val = node.attr.val + translateOffset
-          if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
-            if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
-              s.halfSpaces[index] = val
-          else
-            if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
-              s.halfSpaces[index] = val
+      
+      # Generate half-space primitive when it cannot be compiled into a corner
+      if typeof node.attr.val == 'string'
+        ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+        if not flags.invert
+          node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
         else
-          switch s.type
-            when 'translate'
-              translateOffset += s.attr.offset[node.attr.axis]
-              continue # Search for preceding intersect/union node 
-            when 'invert', 'mirror'
-              continue # Search for preceding intersect/union node
+          node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+      else
+        # Bin half-spaces for corner compilation
+        translateOffset = 0.0
+        for s in stack
+          if s.halfSpaces?
+            # Assign to the halfspace bins for corner compilation
+            index = node.attr.axis + (if flags.invert then 3 else 0)
+            val = node.attr.val + translateOffset
+            if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
+              if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
+                s.halfSpaces[index] = val
             else
-              # This may occur in special cases where we cannot do normal corner compilation
-              # (Such as a separate transformations on the plane itself - with a wedge node for example)
-              ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-              if not flags.invert
-                node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+              if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
+                s.halfSpaces[index] = val
+          else
+            switch s.type
+              when 'translate'
+                translateOffset += s.attr.offset[node.attr.axis]
+                continue # Search for preceding intersect/union node 
+              when 'invert', 'mirror'
+                continue # Search for preceding intersect/union node
               else
-                node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
-        break
+                # This may occur in special cases where we cannot do normal corner compilation
+                # (Such as a separate transformation on the plane itself - with a wedge node for example)
+                ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+                if not flags.invert
+                  node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+                else
+                  node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+          break
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
