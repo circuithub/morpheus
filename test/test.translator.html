@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<!--
+      Mecha - A test harness for debugging the CSM API with translation outside of the webworker sandbox
+      Copyright (c) 2011 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Mecha - Test CSM API</title>
+  <meta name='description' content='Test harness for the API'>
+
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+    scene({ parameters: [] },
+      translate(
+        { offset: [0.0, 0.4, 0.0] },
+        intersect(
+          box({ dimensions: [0.2, 0.5, 0.2] }),
+          translate({ offset: [0.3, 0.0, 0.0] },
+            box({ dimensions: [0.5, 0.2, 0.2] })
+          )
+        )
+      ),
+      cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
+      sphere({ radius: 0.3 }).translate({ offset: [0.0, -0.2, 0.0] })
+    );
+  </script>
+
+  <!-- Stylesheet -->
+  <style type='text/css' media='screen'>
+    /* Resets */
+    
+    /* Normalization (taken from http://necolas.github.com/normalize.css/ and a little bit from html5 boilerplate) */
+    
+    /* General styling */
+    
+    /* Application styling */
+    #mecha-editor {
+      position: relative;
+      float: left;
+      width: 502px;
+      height: 512px;
+      margin: 0 10px;
+    }
+    #mecha-source-code {
+      display: block;
+      width: 100%;
+      height: 480px;
+      resize: none;
+    }
+    #mecha-source-compile {
+      position: absolute;
+      right: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id='mecha-layout'>
+    <form id='mecha-editor'></form>
+  </div>
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
+  <script src='../static/lib/glquery/glquery.math.module.js'></script>
+  <link rel='api' href='../static/lib/mecha-api.js'>
+  
+  <!-- Application logic -->
+
+  <script src='../static/lib/mecha-editor.js'></script>
+  <script src='../static/lib/mecha-generator.js'></script>
+  <script>
+
+    window.onload = function(){
+      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+
+      var apiUrl = $("link[rel='api']").attr('href');
+      var apiSourceCode;
+      $.get(encodeURIComponent(apiUrl), void 0, void 0, 'text')
+        .success(function(data, textStatus, jqXHR) {
+          apiSourceCode = data;
+          console.log("Loaded " + apiUrl);
+
+          // Perform translation
+          var csmSourceCode = mecha.generator.translateCSM(apiSourceCode, mecha.editor.getSourceCode());
+          console.log(csmSourceCode);
+          console.log(eval(csmSourceCode));
+          //mecha.generator.compileGLSL(mecha.generator.compileASM(eval(csmSourceCode)));
+        })
+        .error(function() {
+          return console.error("Error loading API script");
+        });
+    };
+
+
+    /*
+    requestId = JSandbox.eval 
+      data: csmSourceCode
+      callback: (result) ->
+        console.log result
+        shaders = 
+        mecha.renderer.sceneShaders shaders 
+      onerror: (data,request) ->
+        mecha.logInternalError "Error compiling the solid model."*/
+  </script>
+</body>
+</html>
