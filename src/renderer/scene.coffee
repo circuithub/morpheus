@@ -44,24 +44,30 @@ createScene = (context) ->
   return
 
 sceneShaders = (shaders) ->
-  vs = state.context.createShader state.context.VERTEX_SHADER
-  fs = state.context.createShader state.context.FRAGMENT_SHADER
-  state.context.shaderSource vs, shaders[0]
-  state.context.shaderSource fs, shaders[1]
-  program = state.context.createProgram()
-  state.context.compileShader vs
-  if state.context.getShaderParameter vs, state.context.COMPILE_STATUS
-    state.context.attachShader program, vs
-  else
-    mecha.logApiError "Shader compile failed:\n#{state.context.getShaderInfoLog vs}"
-  state.context.compileShader fs
-  if state.context.getShaderParameter fs, state.context.COMPILE_STATUS
-    state.context.attachShader program, fs
-  else
-    mecha.logApiError "Shader compile failed:\n#{state.context.getShaderInfoLog fs}"
-  state.context.linkProgram program
-  (gl 'scene').shaderProgram program
-  return
+  success = true
+
+  # Create the shader program
+  if not state.shader.program?
+    state.shader.program = state.context.createProgram()
+    state.shader.vs = state.context.createShader state.context.VERTEX_SHADER
+    state.context.attachShader state.shader.program, state.shader.vs
+    state.shader.fs = state.context.createShader state.context.FRAGMENT_SHADER
+    state.context.attachShader state.shader.program, state.shader.fs
+
+  # Compile the shaders
+  state.context.shaderSource state.shader.vs, shaders[0]
+  state.context.shaderSource state.shader.fs, shaders[1]
+  state.context.compileShader state.shader.vs
+  if not state.context.getShaderParameter state.shader.vs, state.context.COMPILE_STATUS
+    mecha.logApiError "Shader compile failed:\n#{state.context.getShaderInfoLog state.shader.vs}\n#{shaders[0]}"
+  state.context.compileShader state.shader.fs
+  if not state.context.getShaderParameter state.shader.fs, state.context.COMPILE_STATUS
+    mecha.logApiError "Shader compile failed:\n#{state.context.getShaderInfoLog state.shader.fs}\n#{shaders[1]}"
+  state.context.linkProgram state.shader.program
+  if not state.context.getProgramParameter state.shader.program, state.context.LINK_STATUS
+    mecha.logApiError "Shader link failed:\n#{state.context.getProgramInfoLog state.shader.progam}"
+  (gl 'scene').shaderProgram state.shader.program
+  return success
 
 runScene = (canvas, idleCallback) ->
   # Run the scene with an idle callback function

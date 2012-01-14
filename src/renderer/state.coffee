@@ -5,3 +5,8 @@ state =
   canvas: null
   context: null
   nextFrame: null
+  shader:
+    program: null
+    vs: null
+    fs: null
+
