@@ -48,10 +48,10 @@ compileGLSL = (abstractSolidModel) ->
     if distanceResult.nodes.length != 1
       mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the distance compiler.'
 
-    ### TEMPORARY
+    ## TEMPORARY
     console.log "Distance Result:"
     console.log distanceResult
-    ###
+    ##
 
     idResult = glslSceneId abstractSolidModel
     if idResult.nodes.length != 1

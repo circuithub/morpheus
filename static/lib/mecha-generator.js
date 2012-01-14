@@ -76,7 +76,7 @@ mecha.generator =
     var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    jsSourceCode = '"use strict";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n' + ("\n" + apiSourceCode + "\n") + '\ntry {\n' + (variablesSource ? "\n" + (variablesSource.join('\n')) + "\n" : "") + '/* BEGIN SOURCE */\nreturn scene({ params: exportedParameters },' + csmSourceCode + '  );\n  } catch(err) {\n    return String(err);\n  }\n})();';
+    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS */\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE */\n  return scene({ params: exportedParameters },\n\n" + csmSourceCode + "\n\n  );\n  } catch(err) {\n    return String(err);\n  }\n})();";
     return jsSourceCode;
   };
 
@@ -464,13 +464,13 @@ mecha.generator =
         var halfspaces;
         halfspaces = [
           asm.halfspace({
-            val: node.attr.dimensions[0] * 0.5,
+            val: glsl.mul(glsl.subscript(node.attr.dimensions, 0), 0.5),
             axis: 0
           }), asm.halfspace({
-            val: node.attr.dimensions[1] * 0.5,
+            val: glsl.mul(glsl.subscript(node.attr.dimensions, 1), 0.5),
             axis: 1
           }), asm.halfspace({
-            val: node.attr.dimensions[2] * 0.5,
+            val: glsl.mul(glsl.subscript(node.attr.dimensions, 2), 0.5),
             axis: 2
           })
         ];
@@ -683,6 +683,13 @@ mecha.generator =
   };
 
   glsl = {
+    subscript: function(a, index) {
+      if (Array.isArray(a)) {
+        return a[index];
+      } else {
+        return "" + a + "[" + index + "]";
+      }
+    },
     mul: function(a, b) {
       if (typeof a === 'number' && typeof b === 'number') {
         return a * b;
@@ -1348,10 +1355,8 @@ mecha.generator =
       if (distanceResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
       }
-      /* TEMPORARY
-      console.log "Distance Result:"
-      console.log distanceResult
-      */
+      console.log("Distance Result:");
+      console.log(distanceResult);
       idResult = glslSceneId(abstractSolidModel);
       if (idResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');

@@ -156,17 +156,33 @@ mecha.api =
       })
     });
     window.scene = function() {
-      var attr, nodes, strip;
+      var attr, nodes, serializeAttr, serializeNodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      strip = function(nodes) {
+      serializeAttr = function(attr) {
+        var i, key, val, _ref;
+        if (attr instanceof Parameter) {
+          return attr.serialize();
+        } else if (Array.isArray(attr)) {
+          for (i = 0, _ref = attr.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            attr[i] = serializeAttr(attr[i]);
+          }
+        } else if (typeof attr === 'object') {
+          for (key in attr) {
+            val = attr[key];
+            attr[key] = serializeAttr(val);
+          }
+        }
+        return attr;
+      };
+      serializeNodes = function(nodes) {
         var n, _i, _len, _results;
         _results = [];
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           n = nodes[_i];
           _results.push({
             type: n.type,
-            attr: n.attr,
-            nodes: strip(n.nodes)
+            attr: serializeAttr(n.attr),
+            nodes: serializeNodes(n.nodes)
           });
         }
         return _results;
@@ -174,7 +190,7 @@ mecha.api =
       return {
         type: 'scene',
         attr: attr,
-        nodes: strip(nodes)
+        nodes: serializeNodes(nodes)
       };
     };
     extend(window, dispatch);
@@ -187,7 +203,7 @@ mecha.api =
         exportedParameters.push(attr.description);
       }
 
-      Parameter.prototype.toString = function() {
+      Parameter.prototype.serialize = function() {
         return this.str;
       };
 

@@ -312,11 +312,12 @@ mecha.gui =
 
   sceneInit = function() {
     var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, ($('#source-code')).val());
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
     return requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
         var shaders;
+        console.log(result);
         shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result));
         return mecha.renderer.sceneShaders(shaders);
       },
@@ -330,7 +331,7 @@ mecha.gui =
 
   apiInit = function(callback) {
     state.api.url = ($("link[rel='api']")).attr('href');
-    return ($.get(encodeURIComponent(state.api.url, void 0, void 0, 'text'))).success(function(data, textStatus, jqXHR) {
+    return ($.get(encodeURIComponent(state.api.url), void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
       mecha.log("Loaded " + state.api.url);
       if (callback != null) return callback();
