@@ -24,12 +24,13 @@ var chipDimensions = range("Chip Dimensions", [0.2,0.2,0.5], [20.0,20.0,5.0]), /
     holeRadius = range("Hole Radius", 0.1, 1.0);
 
 // Draw the chip body (with a hole)
-difference(
+box({ dimensions: chipDimensions })
+/*difference(
   box({ dimensions: chipDimensions }),
   cylinder({ radius: holeRadius })
   .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
 )
-.material({ color: [0.1, 0.1, 0.1] })
+.material({ color: [0.1, 0.1, 0.1] })*/
   </script>
 
   <!-- Stylesheet -->
@@ -53,13 +54,13 @@ difference(
       height: 512px;
       margin: 0 10px;
     }
-    #source-code {
+    #mecha-source-code {
       display: block;
       width: 100%;
       height: 480px;
       resize: none;
     }
-    #source-compile {
+    #mecha-source-compile {
       position: absolute;
       right: 0;
     }
