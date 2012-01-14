@@ -190,7 +190,8 @@ mecha.gui =
     },
     application: {
       initialized: false
-    }
+    },
+    models: {}
   };
 
   mouseCoordsWithinElement = function(event) {
@@ -316,10 +317,25 @@ mecha.gui =
     return requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
-        var shaders;
+        var attr, model, name, _ref;
         console.log(result);
-        shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), result.attr.params);
-        return mecha.renderer.sceneShaders(shaders);
+        model = state.models[''];
+        if (!(model != null)) {
+          model = state.models[''] = {
+            shaders: [],
+            params: {},
+            args: {}
+          };
+        }
+        model.params = result.attr.params;
+        _ref = model.params;
+        for (name in _ref) {
+          attr = _ref[name];
+          if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
+        }
+        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        mecha.renderer.modelShaders('', model.shaders);
+        return mecha.renderer.modelArguments('', model.args);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");

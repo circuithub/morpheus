@@ -16,8 +16,21 @@ sceneInit = () ->
       ## TEMPORARY
       console.log result
       ##
-      shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), result.attr.params
-      mecha.renderer.sceneShaders shaders 
+      
+      # Update the model parameters
+      model = state.models['']
+      if not model?
+        model = state.models[''] = { shaders: [], params: {}, args: {} }
+      model.params = result.attr.params
+      # Initialize any model arguments to their default values when they are unassigned
+      for name,attr of model.params
+        if not model.args[name]?
+          model.args[name] = attr.defaultArg
+      # Generate shaders for the model
+      model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
+      # Update the model in the renderer
+      mecha.renderer.modelShaders '', model.shaders
+      mecha.renderer.modelArguments '', model.args
     onerror: (data,request) ->
       mecha.logInternalError "Error compiling the solid model."
 

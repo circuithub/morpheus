@@ -17,3 +17,4 @@ state =
     sourceCode: null
   application:
     initialized: false
+  models: {}

@@ -211,7 +211,7 @@ mecha.api =
       function Parameter(attr) {
         this.attr = attr;
         this.str = "u" + attr.paramIndex;
-        exportedParameters.push(this);
+        exportedParameters[this.str] = attr;
       }
 
       Parameter.prototype.serialize = function() {

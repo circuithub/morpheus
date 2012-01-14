@@ -1412,13 +1412,13 @@ mecha.generator =
         return result;
       };
       generateUniforms = function(params) {
-        var p;
+        var attr, name;
         return ((function() {
-          var _i, _len, _results;
+          var _results;
           _results = [];
-          for (_i = 0, _len = params.length; _i < _len; _i++) {
-            p = params[_i];
-            _results.push("uniform " + p.attr.type + " " + p.str + "; // " + p.attr.description);
+          for (name in params) {
+            attr = params[name];
+            _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
           }
           return _results;
         })()).join('\n');

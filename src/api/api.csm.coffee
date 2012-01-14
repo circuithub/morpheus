@@ -117,7 +117,7 @@ do () ->
     constructor: (attr) ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
-      exportedParameters.push this
+      exportedParameters[this.str] = attr
     serialize: ->
       @str
     index: (arg) ->

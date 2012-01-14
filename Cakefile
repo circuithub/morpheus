@@ -76,6 +76,7 @@ rendererFiles  = [
   'renderer/scenejs.conversion'
   'renderer/scenejs.orbitlookat'
   'renderer/scenejs.zoomlookat'
+  'renderer/model'
   'renderer/scene'
   'renderer/exports'
 ]

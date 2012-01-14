@@ -89,7 +89,7 @@ compileGLSL = (abstractSolidModel, params) ->
       result
 
     generateUniforms = (params) ->
-      ("uniform #{p.attr.type} #{p.str}; // #{p.attr.description}" for p in params).join '\n'
+      ("uniform #{attr.type} #{name}; // #{attr.description}" for name,attr of params).join '\n'
 
     # Shader
 

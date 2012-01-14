@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, sceneShaders, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelShaders, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -171,23 +171,7 @@ mecha.renderer =
     }));
   };
 
-  createScene = function(context) {
-    var ibo, indices, positions, vbo;
-    state.context = context;
-    positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
-    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-    vbo = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, vbo);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
-    ibo = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
-    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
-    gl.scene({
-      'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4LookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.setMatrix4Ortho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).triangles();
-  };
-
-  sceneShaders = function(shaders) {
+  modelShaders = function(modelName, shaders) {
     var success;
     success = true;
     if (!(state.shader.program != null)) {
@@ -215,6 +199,26 @@ mecha.renderer =
     return success;
   };
 
+  modelArguments = function(modelName, args) {
+    return console.log(args);
+  };
+
+  createScene = function(context) {
+    var ibo, indices, positions, vbo;
+    state.context = context;
+    positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
+    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+    vbo = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, vbo);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
+    ibo = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
+    gl.scene({
+      'scene': ''
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4LookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.setMatrix4Ortho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).triangles();
+  };
+
   runScene = function(canvas, idleCallback) {
     var callback;
     callback = function() {
@@ -237,7 +241,9 @@ mecha.renderer =
 
   exports.runScene = runScene;
 
-  exports.sceneShaders = sceneShaders;
+  exports.modelShaders = modelShaders;
+
+  exports.modelArguments = modelArguments;
 
   return exports;
 

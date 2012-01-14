@@ -1,6 +1,7 @@
 exports = exports ? {}
 exports.createScene = createScene
 exports.runScene = runScene
-exports.sceneShaders = sceneShaders
+exports.modelShaders = modelShaders
+exports.modelArguments = modelArguments
 return exports
 
