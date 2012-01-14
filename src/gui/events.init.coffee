@@ -7,12 +7,15 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = () ->
-  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, ($ '#source-code').val()
+  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
 
   # Run the script inside a webworker sandbox
   requestId = JSandbox.eval 
     data: csmSourceCode
     callback: (result) ->
+      ## TEMPORARY
+      console.log result
+      ##
       shaders = mecha.generator.compileGLSL mecha.generator.compileASM result
       mecha.renderer.sceneShaders shaders 
     onerror: (data,request) ->
@@ -26,7 +29,7 @@ controlsInit = () ->
 apiInit = (callback) ->
   # Get the API code
   state.api.url = ($ "link[rel='api']").attr 'href'
-  ($.get encodeURIComponent state.api.url, undefined, undefined, 'text')
+  ($.get (encodeURIComponent state.api.url), undefined, undefined, 'text')
     .success (data, textStatus, jqXHR) -> 
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
