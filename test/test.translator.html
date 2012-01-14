@@ -12,19 +12,8 @@
 
   <!-- The CSM script -->
   <script id='csm-source-code' type='csm/csm-javascript'>
-    scene({ parameters: [] },
-      translate(
-        { offset: [0.0, 0.4, 0.0] },
-        intersect(
-          box({ dimensions: [0.2, 0.5, 0.2] }),
-          translate({ offset: [0.3, 0.0, 0.0] },
-            box({ dimensions: [0.5, 0.2, 0.2] })
-          )
-        )
-      ),
-      cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
-      sphere({ radius: 0.3 }).translate({ offset: [0.0, -0.2, 0.0] })
-    );
+    var chipDimensions = range("Chip Dimensions", [0.2,0.2,0.5], [20.0,20.0,5.0]);
+    box({ dimensions: chipDimensions })
   </script>
 
   <!-- Stylesheet -->
