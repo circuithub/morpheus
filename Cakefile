@@ -85,6 +85,7 @@ editorFiles = [
   'common/mecha.log'
   'editor/translate.sugaredjs'
   'editor/create'
+  'editor/sourcecode'
   'editor/exports'
 ]
 
