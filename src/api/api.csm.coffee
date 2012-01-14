@@ -12,7 +12,7 @@ do () ->
 
   # Fluid API builder
   Dispatcher = ->
-  dispatch = new Dispatcher # {}
+  dispatch = new Dispatcher
   
   Api = (f) ->
     return () -> 
@@ -85,11 +85,21 @@ do () ->
 
   # Put API functions into the global namespace
   window.scene = (attr, nodes...) ->
-    strip = (nodes) ->
-      { type: n.type, attr: n.attr, nodes: strip n.nodes } for n in nodes
+    serializeAttr = (attr) ->
+      if attr instanceof Parameter
+        return attr.serialize()
+      else if Array.isArray attr
+        for i in [0...attr.length]
+          attr[i] = serializeAttr attr[i]
+      else if typeof attr == 'object'
+        for key, val of attr
+          attr[key] = serializeAttr val
+      return attr
+    serializeNodes = (nodes) ->
+      { type: n.type, attr: (serializeAttr n.attr), nodes: serializeNodes n.nodes } for n in nodes
     type: 'scene'
     attr: attr
-    nodes: strip nodes
+    nodes: serializeNodes nodes
 
   extend window, dispatch
 
@@ -101,7 +111,8 @@ do () ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
       exportedParameters.push attr.description
-    toString: () -> @str
+    serialize: ->
+      @str
     index: (arg) ->
       if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @str = "#{@str}[#{arg}]"
