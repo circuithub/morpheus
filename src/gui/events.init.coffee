@@ -18,9 +18,9 @@ sceneInit = () ->
       ##
       
       # Update the model parameters
-      model = state.models['']
+      model = state.models['scene']
       if not model?
-        model = state.models[''] = { shaders: [], params: {}, args: {} }
+        model = state.models['scene'] = { shaders: [], params: {}, args: {} }
       model.params = result.attr.params
       # Initialize any model arguments to their default values when they are unassigned
       for name,attr of model.params
@@ -29,8 +29,8 @@ sceneInit = () ->
       # Generate shaders for the model
       model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
       # Update the model in the renderer
-      mecha.renderer.modelShaders '', model.shaders
-      mecha.renderer.modelArguments '', model.args
+      mecha.renderer.modelShaders 'scene', model.shaders
+      mecha.renderer.modelArguments 'scene', model.args
     onerror: (data,request) ->
       mecha.logInternalError "Error compiling the solid model."
 

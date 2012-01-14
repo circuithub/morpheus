@@ -319,9 +319,9 @@ mecha.gui =
       callback: function(result) {
         var attr, model, name, _ref;
         console.log(result);
-        model = state.models[''];
+        model = state.models['scene'];
         if (!(model != null)) {
-          model = state.models[''] = {
+          model = state.models['scene'] = {
             shaders: [],
             params: {},
             args: {}
@@ -334,8 +334,8 @@ mecha.gui =
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-        mecha.renderer.modelShaders('', model.shaders);
-        return mecha.renderer.modelArguments('', model.args);
+        mecha.renderer.modelShaders('scene', model.shaders);
+        return mecha.renderer.modelArguments('scene', model.args);
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");

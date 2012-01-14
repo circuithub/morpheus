@@ -200,7 +200,11 @@ mecha.renderer =
   };
 
   modelArguments = function(modelName, args) {
-    return console.log(args);
+    var name, val;
+    for (name in args) {
+      val = args[name];
+      (gl(modelName)).uniform(name, val);
+    }
   };
 
   createScene = function(context) {

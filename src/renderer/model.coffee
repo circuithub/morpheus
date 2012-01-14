@@ -25,6 +25,7 @@ modelShaders = (modelName, shaders) ->
   return success
 
 modelArguments = (modelName, args) ->
-  console.log args
-  #(gl modelName).uniform args
+  for name,val of args
+    (gl modelName).uniform name, val
+  return
 
