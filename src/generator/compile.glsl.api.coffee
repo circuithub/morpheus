@@ -1,6 +1,12 @@
 # The GLSL builder API (This builder produces strings rather than a tree)
 
 glsl =
+  subscript: (a, index) ->
+    if Array.isArray a
+      return a[index]
+    else
+      "#{a}[#{index}]"
+  
   mul: (a, b) ->
     if typeof a == 'number' and typeof b == 'number'
       a * b
