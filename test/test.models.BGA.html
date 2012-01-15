@@ -25,6 +25,10 @@ var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.5], [0.2,0.2,0.5], [2
 
 // Draw the chip body (with a hole)
 box({ dimensions: chipDimensions })
+//,box({ dimensions: [0.1,0.1,0.1] })
+
+
+
 /*difference(
   box({ dimensions: chipDimensions }),
   cylinder({ radius: holeRadius })

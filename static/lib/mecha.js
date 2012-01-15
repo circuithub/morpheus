@@ -1692,6 +1692,7 @@ mecha.renderer =
       mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
     }
     (gl('scene')).shaderProgram(state.shader.program);
+    gl.refresh(state.shader.program);
     return success;
   };
 
@@ -2086,6 +2087,7 @@ mecha.gui =
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        console.log(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         return mecha.renderer.modelArguments('scene', model.args);
       },
@@ -2140,8 +2142,8 @@ mecha.gui =
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-    containerEl.innerHTML = "<canvas id='scenejsCanvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>";
-    init(containerEl, document.getElementById('scenejsCanvas'));
+    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>";
+    init(containerEl, document.getElementById('mecha-canvas'));
     return true;
   };
 

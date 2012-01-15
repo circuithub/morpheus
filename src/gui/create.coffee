@@ -20,9 +20,9 @@ create = (container) ->
 
   containerEl.innerHTML = 
     """
-    <canvas id='scenejsCanvas' width='512' height='512'>
+    <canvas id='mecha-canvas' width='512' height='512'>
       <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
     </canvas>
     """
-  init containerEl, document.getElementById 'scenejsCanvas'
+  init containerEl, document.getElementById 'mecha-canvas'
   return true
