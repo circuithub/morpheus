@@ -776,7 +776,7 @@ mecha.generator =
             return "" + a + " - " + ((b | 0) === b ? b + '.0' : b);
         }
       } else {
-        return "" + a + " + " + b;
+        return "" + a + " - " + b;
       }
     },
     neg: function(a) {
@@ -1232,9 +1232,17 @@ mecha.generator =
           mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
           return;
         }
+        /*
+              ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+              if flags.invert
+                node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+              else
+                node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+              #
+        */
         if (typeof node.attr.val === 'string') {
           ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-          if (!flags.invert) {
+          if (flags.invert) {
             node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
           } else {
             node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
@@ -1265,7 +1273,7 @@ mecha.generator =
                   continue;
                 default:
                   ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-                  if (!flags.invert) {
+                  if (flags.invert) {
                     node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
                   } else {
                     node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);

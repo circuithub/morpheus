@@ -95,7 +95,7 @@ glsl =
           # Number must not be integers (bitwise op converts operand to integer)
           "#{a} - #{if (b | 0) == b then (b + '.0') else b}"
     else 
-      "#{a} + #{b}"
+      "#{a} - #{b}"
     # TODO: handle vectors
     # else if Array.isArray a
     # else if Array.isArray b
