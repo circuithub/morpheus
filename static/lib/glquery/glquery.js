@@ -591,6 +591,12 @@ var glQuery = (function() {
     return commands.length > 0;
   };
 
+  gl.refresh = function(obj) {
+    if (obj instanceof WebGLProgram && obj['_glquery_id'] != null) {
+      shaderLocations[obj._glquery_id] = {};
+    }
+  };
+
   // Utility functions for working with tags
   // Test whether t0 contains any of the tags in ts1
   var containsAnyTags = function(t0, ts1) {
