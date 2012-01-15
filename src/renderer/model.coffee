@@ -22,6 +22,7 @@ modelShaders = (modelName, shaders) ->
   if not state.context.getProgramParameter state.shader.program, state.context.LINK_STATUS
     mecha.logApiError "Shader link failed:\n#{state.context.getProgramInfoLog state.shader.progam}"
   (gl 'scene').shaderProgram state.shader.program
+  gl.refresh state.shader.program
   return success
 
 modelArguments = (modelName, args) ->
