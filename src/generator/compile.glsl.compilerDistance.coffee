@@ -277,10 +277,18 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
         return
       
-      # Generate half-space primitive when it cannot be compiled into a corner
+      ###
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      if flags.invert
+        node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+      else
+        node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+      # ###
+
+      ## Generate half-space primitive when it cannot be compiled into a corner
       if typeof node.attr.val == 'string'
         ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-        if not flags.invert
+        if flags.invert
           node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
         else
           node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
@@ -309,11 +317,12 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
                 # This may occur in special cases where we cannot do normal corner compilation
                 # (Such as a separate transformation on the plane itself - with a wedge node for example)
                 ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-                if not flags.invert
+                if flags.invert
                   node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
                 else
                   node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
           break
+      # ###
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
