@@ -24,17 +24,13 @@ var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.5], [0.2,0.2,0.5], [2
     holeRadius = range("Hole Radius", 0.1, 0.1, 1.0);
 
 // Draw the chip body (with a hole)
-box({ dimensions: chipDimensions })
-//,box({ dimensions: [0.1,0.1,0.1] })
-
-
-
-/*difference(
+difference(
   box({ dimensions: chipDimensions }),
-  cylinder({ radius: holeRadius })
-  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
+  cylinder({ radius: 0.1, axis: 2 })
+  /*cylinder({ radius: holeRadius })
+  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })*/
 )
-.material({ color: [0.1, 0.1, 0.1] })*/
+.material({ color: [0.1, 0.1, 0.1] })
   </script>
 
   <!-- Stylesheet -->

@@ -487,19 +487,26 @@ mecha.generator =
       },
       cylinder: function(node) {
         var halfspaces;
-        halfspaces = [
-          asm.halfspace({
-            val: node.attr.length * 0.5,
+        if (node.attr.length != null) {
+          halfspaces = [
+            asm.halfspace({
+              val: node.attr.length * 0.5,
+              axis: node.attr.axis
+            }), asm.invert(asm.halfspace({
+              val: node.attr.length * -0.5,
+              axis: node.attr.axis
+            }))
+          ];
+          return asm.intersect(asm.cylinder({
+            radius: node.attr.radius,
             axis: node.attr.axis
-          }), asm.invert(asm.halfspace({
-            val: node.attr.length * -0.5,
+          }), halfspaces[0], halfspaces[1]);
+        } else {
+          return asm.cylinder({
+            radius: node.attr.radius,
             axis: node.attr.axis
-          }))
-        ];
-        return asm.intersect(asm.cylinder({
-          radius: node.attr.radius,
-          axis: node.attr.axis
-        }), halfspaces[0], halfspaces[1]);
+          });
+        }
       },
       intersect: function(node) {
         var n;
@@ -530,18 +537,18 @@ mecha.generator =
       difference: function(node) {
         var n;
         if (node.nodes.length > 0) {
-          return asm.intersect(compileASMNode(node.nodes[0], asm.invert.apply(asm, (function() {
+          return asm.intersect(compileASMNode(node.nodes[0]), asm.invert.apply(asm, (function() {
             var _i, _len, _ref, _results;
-            _ref = node.nodes.slice(1, node.nodes.length + 1 || 9e9);
+            _ref = node.nodes.slice(1, node.nodes.length);
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               n = _ref[_i];
               _results.push(compileASMNode(n));
             }
             return _results;
-          })())));
+          })()));
         } else {
-          return asm.intersect();
+          return node;
         }
       },
       mirror: function(node) {
