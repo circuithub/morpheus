@@ -59,15 +59,18 @@ compileASM = (concreteSolidModel) ->
     sphere: (node) ->
       asm.sphere { radius: node.attr.radius }
     cylinder: (node) ->
-      halfspaces = [
-        asm.halfspace 
-          val: node.attr.length * 0.5
-          axis: node.attr.axis
-        asm.invert asm.halfspace
-          val: node.attr.length * -0.5
-          axis: node.attr.axis
-      ]
-      asm.intersect (asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }), halfspaces[0], halfspaces[1]
+      if node.attr.length?
+        halfspaces = [
+          asm.halfspace 
+            val: node.attr.length * 0.5
+            axis: node.attr.axis
+          asm.invert asm.halfspace
+            val: node.attr.length * -0.5
+            axis: node.attr.axis
+        ]
+        asm.intersect (asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }), halfspaces[0], halfspaces[1]
+      else
+        asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }
     intersect: (node) ->
       asm.intersect (compileASMNode n for n in node.nodes)...
     union: (node) ->
