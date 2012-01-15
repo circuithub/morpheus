@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<!--
+      Mecha - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Mecha</title>
+  <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
+  <meta name='author' content='Your Name'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- The glsl scripts -->
+  <script id="shader-vs" type="x-shader/x-vertex">
+  const float Infinity = (1.0/0.0);
+  const vec3 sceneScale = vec3(Infinity, Infinity, Infinity);
+  const vec3 sceneTranslation = vec3(0.0,0.0,0.0);
+  uniform mat4 projection;
+  uniform mat4 view;
+  attribute vec3 position;
+  varying vec3 modelPosition;
+
+  void main(void) {
+    modelPosition = position;
+    
+    gl_Position = projection * view * vec4(position, 1.0);
+  }
+  </script>
+
+  <!-- Stylesheet -->
+  <style type='text/css' media='screen'>
+    /* Resets */
+    
+    /* Normalization (taken from http://necolas.github.com/normalize.css/ and a little bit from html5 boilerplate) */
+    
+    /* General styling */
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* Application styling */
+    #mecha-editor {
+      position: relative;
+      float: left;
+      width: 502px;
+      height: 512px;
+      margin: 0 10px;
+    }
+    #shader-fs {
+      display: block;
+      width: 100%;
+      height: 480px;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='scenejsLog' style='display:block;'></div>
+
+  <div id='mecha-layout'>
+    <form id='mecha-editor'><textarea id='shader-fs'>
+//*
+#ifdef GL_ES
+  precision highp float;
+#endif
+const float Infinity = (1.0/0.0);
+uniform mat4 view;
+varying vec3 modelPosition;
+
+uniform vec3 u0; // Chip Dimensions
+uniform float u1; // Balls (X)
+uniform float u2; // Balls (Y)
+uniform float u3; // Ball Pitch
+uniform float u4; // Ball Radius
+uniform float u5; // Hole Radius
+
+float sceneDist(in vec3 ro) {
+  vec3 r0 = abs(ro);
+  
+  //return max(0.0,max(u0[2] * 0.5 + r0[2], max(u0[1] * 0.5 + r0[1], u0[0] * 0.5 + r0[0])));
+  return max(0.0,max(0.5 * 0.5 + r0[2], max(0.5 * 0.5 + r0[1], 0.5 * 0.5 + r0[0])));
+}
+
+vec3 sceneNormal(in vec3 p) {
+  const float eps = 0.00001;
+  vec3 n;
+  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );
+  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );
+  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );
+  return normalize(n);
+}
+
+int sceneId(in vec3 ro) {
+  vec3 r0 = abs(ro);
+  float r1 = u0[1] * 0.5 + r0[1];
+  float r2 = u0[0] * 0.5 + r0[0];
+  int r3 = -1;
+  float r4 = u0[2] * 0.5 + r0[2];
+  float r5 = r1 > r2? (r3 = -1, r1) : (r3 = -1, r2);
+  int r6 = -1;
+
+  r4 > r5? (r6 = -1, r4) : (r6 = r3, r5);
+  return r6;
+}
+
+vec3 sceneMaterial(in vec3 ro) {
+  int id = sceneId(ro);
+  return vec3(0.5);
+}
+
+void main(void) {
+  const int steps = 64;
+  const float threshold = 0.005;
+  vec3 rayOrigin = modelPosition;
+  vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;
+  vec3 prevRayOrigin = rayOrigin;
+  bool hit = false;
+  float dist = Infinity;
+  //float prevDist = (1.0/0.0);
+  //float bias = 0.0; // corrective bias for the step size
+  //float minDist = (1.0/0.0);
+  for(int i = 0; i < steps; i++) {
+    //dist = sceneRayDist(rayOrigin, rayDir);
+    //prevDist = dist;
+    dist = sceneDist(rayOrigin);
+    //minDist = min(minDist, dist);
+    if (dist <= 0.0) {
+      hit = true;
+      break;
+    }
+    prevRayOrigin = rayOrigin;
+    //rayOrigin += (max(dist, threshold) + bias) * rayDir;
+    rayOrigin += max(dist, threshold) * rayDir;
+    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }
+  }
+  vec3 absRayOrigin = abs(rayOrigin);
+  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
+  //if(!hit && prevDist >= dist) { discard; }
+  if(!hit) { discard; }
+  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+  vec3 diffuseColor = sceneMaterial(prevRayOrigin);
+  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
+  const vec3 lightPos = vec3(1.5,1.5, 4.0);
+  vec3 ldir = normalize(lightPos - prevRayOrigin);
+  vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);
+  gl_FragColor = vec4(diffuse, 1.0);
+}
+//*/
+/*
+#ifdef GL_ES
+  precision highp float;
+#endif
+const float Infinity = (1.0/0.0);
+uniform mat4 view;
+varying vec3 modelPosition;
+
+
+
+
+
+
+float sceneDist(in vec3 ro) {
+    vec3 r0 = abs(ro);
+  vec3 r1 = r0 - vec3(0.2,0.2,0.25);
+  
+  return max(0.0,length(max(r1, 0.0)));
+}
+
+vec3 sceneNormal(in vec3 p) {
+  const float eps = 0.00001;
+  vec3 n;
+  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );
+  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );
+  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );
+  return normalize(n);
+}
+
+int sceneId(in vec3 ro) {
+    vec3 r0 = abs(ro);
+  vec3 r1 = r0 - vec3(0.2,0.2,0.25);
+
+  length(max(r1, 0.0));
+  return -1;
+}
+
+
+vec3 sceneMaterial(in vec3 ro) {
+  int id = sceneId(ro);
+  return vec3(0.5);
+}
+
+
+
+void main(void) {
+  const int steps = 64;
+  const float threshold = 0.005;
+  vec3 rayOrigin = modelPosition;
+  vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;
+  vec3 prevRayOrigin = rayOrigin;
+  bool hit = false;
+  float dist = Infinity;
+  //float prevDist = (1.0/0.0);
+  //float bias = 0.0; // corrective bias for the step size
+  //float minDist = (1.0/0.0);
+  for(int i = 0; i < steps; i++) {
+    //dist = sceneRayDist(rayOrigin, rayDir);
+    //prevDist = dist;
+    dist = sceneDist(rayOrigin);
+    //minDist = min(minDist, dist);
+    if (dist <= 0.0) {
+      hit = true;
+      break;
+    }
+    prevRayOrigin = rayOrigin;
+    //rayOrigin += (max(dist, threshold) + bias) * rayDir;
+    rayOrigin += max(dist, threshold) * rayDir;
+    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }
+  }
+  vec3 absRayOrigin = abs(rayOrigin);
+  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
+  //if(!hit && prevDist >= dist) { discard; }
+  if(!hit) { discard; }
+  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+  vec3 diffuseColor = sceneMaterial(prevRayOrigin);
+  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
+  const vec3 lightPos = vec3(1.5,1.5, 4.0);
+  vec3 ldir = normalize(lightPos - prevRayOrigin);
+  vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);
+  gl_FragColor = vec4(diffuse, 1.0);
+}
+//*/
+    </textarea></form>
+    <div id='mecha-gui'>
+      <canvas id='mecha-canvas' width='512' height='512'>
+        <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
+      </canvas>
+    </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
+  <script src='../static/lib/glquery/glquery.js'></script>
+  <script src='../static/lib/glquery/glquery.math.module.js'></script>
+  <link rel="jsandbox" href="../static/lib/jsandbox/jsandbox-worker.js">
+  <link rel="api" href="../static/lib/mecha-api.js">
+  <script src='../static/lib/jsandbox/jsandbox.js'></script>
+  <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
+  
+  <!-- Application logic -->
+
+  <script src='../static/lib/mecha.js'></script>
+
+  <script>
+    window.onload = function(){
+      var vs = document.getElementById('shader-vs').textContent;
+      var fs = document.getElementById('shader-fs').textContent;
+      var canvasEl = document.getElementById('mecha-canvas');
+      var scene = mecha.renderer.createScene(canvasEl.getContext('experimental-webgl'));
+      mecha.renderer.runScene(canvasEl, function(){});
+
+      // Create the model parameters
+      var model =  { shaders: [], params: {}, args: {} };
+      //model.params = 
+      // Initialize model arguments
+      model.args['u0'] = [0.5,0.5,0.5];
+      // Generate shaders for the model
+      model.shaders = [vs,fs];
+      // Update the model in the renderer
+      mecha.renderer.modelShaders('scene', model.shaders);
+      mecha.renderer.modelArguments('scene', model.args);
+    };
+  </script>
+</body>
+</html>
