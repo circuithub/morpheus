@@ -9,7 +9,7 @@ mecha.api =
   var __slice = Array.prototype.slice;
 
   (function() {
-    var Api, Dispatcher, Parameter, dispatch, extend, globalParamIndex, mechaTypeof;
+    var Api, Dispatcher, MechaExpression, MechaParameter, dispatch, extend, globalParamIndex, mechaPrimitiveTypeof, mechaTypeof;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -23,10 +23,22 @@ mecha.api =
         if (value.length <= 4) {
           return "vec" + value.length;
         } else {
-          return "unknown";
+          return 'unknown';
         }
       } else {
-        return "float";
+        return 'float';
+      }
+    };
+    mechaPrimitiveTypeof = function(value) {
+      if (Array.isArray(value && value.length > 0)) {
+        return mechaPrimitiveTypeof(value[0]);
+      } else {
+        switch (typeof value) {
+          case 'number':
+            return 'float';
+          default:
+            return 'unknown';
+        }
       }
     };
     Dispatcher = function() {};
@@ -171,7 +183,7 @@ mecha.api =
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       serializeAttr = function(attr) {
         var i, key, val, _ref;
-        if (attr instanceof Parameter) {
+        if (attr instanceof MechaExpression) {
           return attr.serialize();
         } else if (Array.isArray(attr)) {
           for (i = 0, _ref = attr.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
@@ -206,88 +218,102 @@ mecha.api =
     };
     extend(window, dispatch);
     globalParamIndex = 0;
-    Parameter = (function() {
+    MechaParameter = (function() {
 
-      function Parameter(attr) {
+      function MechaParameter(attr) {
         this.attr = attr;
         this.str = "u" + attr.paramIndex;
         exportedParameters[this.str] = attr;
       }
 
-      Parameter.prototype.serialize = function() {
+      return MechaParameter;
+
+    })();
+    MechaExpression = (function() {
+
+      function MechaExpression(param, str) {
+        this.param = param;
+        this.str = str != null ? str : new String(param.str);
+      }
+
+      MechaExpression.prototype.serialize = function() {
         return this.str;
       };
 
-      Parameter.prototype.index = function(arg) {
+      MechaExpression.prototype.update = function(str) {
+        return new MechaExpression(this.param, str);
+      };
+
+      MechaExpression.prototype.index = function(arg) {
         if (typeof arg === 'number' && (arg | 0) === arg) {
-          this.str = "" + this.str + "[" + arg + "]";
+          return this.update("" + this.str + "[" + arg + "]");
         } else {
           throw "Argument to index must be an integer";
         }
-        return this;
       };
 
-      Parameter.prototype.mul = function(arg) {
-        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          this.str = "(" + this.str + ") * " + arg + ".0";
+      MechaExpression.prototype.mul = function(arg) {
+        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + this.str + ") * " + arg + ".0");
         } else {
-          this.str = "(" + this.str + ") * " + arg;
+          return this.update("(" + this.str + ") * " + arg);
         }
-        return this;
       };
 
-      Parameter.prototype.div = function(arg) {
-        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          this.str = "(" + this.str + ") / " + arg + ".0";
+      MechaExpression.prototype.div = function(arg) {
+        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + this.str + ") / " + arg + ".0");
         } else {
-          this.str = "(" + this.str + ") / " + arg;
+          return this.update("(" + this.str + ") / " + arg);
         }
-        return this;
       };
 
-      Parameter.prototype.add = function(arg) {
-        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          this.str = "(" + this.str + ") + " + arg + ".0";
+      MechaExpression.prototype.add = function(arg) {
+        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + this.str + ") + " + arg + ".0");
         } else {
-          this.str = "(" + this.str + ") + " + arg;
+          return this.update("(" + this.str + ") + " + arg);
         }
-        return this;
       };
 
-      Parameter.prototype.sub = function(arg) {
-        if (this.attr.type === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          this.str = "(" + this.str + ") - " + arg + ".0";
+      MechaExpression.prototype.sub = function(arg) {
+        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + this.str + ") - " + arg + ".0");
         } else {
-          this.str = "(" + this.str + ") - " + arg;
+          return this.update("(" + this.str + ") - " + arg);
         }
-        return this;
       };
 
-      return Parameter;
+      return MechaExpression;
 
     })();
     window.range = function(description, defaultArg, start, end, step) {
       var paramIndex;
       paramIndex = globalParamIndex;
       ++globalParamIndex;
-      return new Parameter({
+      return new MechaExpression(new MechaParameter({
         param: 'range',
         description: description,
         type: mechaTypeof(defaultArg),
+        primitiveType: mechaPrimitiveTypeof(defaultArg),
         paramIndex: paramIndex,
         start: start,
         end: end,
         step: step,
         defaultArg: defaultArg
-      });
+      }));
     };
     return window.number = function(description, defaultArg) {
-      return {
+      var paramIndex;
+      paramIndex = globalParamIndex;
+      ++globalParamIndex;
+      return new MechaExpression(new MechaParameter({
         param: 'param',
         description: description,
         type: mechaTypeof(defaultArg),
+        primitiveType: mechaPrimitiveTypeof(defaultArg),
         defaultArg: defaultArg
-      };
+      }));
     };
   })();
 

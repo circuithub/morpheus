@@ -299,7 +299,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           if s.halfSpaces?
             # Assign to the halfspace bins for corner compilation
             index = node.attr.axis + (if flags.invert then 3 else 0)
-            val = node.attr.val + translateOffset
+            val = glsl.add node.attr.val, translateOffset
             if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
               if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
                 s.halfSpaces[index] = val
@@ -309,7 +309,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           else
             switch s.type
               when 'translate'
-                translateOffset += s.attr.offset[node.attr.axis]
+                translateOffset = glsl.add translateOffset, s.attr.offset[node.attr.axis]
                 continue # Search for preceding intersect/union node 
               when 'invert', 'mirror'
                 continue # Search for preceding intersect/union node

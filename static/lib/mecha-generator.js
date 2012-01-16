@@ -390,10 +390,14 @@ mecha.generator =
         var i;
         node.bounds = collectChildren(node.nodes, flags);
         for (i = 0; i <= 2; i++) {
-          node.bounds[0][i] += node.attr.offset[i];
+          if (typeof node.attr.offset[i] === 'number') {
+            node.bounds[0][i] += node.attr.offset[i];
+          }
         }
         for (i = 0; i <= 2; i++) {
-          node.bounds[1][i] += node.attr.offset[i];
+          if (typeof node.attr.offset[i] === 'number') {
+            node.bounds[1][i] += node.attr.offset[i];
+          }
         }
         return stack[0].nodes.push(node);
       },
@@ -413,17 +417,21 @@ mecha.generator =
         return stack[0].nodes.push(node);
       },
       cylinder: function(stack, node, flags) {
-        if (typeof node.attr.radius === 'string') {
-          node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
-        } else {
+        if (typeof node.attr.radius === 'number') {
           node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
           node.bounds[0][node.attr.axis] = -Infinity;
           node.bounds[1][node.attr.axis] = Infinity;
+        } else {
+          node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
         }
         return stack[0].nodes.push(node);
       },
       sphere: function(stack, node, flags) {
-        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
+        if (typeof node.attr.radius === 'number') {
+          node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
+        } else {
+          node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
+        }
         return stack[0].nodes.push(node);
       },
       "default": function(stack, node, flags) {
@@ -1264,7 +1272,7 @@ mecha.generator =
             s = stack[_i];
             if (s.halfSpaces != null) {
               index = node.attr.axis + (flags.invert ? 3 : 0);
-              val = node.attr.val + translateOffset;
+              val = glsl.add(node.attr.val, translateOffset);
               if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
                 if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
                   s.halfSpaces[index] = val;
@@ -1277,7 +1285,7 @@ mecha.generator =
             } else {
               switch (s.type) {
                 case 'translate':
-                  translateOffset += s.attr.offset[node.attr.axis];
+                  translateOffset = glsl.add(translateOffset, s.attr.offset[node.attr.axis]);
                   continue;
                 case 'invert':
                 case 'mirror':

@@ -12,10 +12,18 @@ do () ->
 
   mechaTypeof = (value) -> 
     if Array.isArray value
-      if value.length <= 4 then "vec#{value.length}" else "unknown"
+      if value.length <= 4 then "vec#{value.length}" else 'unknown'
     else
       # TODO: Support int for loops
-      "float"
+      'float'
+
+  mechaPrimitiveTypeof = (value) -> 
+    if Array.isArray value and value.length > 0
+      mechaPrimitiveTypeof value[0]
+    else
+      switch typeof value
+        when 'number' then 'float'
+        else 'unknown'
 
   # Fluid API builder
   Dispatcher = ->
@@ -93,7 +101,7 @@ do () ->
   # Put API functions into the global namespace
   window.scene = (attr, nodes...) ->
     serializeAttr = (attr) ->
-      if attr instanceof Parameter
+      if attr instanceof MechaExpression
         return attr.serialize()
       else if Array.isArray attr
         for i in [0...attr.length]
@@ -113,51 +121,54 @@ do () ->
   # Parameters
   globalParamIndex = 0
   
-  class Parameter
+  class MechaParameter
     constructor: (attr) ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
       exportedParameters[this.str] = attr
+
+  class MechaExpression
+    constructor: (param, str) ->
+      @param = param
+      @str = if str? then str else new String param.str
     serialize: ->
       @str
+    update: (str) ->
+      new MechaExpression @param, str
     index: (arg) ->
       if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @str = "#{@str}[#{arg}]"
+        @update "#{@str}[#{arg}]"
       else
         throw "Argument to index must be an integer"
-      return this
     mul: (arg) ->
-      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @str = "(#{@str}) * #{arg}.0"
+      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@str}) * #{arg}.0"
       else
-        @str = "(#{@str}) * #{arg}"
-      return this
+        @update "(#{@str}) * #{arg}"
     div: (arg) ->
-      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @str = "(#{@str}) / #{arg}.0"
+      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@str}) / #{arg}.0"
       else
-        @str = "(#{@str}) / #{arg}"
-      return this
+        @update "(#{@str}) / #{arg}"
     add: (arg) ->
-      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @str = "(#{@str}) + #{arg}.0"
+      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@str}) + #{arg}.0"
       else
-        @str = "(#{@str}) + #{arg}"
-      return this
+        @update "(#{@str}) + #{arg}"
     sub: (arg) ->
-      if @attr.type == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @str = "(#{@str}) - #{arg}.0"
+      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@str}) - #{arg}.0"
       else
-        @str = "(#{@str}) - #{arg}"
-      return this
+        @update "(#{@str}) - #{arg}"
   
   window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
-    (new Parameter
+    new MechaExpression (new MechaParameter
       param: 'range'
       description: description
       type: mechaTypeof defaultArg
+      primitiveType: mechaPrimitiveTypeof defaultArg
       paramIndex: paramIndex
       start: start
       end: end
@@ -166,8 +177,13 @@ do () ->
     )
 
   window.number = (description, defaultArg) ->
-    param: 'param'
-    description: description
-    type: mechaTypeof defaultArg
-    defaultArg: defaultArg
+    paramIndex = globalParamIndex
+    ++globalParamIndex
+    new MechaExpression (new MechaParameter
+      param: 'param'
+      description: description
+      type: mechaTypeof defaultArg
+      primitiveType: mechaPrimitiveTypeof defaultArg
+      defaultArg: defaultArg
+    )
 

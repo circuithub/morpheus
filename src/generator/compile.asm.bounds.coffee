@@ -50,8 +50,9 @@ compileASMBounds = (abstractSolidModel) ->
       stack[0].nodes.push node
     translate: (stack, node, flags) ->
       node.bounds = collectChildren node.nodes, flags
-      node.bounds[0][i] += node.attr.offset[i] for i in [0..2]
-      node.bounds[1][i] += node.attr.offset[i] for i in [0..2]
+      # TODO: handle node.attr.offset[..] != 'number'
+      node.bounds[0][i] += node.attr.offset[i] for i in [0..2] when typeof node.attr.offset[i] == 'number'
+      node.bounds[1][i] += node.attr.offset[i] for i in [0..2] when typeof node.attr.offset[i] == 'number'
       stack[0].nodes.push node
     rotate: (stack, node, flags) ->
       node.bounds = collectChildren node.nodes, flags
@@ -74,16 +75,19 @@ compileASMBounds = (abstractSolidModel) ->
         node.bounds[if flags.invert then 1 else 0][node.attr.axis] = node.attr.val
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
-      if typeof node.attr.radius == 'string'
-        # TODO: use parameters to limit the dimensions
-        node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
-      else
+      if typeof node.attr.radius == 'number'
         node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
         node.bounds[0][node.attr.axis] = -Infinity
         node.bounds[1][node.attr.axis] = Infinity
+      else
+        # TODO: use parameters to limit the dimensions
+        node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
       stack[0].nodes.push node
     sphere: (stack, node, flags) ->
-      node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
+      if typeof node.attr.radius  == 'number'
+        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
+      else
+        node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
       stack[0].nodes.push node
     default: (stack, node, flags) ->
       node.bounds = collectChildren node.nodes, flags
