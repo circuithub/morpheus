@@ -18,3 +18,5 @@ state =
   application:
     initialized: false
   models: {}
+  parameters:
+    domElement: null

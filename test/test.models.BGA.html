@@ -16,7 +16,7 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.5], [0.2,0.2,0.5], [20.0,20.0,5.0]), // assuming we're working in centimeters
+var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.2], [0.5,0.5,0.2], [20.0,20.0,5.0]), // assuming we're working in centimeters
     ballsX = range("Balls (X)", 1, 1, 10, 1),
     ballsY = range("Balls (Y)", 1, 1, 10, 1),
     ballPitch  = range("Ball Pitch", 0.1, 0.1, 5.0), // Could also calculate this relative to chipDimensions...
@@ -26,9 +26,9 @@ var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.5], [0.2,0.2,0.5], [2
 // Draw the chip body (with a hole)
 difference(
   box({ dimensions: chipDimensions }),
-  cylinder({ radius: 0.1, axis: 2 })
-  /*cylinder({ radius: holeRadius })
-  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })*/
+  cylinder({ radius: holeRadius, axis: 2 })
+  //.translate({ offset: [chipDimensions.index(0), chipDimensions.index(1), 0.0] })
+  //.translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
 )
 .material({ color: [0.1, 0.1, 0.1] })
   </script>
@@ -64,6 +64,11 @@ difference(
       position: absolute;
       right: 0;
     }
+    #mecha-controls {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
   </style>
 </head>
 <body>
@@ -74,8 +79,9 @@ difference(
 
   <div id='mecha-layout'>
     <form id='mecha-editor'></form>
-    <div id='mecha-gui'>
-    </div>
+    <div id='mecha-gui'></div>
+    <div id='mecha-controls'></div>
+  </div>
   </div>
 
   <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
@@ -96,13 +102,14 @@ difference(
   <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
   
   <!-- Application logic -->
-
+  
   <script src='../static/lib/mecha.js'></script>
-
+  
   <script>
     window.onload = function(){
       mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
       mecha.gui.create('mecha-gui');
+      mecha.gui.createControls('mecha-controls');
     };
   </script>
 </body>

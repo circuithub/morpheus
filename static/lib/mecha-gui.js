@@ -8,7 +8,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, exports, gl, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
+  var apiInit, canvasInit, constants, controlsInit, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modifySubAttr, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, registerControlEvents, registerDOMEvents, sceneIdle, sceneInit, state, vec3ToRecord, vec4ToRecord, windowResize, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -191,7 +191,10 @@ mecha.gui =
     application: {
       initialized: false
     },
-    models: {}
+    models: {},
+    parameters: {
+      domElement: null
+    }
   };
 
   mouseCoordsWithinElement = function(event) {
@@ -336,7 +339,8 @@ mecha.gui =
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
         console.log(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
-        return mecha.renderer.modelArguments('scene', model.args);
+        mecha.renderer.modelArguments('scene', model.args);
+        return controlsInit();
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");
@@ -344,7 +348,78 @@ mecha.gui =
     });
   };
 
-  controlsInit = function() {};
+  controlsInit = function() {
+    var el, html, model, name, param, stepAttr, val, _ref, _ref2;
+    el = state.parameters.domElement;
+    if (el != null) {
+      html = '<table>';
+      _ref = state.models;
+      for (name in _ref) {
+        model = _ref[name];
+        _ref2 = model.params;
+        for (param in _ref2) {
+          val = _ref2[param];
+          html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
+          switch (val.param) {
+            case 'range':
+              switch (val.type) {
+                case 'float':
+                  stepAttr = val.step ? " step='" + val.step + "'" : '';
+                  html += "<input name='" + param + "' id='" + param + "' type='range' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
+                  break;
+                case 'vec2':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='range' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='range' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  break;
+                case 'vec3':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='range' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='range' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' type='range' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                  break;
+                case 'vec4':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='range' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='range' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' type='range' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' type='range' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
+                  break;
+                default:
+                  mecha.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
+              }
+              break;
+            case 'number':
+              switch (val.type) {
+                case 'float':
+                  html += "<input name='" + param + "' id='" + param + "' type='number'></input>";
+                  break;
+                case 'vec2':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='number'></input></div>";
+                  break;
+                case 'vec3':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' type='number'></input></div>";
+                  break;
+                case 'vec4':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' type='number'></input></div>";
+                  html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' type='number'></input></div>";
+                  break;
+                default:
+                  mecha.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
+              }
+          }
+          html += "</td></tr>";
+        }
+      }
+      html += '</table>';
+      return el.innerHTML = html;
+    }
+  };
 
   apiInit = function(callback) {
     state.api.url = ($("link[rel='api']")).attr('href');
@@ -366,7 +441,6 @@ mecha.gui =
     }
     canvasInit();
     apiInit(sceneInit);
-    controlsInit();
     registerDOMEvents();
     registerControlEvents();
     return state.application.initialized = true;
@@ -379,8 +453,7 @@ mecha.gui =
       containerEl.innerHTML = errorHtml;
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
-    }
-    if (container === null) {
+    } else if (container === null) {
       mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
     } else {
       containerEl = typeof container === 'string' ? document.getElementById(container) : container;
@@ -389,14 +462,38 @@ mecha.gui =
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>";
+    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
     init(containerEl, document.getElementById('mecha-canvas'));
     return true;
+  };
+
+  createControls = function(container) {
+    var containerEl;
+    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, expected type 'string' or dom element of type 'DIV'.");
+      return false;
+    } else if (container === null) {
+      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+    } else {
+      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+    }
+    if (containerEl === null) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
+      return false;
+    }
+    if (!(state.parameters.domElement != null)) {
+      state.parameters.domElement = document.createElement('form');
+      state.parameters.domElement.id = 'mecha-param-inputs';
+      containerEl.appendChild(state.parameters.domElement);
+    }
+    return controlsInit();
   };
 
   exports = exports != null ? exports : {};
 
   exports.create = create;
+
+  exports.createControls = createControls;
 
   return exports;
 

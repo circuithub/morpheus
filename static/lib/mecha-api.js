@@ -299,7 +299,7 @@ mecha.api =
         paramIndex: paramIndex,
         start: start,
         end: end,
-        step: step,
+        step: typeof step === "function" ? step(step) : void 0,
         defaultArg: defaultArg
       }));
     };
@@ -308,7 +308,7 @@ mecha.api =
       paramIndex = globalParamIndex;
       ++globalParamIndex;
       return new MechaExpression(new MechaParameter({
-        param: 'param',
+        param: 'number',
         description: description,
         type: mechaTypeof(defaultArg),
         primitiveType: mechaPrimitiveTypeof(defaultArg),

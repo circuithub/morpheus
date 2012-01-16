@@ -172,7 +172,7 @@ do () ->
       paramIndex: paramIndex
       start: start
       end: end
-      step: step
+      step: step? step 
       defaultArg: defaultArg
     )
 
@@ -180,7 +180,7 @@ do () ->
     paramIndex = globalParamIndex
     ++globalParamIndex
     new MechaExpression (new MechaParameter
-      param: 'param'
+      param: 'number'
       description: description
       type: mechaTypeof defaultArg
       primitiveType: mechaPrimitiveTypeof defaultArg
