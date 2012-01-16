@@ -74,9 +74,13 @@ compileASMBounds = (abstractSolidModel) ->
         node.bounds[if flags.invert then 1 else 0][node.attr.axis] = node.attr.val
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
-      node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
-      node.bounds[0][node.attr.axis] = -Infinity
-      node.bounds[1][node.attr.axis] = Infinity
+      if typeof node.attr.radius == 'string'
+        # TODO: use parameters to limit the dimensions
+        node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]]
+      else
+        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]
+        node.bounds[0][node.attr.axis] = -Infinity
+        node.bounds[1][node.attr.axis] = Infinity
       stack[0].nodes.push node
     sphere: (stack, node, flags) ->
       node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]]

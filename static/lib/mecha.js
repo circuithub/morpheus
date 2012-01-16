@@ -413,9 +413,13 @@ mecha.generator =
         return stack[0].nodes.push(node);
       },
       cylinder: function(stack, node, flags) {
-        node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
-        node.bounds[0][node.attr.axis] = -Infinity;
-        node.bounds[1][node.attr.axis] = Infinity;
+        if (typeof node.attr.radius === 'string') {
+          node.bounds = [[-Infinity, -Infinity, -Infinity], [Infinity, Infinity, Infinity]];
+        } else {
+          node.bounds = [[-node.attr.radius, -node.attr.radius, -node.attr.radius], [node.attr.radius, node.attr.radius, node.attr.radius]];
+          node.bounds[0][node.attr.axis] = -Infinity;
+          node.bounds[1][node.attr.axis] = Infinity;
+        }
         return stack[0].nodes.push(node);
       },
       sphere: function(stack, node, flags) {
