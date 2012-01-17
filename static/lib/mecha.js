@@ -1998,7 +1998,10 @@ mecha.gui =
     parameters: {
       domElement: null
     },
-    mechaUrlPath: null
+    paths: {
+      mechaUrlRoot: null,
+      jsandboxUrl: null
+    }
   };
 
   mouseCoordsWithinElement = function(event) {
@@ -2256,10 +2259,12 @@ mecha.gui =
   apiInit = function(callback) {
     var $apiLink;
     $apiLink = $("link[rel='api']");
-    if ($apiLink.length > 0) {
+    if (typeof state.paths.mechaUrlRoot === 'string') {
+      state.api.url = state.paths.mechaUrlRoot.length === 0 || state.paths.mechaUrlRoot[state.paths.mechaUrlRoot.length - 1] === '/' ? state.paths.mechaUrlRoot + 'mecha-api.min.js' : state.paths.mechaUrlRoot + '/mecha-api.min.js';
+    } else if ($apiLink.length > 0) {
       state.api.url = $apiLink.attr('href');
-    } else if (typeof state.mechaUrlPath === 'string') {
-      state.api.url = state.mechaUrlPath.length === 0 || state.mechaUrlPath[state.mechaUrlPath.length - 1] === '/' ? state.mechaUrlPath + 'mecha-api.min.js' : state.mechaUrlPath + '/mecha-api.min.js';
+    } else {
+      state.api.url = 'mecha-api.min.js';
     }
     return ($.get(encodeURIComponent(state.api.url), void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
@@ -2284,7 +2289,7 @@ mecha.gui =
     return state.application.initialized = true;
   };
 
-  create = function(container, mechaUrlPath) {
+  create = function(container, jsandboxUrl, mechaUrlRoot) {
     var containerEl, errorHtml;
     errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
@@ -2301,7 +2306,9 @@ mecha.gui =
       return false;
     }
     containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
-    if (mechaUrlPath != null) state.mechaUrlPath = mechaUrlPath;
+    if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
+    if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
+    if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
     init(containerEl, document.getElementById('mecha-canvas'));
     return true;
   };

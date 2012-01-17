@@ -1,5 +1,5 @@
 # Create the DOM elements for the GUI (canvas etc)
-create = (container, mechaUrlPath) ->
+create = (container, jsandboxUrl, mechaUrlRoot) ->
   errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>"
 
   # Check pre-conditions
@@ -24,9 +24,17 @@ create = (container, mechaUrlPath) ->
     </canvas>
     """ + containerEl.innerHTML
 
-  if mechaUrlPath?
-    state.mechaUrlPath = mechaUrlPath
+  # Store url's to dynamically loaded libraries
+  if jsandboxUrl?
+    state.paths.jsandboxUrl = jsandboxUrl
+  if mechaUrlRoot?
+    state.paths.mechaUrlRoot = mechaUrlRoot
 
+  # Initialize the sandbox with the given sandbox worker url
+  if state.paths.jsandboxUrl?
+    JSandbox.create state.paths.jsandboxUrl
+
+  # Initialize the application
   init containerEl, document.getElementById 'mecha-canvas'
   return true
 

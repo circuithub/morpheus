@@ -91,14 +91,16 @@ controlsInit = () ->
 apiInit = (callback) ->
   # Get the API code
   $apiLink = $ "link[rel='api']"
-  if $apiLink.length > 0
-    state.api.url = $apiLink.attr 'href'
-  else if typeof state.mechaUrlPath == 'string' 
+  if typeof state.paths.mechaUrlRoot == 'string' 
     state.api.url = 
-      if state.mechaUrlPath.length == 0 or state.mechaUrlPath[state.mechaUrlPath.length - 1] == '/'
-        state.mechaUrlPath + 'mecha-api.min.js'
+      if state.paths.mechaUrlRoot.length == 0 or state.paths.mechaUrlRoot[state.paths.mechaUrlRoot.length - 1] == '/'
+        state.paths.mechaUrlRoot + 'mecha-api.min.js'
       else
-        state.mechaUrlPath + '/mecha-api.min.js'
+        state.paths.mechaUrlRoot + '/mecha-api.min.js'
+  else if $apiLink.length > 0
+    state.api.url = $apiLink.attr 'href'
+  else 
+    state.api.url = 'mecha-api.min.js'
   ($.get (encodeURIComponent state.api.url), undefined, undefined, 'text')
     .success (data, textStatus, jqXHR) ->
       # TODO: test that the correct api was actually fetched
