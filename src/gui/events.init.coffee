@@ -47,46 +47,46 @@ controlsInit = () ->
             switch val.type
               when 'float'
                 stepAttr = if val.step then " step='#{val.step}'" else ''
-                html += "<input name='#{param}' id='#{param}' type='range' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-range' type='range' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
               when 'vec2'
                 stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
               when 'vec3'
                 stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' type='range' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
               when 'vec4'
                 stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' type='range' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' type='range' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+                html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-range' type='range' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
               else
                 mecha.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
           when 'number'
             switch val.type
               when 'float'
-                html += "<input name='#{param}' id='#{param}' type='number'></input>"
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number'></input>"
               when 'vec2'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='number'></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='number'></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number'></input></div>"
               when 'vec3'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='number'></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='number'></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' type='number'></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number'></input></div>"
               when 'vec4'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' type='number'></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' type='number'></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' type='number'></input></div>"
-                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' type='number'></input></div>"
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number'></input></div>"
+                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-number' type='number'></input></div>"
               else
                 mecha.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
         html += "</td></tr>"
-        
     html += '</table>'
     el.innerHTML = html
+
 # Initialize the CSM API (by loading the code from the given url)
 apiInit = (callback) ->
   # Get the API code
@@ -109,6 +109,6 @@ init = (containerEl, canvasEl) ->
   canvasInit()
   apiInit sceneInit
   registerDOMEvents()
-  registerControlEvents()
+  registerEditorEvents()
   state.application.initialized = true
 

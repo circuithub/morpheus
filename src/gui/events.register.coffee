@@ -18,5 +18,10 @@ registerDOMEvents = () ->
   window.addEventListener 'resize', windowResize, true
 
 # Register UI controls events
+registerEditorEvents = () ->
+  ($ '#mecha-source-compile').click controlsSourceCompile
+
 registerControlEvents = () ->
-  ($ '#source-compile').click controlsSourceCompile
+  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'change', controlsParamChange
+  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'change', controlsParamChange
+

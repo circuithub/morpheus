@@ -46,4 +46,4 @@ createControls = (container) ->
     state.parameters.domElement.id = 'mecha-param-inputs'
     containerEl.appendChild state.parameters.domElement
   controlsInit()
-
+  registerControlEvents()
