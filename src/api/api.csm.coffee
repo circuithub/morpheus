@@ -12,18 +12,18 @@ do () ->
 
   mechaTypeof = (value) -> 
     if Array.isArray value
-      if value.length <= 4 then "vec#{value.length}" else 'unknown'
+      if value.length <= 4 then "vec#{value.length}" else throw "Parameter type with length `#{value.length}` is not supported."
     else
       # TODO: Support int for loops
       'float'
 
   mechaPrimitiveTypeof = (value) -> 
-    if Array.isArray value and value.length > 0
+    if (Array.isArray value) and value.length > 0
       mechaPrimitiveTypeof value[0]
     else
       switch typeof value
         when 'number' then 'float'
-        else 'unknown'
+        else throw "Unknown parameter type `#{typeof value}`."
 
   # Fluid API builder
   Dispatcher = ->
@@ -136,30 +136,40 @@ do () ->
     update: (str) ->
       new MechaExpression @param, str
     index: (arg) ->
-      if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "#{@str}[#{arg}]"
+      if arg instanceof MechaExpression
+        @update "(#{@serialize()})[#{arg.serialize()}]"
+      else if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "#{@serialize()}[#{arg}]"
       else
         throw "Argument to index must be an integer"
     mul: (arg) ->
-      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "(#{@str}) * #{arg}.0"
+      if arg instanceof MechaExpression
+        @update "(#{@serialize()}) * (#{arg.serialize()})"
+      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@serialize()}) * #{arg}.0"
       else
-        @update "(#{@str}) * #{arg}"
+        @update "(#{@serialize()}) * #{arg}"
     div: (arg) ->
-      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "(#{@str}) / #{arg}.0"
+      if arg instanceof MechaExpression
+        @update "(#{@serialize()}) / (#{arg.serialize()})"
+      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@serialize()}) / #{arg}.0"
       else
-        @update "(#{@str}) / #{arg}"
+        @update "(#{@serialize()}) / #{arg}"
     add: (arg) ->
-      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "(#{@str}) + #{arg}.0"
+      if arg instanceof MechaExpression
+        @update "(#{@serialize()}) + (#{arg.serialize()})"
+      if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@serialize()}) + #{arg}.0"
       else
-        @update "(#{@str}) + #{arg}"
+        @update "(#{@serialize()}) + #{arg}"
     sub: (arg) ->
-      if @attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "(#{@str}) - #{arg}.0"
+      if arg instanceof MechaExpression
+        @update "(#{@serialize()}) - (#{arg.serialize()})"
+      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+        @update "(#{@serialize()}) - #{arg}.0"
       else
-        @update "(#{@str}) - #{arg}"
+        @update "(#{@serialize()}) - #{arg}"
   
   window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex

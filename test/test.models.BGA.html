@@ -21,14 +21,14 @@ var chipDimensions = range("Chip Dimensions", [0.5, 0.5, 0.2], [0.5,0.5,0.2], [2
     ballsY = range("Balls (Y)", 1, 1, 10, 1),
     ballPitch  = range("Ball Pitch", 0.1, 0.1, 5.0), // Could also calculate this relative to chipDimensions...
     ballRadius = range("Ball Radius", 0.1, 0.1, 1.0),
-    holeRadius = range("Hole Radius", 0.1, 0.1, 1.0);
+    alignMarkRadius = range("Alignment Mark Radius", 0.1, 0.1, 1.0),
+    borderGap = range("Border Gap", 0.01, 0.01, 0.1);
 
 // Draw the chip body (with a hole)
 difference(
   box({ dimensions: chipDimensions }),
-  cylinder({ radius: holeRadius, axis: 2 })
-  //.translate({ offset: [chipDimensions.index(0), chipDimensions.index(1), 0.0] })
-  //.translate({ offset: [chipDimensions.index(0).div(2.0).sub(0.1), chipDimensions.index(1).div(2.0).sub(0.1), 0.0] })
+  cylinder({ radius: alignMarkRadius, axis: 2 })
+  .translate({ offset: [chipDimensions.index(0).div(2.0).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(1).div(2.0).sub(alignMarkRadius).sub(borderGap), 0.0] })
 )
 .material({ color: [0.1, 0.1, 0.1] })
   </script>

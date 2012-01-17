@@ -23,21 +23,21 @@ mecha.api =
         if (value.length <= 4) {
           return "vec" + value.length;
         } else {
-          return 'unknown';
+          throw "Parameter type with length `" + value.length + "` is not supported.";
         }
       } else {
         return 'float';
       }
     };
     mechaPrimitiveTypeof = function(value) {
-      if (Array.isArray(value && value.length > 0)) {
+      if ((Array.isArray(value)) && value.length > 0) {
         return mechaPrimitiveTypeof(value[0]);
       } else {
         switch (typeof value) {
           case 'number':
             return 'float';
           default:
-            return 'unknown';
+            throw "Unknown parameter type `" + (typeof value) + "`.";
         }
       }
     };
@@ -245,42 +245,53 @@ mecha.api =
       };
 
       MechaExpression.prototype.index = function(arg) {
-        if (typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("" + this.str + "[" + arg + "]");
+        if (arg instanceof MechaExpression) {
+          return this.update("(" + (this.serialize()) + ")[" + (arg.serialize()) + "]");
+        } else if (typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("" + (this.serialize()) + "[" + arg + "]");
         } else {
           throw "Argument to index must be an integer";
         }
       };
 
       MechaExpression.prototype.mul = function(arg) {
-        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("(" + this.str + ") * " + arg + ".0");
+        if (arg instanceof MechaExpression) {
+          return this.update("(" + (this.serialize()) + ") * (" + (arg.serialize()) + ")");
+        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + (this.serialize()) + ") * " + arg + ".0");
         } else {
-          return this.update("(" + this.str + ") * " + arg);
+          return this.update("(" + (this.serialize()) + ") * " + arg);
         }
       };
 
       MechaExpression.prototype.div = function(arg) {
-        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("(" + this.str + ") / " + arg + ".0");
+        if (arg instanceof MechaExpression) {
+          return this.update("(" + (this.serialize()) + ") / (" + (arg.serialize()) + ")");
+        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + (this.serialize()) + ") / " + arg + ".0");
         } else {
-          return this.update("(" + this.str + ") / " + arg);
+          return this.update("(" + (this.serialize()) + ") / " + arg);
         }
       };
 
       MechaExpression.prototype.add = function(arg) {
-        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("(" + this.str + ") + " + arg + ".0");
+        if (arg instanceof MechaExpression) {
+          this.update("(" + (this.serialize()) + ") + (" + (arg.serialize()) + ")");
+        }
+        if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + (this.serialize()) + ") + " + arg + ".0");
         } else {
-          return this.update("(" + this.str + ") + " + arg);
+          return this.update("(" + (this.serialize()) + ") + " + arg);
         }
       };
 
       MechaExpression.prototype.sub = function(arg) {
-        if (this.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("(" + this.str + ") - " + arg + ".0");
+        if (arg instanceof MechaExpression) {
+          return this.update("(" + (this.serialize()) + ") - (" + (arg.serialize()) + ")");
+        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + (this.serialize()) + ") - " + arg + ".0");
         } else {
-          return this.update("(" + this.str + ") - " + arg);
+          return this.update("(" + (this.serialize()) + ") - " + arg);
         }
       };
 
