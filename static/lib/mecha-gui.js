@@ -194,7 +194,8 @@ mecha.gui =
     models: {},
     parameters: {
       domElement: null
-    }
+    },
+    mechaUrlPath: null
   };
 
   mouseCoordsWithinElement = function(event) {
@@ -450,7 +451,13 @@ mecha.gui =
   };
 
   apiInit = function(callback) {
-    state.api.url = ($("link[rel='api']")).attr('href');
+    var $apiLink;
+    $apiLink = $("link[rel='api']");
+    if ($apiLink.length > 0) {
+      state.api.url = $apiLink.attr('href');
+    } else if (typeof state.mechaUrlPath === 'string') {
+      state.api.url = state.mechaUrlPath.length === 0 || state.mechaUrlPath[state.mechaUrlPath.length - 1] === '/' ? state.mechaUrlPath + 'mecha-api.min.js' : state.mechaUrlPath + '/mecha-api.min.js';
+    }
     return ($.get(encodeURIComponent(state.api.url), void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
       mecha.log("Loaded " + state.api.url);
@@ -474,12 +481,12 @@ mecha.gui =
     return state.application.initialized = true;
   };
 
-  create = function(container) {
+  create = function(container, mechaUrlPath) {
     var containerEl, errorHtml;
     errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
       containerEl.innerHTML = errorHtml;
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, expected type 'string' or dom element of type 'DIV'.");
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
     } else if (container === null) {
       mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
@@ -487,10 +494,11 @@ mecha.gui =
       containerEl = typeof container === 'string' ? document.getElementById(container) : container;
     }
     if (containerEl === null) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
     containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
+    if (mechaUrlPath != null) state.mechaUrlPath = mechaUrlPath;
     init(containerEl, document.getElementById('mecha-canvas'));
     return true;
   };
@@ -498,7 +506,7 @@ mecha.gui =
   createControls = function(container) {
     var containerEl;
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, expected type 'string' or dom element of type 'DIV'.");
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
     } else if (container === null) {
       mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
@@ -506,7 +514,7 @@ mecha.gui =
       containerEl = typeof container === 'string' ? document.getElementById(container) : container;
     }
     if (containerEl === null) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id supplied, could not find a matching 'DIV' element in the document.");
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
     if (!(state.parameters.domElement != null)) {

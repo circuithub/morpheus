@@ -90,13 +90,22 @@ controlsInit = () ->
 # Initialize the CSM API (by loading the code from the given url)
 apiInit = (callback) ->
   # Get the API code
-  state.api.url = ($ "link[rel='api']").attr 'href'
+  $apiLink = $ "link[rel='api']"
+  if $apiLink.length > 0
+    state.api.url = $apiLink.attr 'href'
+  else if typeof state.mechaUrlPath == 'string' 
+    state.api.url = 
+      if state.mechaUrlPath.length == 0 or state.mechaUrlPath[state.mechaUrlPath.length - 1] == '/'
+        state.mechaUrlPath + 'mecha-api.min.js'
+      else
+        state.mechaUrlPath + '/mecha-api.min.js'
   ($.get (encodeURIComponent state.api.url), undefined, undefined, 'text')
-    .success (data, textStatus, jqXHR) -> 
+    .success (data, textStatus, jqXHR) ->
+      # TODO: test that the correct api was actually fetched
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
       callback() if callback?
-    .error () -> 
+    .error () ->
       mecha.log "Error loading API script"
 
 # Initialize the gui controls and register events once the rest of the document has completely loaded

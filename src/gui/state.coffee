@@ -20,3 +20,4 @@ state =
   models: {}
   parameters:
     domElement: null
+  mechaUrlPath: null
