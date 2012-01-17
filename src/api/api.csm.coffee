@@ -164,6 +164,39 @@ do () ->
   window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
+    mul = (a,b) ->
+      if (Array.isArray a) and (Array.isArray b)
+        # Perform a dot product if both arguments are arrays (vectors)
+        if a.length != b.length then throw "No product operator available for arrays of different lengths."
+        if a.length > 4 then throw "No product operator available for arrays of lengths greater than 4."
+        result = 0.0
+        for i in [0...a.length]
+          result += a[i] * b[i]
+        return result
+      else if Array.isArray a
+        result = a.slice()
+        for i in [0...a.length]
+          result[i] *= b
+        return result
+      else if typeof a == 'number' and typeof b == 'number'
+        a * b
+      else
+        throw "No product operator available operands with types `#{typeof a}` and `#{typeof b}`."
+    
+    sub = (a,b) ->
+      if (Array.isArray a) and (Array.isArray b)
+        # Subtract two vectors
+        if a.length != b.length then throw "No subtract operator available for arrays of different lengths."
+        if a.length > 4 then throw "No subtract operator available for arrays of lengths greater than 4."
+        result = a.slice()
+        for i in [0...a.length]
+          result[i] -= b[i]
+        return result
+      else if typeof a == 'number' and typeof b == 'number'
+        a - b
+      else
+        throw "No subtract operator available operands with types `#{typeof a}` and `#{typeof b}`."
+
     new MechaExpression (new MechaParameter
       param: 'range'
       description: description
@@ -172,7 +205,7 @@ do () ->
       paramIndex: paramIndex
       start: start
       end: end
-      step: step? step 
+      step: if step? then step else (mul (sub end, start), 0.01)
       defaultArg: defaultArg
     )
 

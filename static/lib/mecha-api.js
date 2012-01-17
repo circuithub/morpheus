@@ -288,9 +288,55 @@ mecha.api =
 
     })();
     window.range = function(description, defaultArg, start, end, step) {
-      var paramIndex;
+      var mul, paramIndex, sub;
       paramIndex = globalParamIndex;
       ++globalParamIndex;
+      mul = function(a, b) {
+        var i, result, _ref, _ref2;
+        if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "No product operator available for arrays of different lengths.";
+          }
+          if (a.length > 4) {
+            throw "No product operator available for arrays of lengths greater than 4.";
+          }
+          result = 0.0;
+          for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            result += a[i] * b[i];
+          }
+          return result;
+        } else if (Array.isArray(a)) {
+          result = a.slice();
+          for (i = 0, _ref2 = a.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
+            result[i] *= b;
+          }
+          return result;
+        } else if (typeof a === 'number' && typeof b === 'number') {
+          return a * b;
+        } else {
+          throw "No product operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
+        }
+      };
+      sub = function(a, b) {
+        var i, result, _ref;
+        if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "No subtract operator available for arrays of different lengths.";
+          }
+          if (a.length > 4) {
+            throw "No subtract operator available for arrays of lengths greater than 4.";
+          }
+          result = a.slice();
+          for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            result[i] -= b[i];
+          }
+          return result;
+        } else if (typeof a === 'number' && typeof b === 'number') {
+          return a - b;
+        } else {
+          throw "No subtract operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
+        }
+      };
       return new MechaExpression(new MechaParameter({
         param: 'range',
         description: description,
@@ -299,7 +345,7 @@ mecha.api =
         paramIndex: paramIndex,
         start: start,
         end: end,
-        step: typeof step === "function" ? step(step) : void 0,
+        step: step != null ? step : mul(sub(end, start), 0.01),
         defaultArg: defaultArg
       }));
     };
