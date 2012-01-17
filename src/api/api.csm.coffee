@@ -69,6 +69,10 @@ do () ->
       type: 'mirror'
       attr: attr
       nodes: nodes
+    repeat: Api (attr, nodes...) -> 
+      type: 'repeat'
+      attr: attr
+      nodes: nodes
     translate: Api (attr, nodes...) ->
       type: 'translate'
       attr: attr

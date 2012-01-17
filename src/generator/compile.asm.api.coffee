@@ -22,6 +22,10 @@ asm =
     type: 'mirror'
     attr: attr
     nodes: flatten nodes
+  repeat: (attr, nodes...) ->
+    type: 'repeat'
+    attr: attr
+    nodes: flatten nodes
   translate:  (attr, nodes...) ->
     type: 'translate'
     attr: attr

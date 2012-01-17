@@ -23,6 +23,20 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       #node.halfSpaces = []
       #node.halfSpaces.push null for i in [0..5]
       return
+    mirror: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      axes = [false, false, false]
+      (axes[a] = true) for a in node.attr.axes
+      if axes[0] and axes[1] and axes[2]
+        glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
+      else
+        axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
+        glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
+      return
+    repeat: (stack, node, flags) ->
+      # TODO
+      return
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -66,17 +80,6 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
         glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.value)
-      return
-    mirror: (stack, node, flags) ->
-      # Push the modified ray origin onto the prelude stack
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      axes = [false, false, false]
-      (axes[a] = true) for a in node.attr.axes
-      if axes[0] and axes[1] and axes[2]
-        glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
-      else
-        axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
-        glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
       return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
