@@ -463,7 +463,7 @@ mecha.gui =
     } else {
       state.api.url = 'mecha-api.min.js';
     }
-    return ($.get(encodeURIComponent(state.api.url), void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
+    return ($.get(state.api.url, void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
       mecha.log("Loaded " + state.api.url);
       if (callback != null) return callback();

@@ -101,7 +101,8 @@ apiInit = (callback) ->
     state.api.url = $apiLink.attr 'href'
   else 
     state.api.url = 'mecha-api.min.js'
-  ($.get (encodeURIComponent state.api.url), undefined, undefined, 'text')
+  #($.get (encodeURIComponent state.api.url), undefined, undefined, 'text')
+  ($.get state.api.url, undefined, undefined, 'text')
     .success (data, textStatus, jqXHR) ->
       # TODO: test that the correct api was actually fetched
       state.api.sourceCode = data
