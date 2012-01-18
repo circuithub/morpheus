@@ -92,6 +92,10 @@ compileGLSL = (abstractSolidModel, params) ->
       ("uniform #{attr.type} #{name}; // #{attr.description}" for name,attr of params).join '\n'
 
     # Shader
+    distanceCode = distanceResult.nodes[0].code
+    distancePreludeCode = distanceResult.flags.glslPrelude.code
+    idCode = idResult.nodes[0].code
+    idPreludeCode = idResult.flags.glslPrelude.code
 
     """
     #ifdef GL_ES
@@ -107,8 +111,8 @@ compileGLSL = (abstractSolidModel, params) ->
     #{glslLibrary.compile distanceResult.flags.glslFunctions}
 
     float sceneDist(in vec3 #{rayOrigin}) {
-      #{distanceResult.flags.glslPrelude.code}  
-      return max(0.0,#{distanceResult.nodes[0].code});
+      #{if distancePreludeCode? then distancePreludeCode else ''}
+      return max(0.0,#{if distanceCode? then distanceCode else 'Infinity'});
     }
 
     vec3 sceneNormal(in vec3 p) {
@@ -121,9 +125,9 @@ compileGLSL = (abstractSolidModel, params) ->
     }
 
     int sceneId(in vec3 #{rayOrigin}) {
-      #{idResult.flags.glslPrelude.code}
-      #{idResult.nodes[0].code};
-      return #{idResult.nodes[0].code.materialId};
+      #{if idPreludeCode? then idPreludeCode else ''}
+      #{if idCode? then (idCode + ';') else ''}
+      return #{if idCode? then idCode.materialId else '-1'};
     }
 
     #{sceneMaterial idResult.flags.materials}

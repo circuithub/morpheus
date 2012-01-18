@@ -31,10 +31,10 @@ translateCSM = (apiSourceCode, csmSourceCode) ->
 
       /* BEGIN PARAMETERS */
 
-    #{(if variablesSource then variablesSource.join '\n' else "")}
+    #{if variablesSource then variablesSource.join '\n' else ""}
 
       /* BEGIN SOURCE */
-      return scene({ params: exportedParameters },
+      return scene({ params: exportedParameters }#{if csmSourceCode.trim().length > 0 then ',' else ''}
     
     #{csmSourceCode}
     
