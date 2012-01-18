@@ -954,30 +954,6 @@ mecha.generator =
       },
       chamfer: function(stack, node, flags) {},
       bevel: function(stack, node, flags) {},
-      mirror: function(stack, node, flags) {
-        var a, axes, axesCodes, i, ro, _i, _len, _ref;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        axes = [false, false, false];
-        _ref = node.attr.axes;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          a = _ref[_i];
-          axes[a] = true;
-        }
-        if (axes[0] && axes[1] && axes[2]) {
-          glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
-        } else {
-          axesCodes = (function() {
-            var _results;
-            _results = [];
-            for (i = 0; i <= 2; i++) {
-              _results.push(axes[i] ? "abs(" + ro + "[" + i + "])" : "" + ro + "[" + i + "]");
-            }
-            return _results;
-          })();
-          glslCompiler.preludePush(flags.glslPrelude, "vec3(" + axesCodes + ")");
-        }
-      },
-      repeat: function(stack, node, flags) {},
       translate: function(stack, node, flags) {
         var ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
@@ -1037,6 +1013,45 @@ mecha.generator =
         } else {
           glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.value));
         }
+      },
+      mirror: function(stack, node, flags) {
+        var a, axes, axesCodes, i, ro, _i, _len, _ref;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        axes = [false, false, false];
+        _ref = node.attr.axes;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          a = _ref[_i];
+          axes[a] = true;
+        }
+        if (axes[0] && axes[1] && axes[2]) {
+          glslCompiler.preludePush(flags.glslPrelude, "abs(" + ro + ")");
+        } else {
+          axesCodes = (function() {
+            var _results;
+            _results = [];
+            for (i = 0; i <= 2; i++) {
+              _results.push(axes[i] ? "abs(" + ro + "[" + i + "])" : "" + ro + "[" + i + "]");
+            }
+            return _results;
+          })();
+          glslCompiler.preludePush(flags.glslPrelude, "vec3(" + axesCodes + ")");
+        }
+      },
+      repeat: function(stack, node, flags) {
+        var fixedOffsets, o, repeatRO, ro;
+        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        fixedOffsets = (function() {
+          var _i, _len, _ref, _results;
+          _ref = node.attr.offset;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            o = _ref[_i];
+            _results.push(0.5);
+          }
+          return _results;
+        })();
+        repeatRO = "mod(" + ro + ", vec3(" + fixedOffsets + "))";
+        glslCompiler.preludePush(flags.glslPrelude, repeatRO);
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);
@@ -1159,6 +1174,7 @@ mecha.generator =
             case 'translate':
             case 'rotate':
             case 'mirror':
+            case 'repeat':
             case 'invert':
             case 'material':
             case 'chamfer':
@@ -1193,6 +1209,7 @@ mecha.generator =
           case 'scale':
           case 'invert':
           case 'mirror':
+          case 'repeat':
             continue;
         }
         break;
@@ -1265,6 +1282,10 @@ mecha.generator =
         return stack[0].nodes.push(node);
       },
       mirror: function(stack, node, flags) {
+        glslCompiler.preludePop(flags.glslPrelude);
+        return stack[0].nodes.push(node);
+      },
+      repeat: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
         return stack[0].nodes.push(node);
       },

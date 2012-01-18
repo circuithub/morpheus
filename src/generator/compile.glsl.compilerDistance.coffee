@@ -23,20 +23,6 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       #node.halfSpaces = []
       #node.halfSpaces.push null for i in [0..5]
       return
-    mirror: (stack, node, flags) ->
-      # Push the modified ray origin onto the prelude stack
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      axes = [false, false, false]
-      (axes[a] = true) for a in node.attr.axes
-      if axes[0] and axes[1] and axes[2]
-        glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
-      else
-        axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
-        glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
-      return
-    repeat: (stack, node, flags) ->
-      # TODO
-      return
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
@@ -80,6 +66,30 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
         glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.value)
+      return
+    mirror: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      axes = [false, false, false]
+      (axes[a] = true) for a in node.attr.axes
+      if axes[0] and axes[1] and axes[2]
+        glslCompiler.preludePush flags.glslPrelude, "abs(#{ro})"
+      else
+        axesCodes = ((if axes[i] then "abs(#{ro}[#{i}])" else "#{ro}[#{i}]") for i in [0..2])
+        glslCompiler.preludePush flags.glslPrelude, "vec3(#{axesCodes})"
+      return
+    repeat: (stack, node, flags) ->
+      # Push the modified ray origin onto the prelude stack
+      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      #axes = [false, false, false]
+      #for c,index in node.attr.count
+      #  axes[index] = c > 1
+      #if axes[0] and axes[1] and axes[2] and (node.attr.count[0] == node.attr.count[1] == node.attr.count[2])
+      #  # TODO
+      fixedOffsets = (0.5 for o in node.attr.offset)
+      #TODO: fixedOffsets = ((if node.attr.count[index] > 1 then o else Infinity) for o,index in node.attr.offset)
+      repeatRO = "mod(#{ro}, vec3(#{fixedOffsets}))"
+      glslCompiler.preludePush flags.glslPrelude, repeatRO
       return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
@@ -184,7 +194,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         for node in nodes
           codes.push node.code if node.code?
           switch node.type
-            when 'translate','rotate','mirror','invert','material','chamfer','bevel'
+            when 'translate','rotate','mirror','repeat','invert','material','chamfer','bevel'
               collectCode codes, node.nodes
       collectCode codes, node.nodes
 
@@ -203,7 +213,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
             chamferRadius = s.attr.radius
           when 'bevel'
             bevelRadius = s.attr.radius
-          when 'translate','rotate','scale','invert','mirror'
+          when 'translate','rotate','scale','invert','mirror','repeat'
             continue
         break
 
@@ -271,6 +281,10 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
     mirror: (stack, node, flags) ->
+      # Remove the modified ray origin from the prelude stack
+      glslCompiler.preludePop flags.glslPrelude
+      stack[0].nodes.push node
+    repeat: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
