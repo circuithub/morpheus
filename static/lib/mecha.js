@@ -826,6 +826,167 @@ mecha.generator =
       } else {
         return "-" + a;
       }
+    },
+    min: function(a, b) {
+      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
+      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+        return Math.min(a, b);
+      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+        return "min(" + a + ", " + b + ")";
+      } else if (typeof a === 'string') {
+        return "min(" + a + ", " + (glsl.literal(b)) + ")";
+      } else if (typeof b === 'string') {
+        return "min(" + (glsl.literal(a)) + ", " + b + ")";
+      } else if (Array.isArray(a && Array.isArray(b))) {
+        if (a.length !== b.length) {
+          throw "Cannot perform min operation with array operands of different lengths";
+        }
+        numbersOnly = true;
+        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
+            numbersOnly = false;
+            break;
+          }
+        }
+        if (numbersOnly) {
+          _results = [];
+          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
+            _results.push(Math.min(a[i], b[i]));
+          }
+          return _results;
+        } else {
+          return "min(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+        }
+      } else {
+        throw "Operands passed to the min operation have incorrect types.";
+      }
+    },
+    max: function(a, b) {
+      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
+      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+        return Math.max(a, b);
+      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+        return "max(" + a + ", " + b + ")";
+      } else if (typeof a === 'string') {
+        return "max(" + a + ", " + (glsl.literal(b)) + ")";
+      } else if (typeof b === 'string') {
+        return "max(" + (glsl.literal(a)) + ", " + b + ")";
+      } else if (Array.isArray(a && Array.isArray(b))) {
+        if (a.length !== b.length) {
+          throw "Cannot perform operation with arrays of different lengths";
+        }
+        numbersOnly = true;
+        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
+            numbersOnly = false;
+            break;
+          }
+        }
+        if (numbersOnly) {
+          _results = [];
+          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
+            _results.push(Math.max(a[i], b[i]));
+          }
+          return _results;
+        } else {
+          return "max(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+        }
+      } else {
+        throw "Operands passed to the max operation have incorrect types.";
+      }
+    },
+    mini: function(a, b) {
+      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
+      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+        return Math.min(a, b);
+      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+        return "min(" + a + ", " + b + ")";
+      } else if (typeof a === 'string' || typeof b === 'string') {
+        return "max(" + a + ", " + b + ")";
+      } else if (Array.isArray(a && Array.isArray(b))) {
+        if (a.length !== b.length) {
+          throw "Cannot perform operation with arrays of different lengths";
+        }
+        numbersOnly = true;
+        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
+            numbersOnly = false;
+            break;
+          }
+        }
+        if (numbersOnly) {
+          _results = [];
+          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
+            _results.push(Math.max(a[i], b[i]));
+          }
+          return _results;
+        } else {
+          return "max(vec3(" + a + "), vec3(" + b + "))";
+        }
+      } else {
+        throw "Operands passed to the max operation have incorrect types.";
+      }
+    },
+    maxi: function(a, b) {
+      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
+      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+        return Math.max(a, b);
+      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+        return "max(" + a + ", " + b + ")";
+      } else if (typeof a === 'string' || typeof b === 'string') {
+        return "max(" + a + ", " + b + ")";
+      } else if (Array.isArray(a && Array.isArray(b))) {
+        if (a.length !== b.length) {
+          throw "Cannot perform operation with arrays of different lengths";
+        }
+        numbersOnly = true;
+        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
+            numbersOnly = false;
+            break;
+          }
+        }
+        if (numbersOnly) {
+          _results = [];
+          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
+            _results.push(Math.max(a[i], b[i]));
+          }
+          return _results;
+        } else {
+          return "max(vec3(" + a + "), vec3(" + b + "))";
+        }
+      } else {
+        throw "Operands passed to the max operation have incorrect types.";
+      }
+    },
+    literal: function(a) {
+      if (typeof a === 'string') {
+        return a;
+      } else if (typeof a === 'number') {
+        return glsl.floatLit(a);
+      } else if (Array.isArray(a)) {
+        return glsl.vec3Lit(a);
+      }
+    },
+    floatLit: function(a) {
+      if (typeof a === 'string') {
+        return a;
+      } else {
+        if ((a | 0) === a) {
+          return a + '.0';
+        } else {
+          return a;
+        }
+      }
+    },
+    vec3Lit: function(a) {
+      if (typeof a === 'string') {
+        return a;
+      } else if (typeof a === 'number') {
+        return "vec3(" + (glsl.floatLit(a)) + ")";
+      } else {
+        return "vec3(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + ")";
+      }
     }
   };
 
@@ -1038,19 +1199,32 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var fixedOffsets, o, repeatRO, ro;
+        var index, limits, o, offsets, repeatHalfOffsets, repeatInfinite, repeatOffsets, repeatRO, ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        fixedOffsets = (function() {
-          var _i, _len, _ref, _results;
+        offsets = (function() {
+          var _len, _ref, _results;
           _ref = node.attr.offset;
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            o = _ref[_i];
-            _results.push(0.5);
+          for (index = 0, _len = _ref.length; index < _len; index++) {
+            o = _ref[index];
+            _results.push(node.attr.count[index] > 1 ? o : 0.0);
           }
           return _results;
         })();
-        repeatRO = "mod(" + ro + ", vec3(" + fixedOffsets + "))";
+        limits = (function() {
+          var _len, _ref, _results;
+          _ref = node.attr.offset;
+          _results = [];
+          for (index = 0, _len = _ref.length; index < _len; index++) {
+            o = _ref[index];
+            _results.push(node.attr.count[index] > 1 ? glsl.mul(glsl.maxi(1, node.attr.count[index]), o) : Infinity);
+          }
+          return _results;
+        })();
+        repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
+        repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
+        repeatInfinite = glslCompiler.preludeAdd(flags.glslPrelude, "(mod(" + ro + " + " + repeatHalfOffsets + ", " + repeatOffsets + ") - " + repeatHalfOffsets + ")");
+        repeatRO = "" + repeatInfinite + " + step(" + (glsl.vec3Lit(limits)) + " - " + repeatHalfOffsets + ", abs(" + ro + ")) * Infinity";
         glslCompiler.preludePush(flags.glslPrelude, repeatRO);
       },
       material: function(stack, node, flags) {

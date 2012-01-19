@@ -81,14 +81,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
     repeat: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
-      #axes = [false, false, false]
-      #for c,index in node.attr.count
-      #  axes[index] = c > 1
-      #if axes[0] and axes[1] and axes[2] and (node.attr.count[0] == node.attr.count[1] == node.attr.count[2])
-      #  # TODO
-      fixedOffsets = (0.5 for o in node.attr.offset)
-      #TODO: fixedOffsets = ((if node.attr.count[index] > 1 then o else Infinity) for o,index in node.attr.offset)
-      repeatRO = "mod(#{ro}, vec3(#{fixedOffsets}))"
+      #parameterizedCount = false
+      #(parameterizedCount = true) for c in node.attr.count where typeof c == 'number'
+      offsets = ((if node.attr.count[index] > 1 then o else 0.0) for o,index in node.attr.offset)
+      limits = ((if node.attr.count[index] > 1 then (glsl.mul (glsl.maxi 1, node.attr.count[index]), o) else Infinity) for o,index in node.attr.offset)
+      repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
+      repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
+      repeatInfinite = glslCompiler.preludeAdd flags.glslPrelude, "(mod(#{ro} + #{repeatHalfOffsets}, #{repeatOffsets}) - #{repeatHalfOffsets})"
+      repeatRO = "#{repeatInfinite} + step(#{(glsl.vec3Lit limits)} - #{repeatHalfOffsets}, abs(#{ro})) * Infinity"
       glslCompiler.preludePush flags.glslPrelude, repeatRO
       return
     material: (stack, node, flags) ->
