@@ -24,7 +24,7 @@ glsl = do ->
           when -1 then "-#{b}"
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{if (a | 0) == a then (a + '.0') else a} * #{b}"
+            "#{glsl.floatLit a} * #{b}"
       else if typeof b == 'number'
         switch b
           when 0 then 0
@@ -32,7 +32,7 @@ glsl = do ->
           when -1 then "-#{a}"
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} * #{if (b | 0) == b then (b + '.0') else b}"
+            "#{a} * #{glsl.floatLit b}"
       else 
         "#{a} * #{b}"
       # TODO: handle vectors
@@ -75,13 +75,13 @@ glsl = do ->
           when 0 then 0
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{if (a | 0) == a then (a + '.0') else a} / #{b}"
+            "#{glsl.floatLit a} / #{b}"
       else if typeof b == 'number'
         switch b
           when 0 then "#{a} / 0.0" # infinity
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} / #{if (b | 0) == b then (b + '.0') else b}"
+            "#{a} / #{glsl.floatLit b}"
       else 
         "#{a} / #{b}"
       # TODO: handle vectors
@@ -99,7 +99,7 @@ glsl = do ->
           when 0 then b
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{if (a | 0) == a then (a + '.0') else a} + #{b}"
+            "#{glsl.floatLit a} + #{b}"
       else if typeof b == 'number'
         glsl.add b, a
       else 
@@ -119,13 +119,13 @@ glsl = do ->
           when 0 then glsl.neg b
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{if (a | 0) == a then (a + '.0') else a} - #{b}"
+            "#{glsl.floatLit a} - #{b}"
       else if typeof b == 'number'
         switch b
           when 0 then a
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} - #{if (b | 0) == b then (b + '.0') else b}"
+            "#{a} - #{glsl.floatLit b}"
       else 
         "#{a} - #{b}"
       # TODO: handle vectors
@@ -157,12 +157,7 @@ glsl = do ->
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform min operation with array operands of different lengths"
-        numbersOnly = true
-        for i in [0...a.length]
-          if typeof a[i] != 'number' or typeof b[i] != 'number'
-            numbersOnly = false
-            break
-        if numbersOnly
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.min a[i], b[i]) for i in [0...a.length]
         else 
           "min(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
@@ -181,12 +176,7 @@ glsl = do ->
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths"
-        numbersOnly = true
-        for i in [0...a.length]
-          if typeof a[i] != 'number' or typeof b[i] != 'number'
-            numbersOnly = false
-            break
-        if numbersOnly
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
           "max(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
@@ -203,12 +193,7 @@ glsl = do ->
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths"
-        numbersOnly = true
-        for i in [0...a.length]
-          if typeof a[i] != 'number' or typeof b[i] != 'number'
-            numbersOnly = false
-            break
-        if numbersOnly
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
           "max(vec3(#{a}), vec3(#{b}))"
@@ -225,12 +210,7 @@ glsl = do ->
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths"
-        numbersOnly = true
-        for i in [0...a.length]
-          if typeof a[i] != 'number' or typeof b[i] != 'number'
-            numbersOnly = false
-            break
-        if numbersOnly
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
           "max(vec3(#{a}), vec3(#{b}))"
