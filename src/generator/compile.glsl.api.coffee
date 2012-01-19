@@ -112,3 +112,118 @@ glsl =
     # else if Array.isArray a
     # TODO: handle uniforms
     # else if typeof a == 'object'
+
+  min: (a,b) ->
+    if typeof a == typeof b == 'number'
+      Math.min a, b
+    else if typeof a == typeof b == 'string'
+      "min(#{a}, #{b})"
+    else if typeof a == 'string'
+      "min(#{a}, #{glsl.literal b})"
+    else if typeof b == 'string'
+      "min(#{glsl.literal a}, #{b})"
+    else if Array.isArray a and Array.isArray b
+      if a.length != b.length
+        throw "Cannot perform min operation with array operands of different lengths"
+      numbersOnly = true
+      for i in [0...a.length]
+        if typeof a[i] != 'number' or typeof b[i] != 'number'
+          numbersOnly = false
+          break
+      if numbersOnly
+        (Math.min a[i], b[i]) for i in [0...a.length]
+      else 
+        "min(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
+    else
+      throw "Operands passed to the min operation have incorrect types."
+    
+  max: (a,b) ->
+    if typeof a == typeof b == 'number'
+      Math.max a, b
+    else if typeof a == typeof b == 'string'
+      "max(#{a}, #{b})"
+    else if typeof a == 'string'
+      "max(#{a}, #{glsl.literal b})"
+    else if typeof b == 'string'
+      "max(#{glsl.literal a}, #{b})"
+    else if Array.isArray a and Array.isArray b
+      if a.length != b.length
+        throw "Cannot perform operation with arrays of different lengths"
+      numbersOnly = true
+      for i in [0...a.length]
+        if typeof a[i] != 'number' or typeof b[i] != 'number'
+          numbersOnly = false
+          break
+      if numbersOnly
+        (Math.max a[i], b[i]) for i in [0...a.length]
+      else 
+        "max(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
+    else
+      throw "Operands passed to the max operation have incorrect types."
+
+  mini: (a,b) ->
+    if typeof a == typeof b == 'number'
+      Math.min a, b
+    else if typeof a == typeof b == 'string'
+      "min(#{a}, #{b})"
+    else if typeof a == 'string' or typeof b == 'string'
+      "max(#{a}, #{b})"
+    else if Array.isArray a and Array.isArray b
+      if a.length != b.length
+        throw "Cannot perform operation with arrays of different lengths"
+      numbersOnly = true
+      for i in [0...a.length]
+        if typeof a[i] != 'number' or typeof b[i] != 'number'
+          numbersOnly = false
+          break
+      if numbersOnly
+        (Math.max a[i], b[i]) for i in [0...a.length]
+      else 
+        "max(vec3(#{a}), vec3(#{b}))"
+    else
+      throw "Operands passed to the max operation have incorrect types."
+
+  maxi: (a,b) ->
+    if typeof a == typeof b == 'number'
+      Math.max a, b
+    else if typeof a == typeof b == 'string'
+      "max(#{a}, #{b})"
+    else if typeof a == 'string' or typeof b == 'string'
+      "max(#{a}, #{b})"
+    else if Array.isArray a and Array.isArray b
+      if a.length != b.length
+        throw "Cannot perform operation with arrays of different lengths"
+      numbersOnly = true
+      for i in [0...a.length]
+        if typeof a[i] != 'number' or typeof b[i] != 'number'
+          numbersOnly = false
+          break
+      if numbersOnly
+        (Math.max a[i], b[i]) for i in [0...a.length]
+      else 
+        "max(vec3(#{a}), vec3(#{b}))"
+    else
+      throw "Operands passed to the max operation have incorrect types."
+
+  literal: (a) ->
+    if typeof a == 'string'
+      a
+    else if typeof a == 'number'
+      glsl.floatLit a
+    else if Array.isArray a
+      glsl.vec3Lit a
+    
+  floatLit: (a) ->
+    if typeof a == 'string'
+      a
+    else
+      if (a | 0) == a then a + '.0' else a
+  
+  vec3Lit: (a) ->
+    if typeof a == 'string'
+      a
+    else if typeof a == 'number'
+      "vec3(#{glsl.floatLit a})"
+    else
+      "vec3(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]})"
+
