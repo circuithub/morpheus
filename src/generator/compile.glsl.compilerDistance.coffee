@@ -87,8 +87,10 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       limits = ((if node.attr.count[index] > 1 then (glsl.mul (glsl.maxi 1, node.attr.count[index]), o) else Infinity) for o,index in node.attr.offset)
       repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
       repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
-      repeatInfinite = glslCompiler.preludeAdd flags.glslPrelude, "(mod(#{ro} + #{repeatHalfOffsets}, #{repeatOffsets}) - #{repeatHalfOffsets})"
-      repeatRO = "#{repeatInfinite} + step(#{(glsl.vec3Lit limits)} - #{repeatHalfOffsets}, abs(#{ro})) * Infinity"
+      #repeatParity = glslCompiler.preludeAdd flags.glslPrelude, (glsl.sub 'vec3(1.0)', (glsl.mod (glsl.vec3Lit node.attr.count), 2.0))
+      repeatParity = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mod (glsl.vec3Lit node.attr.count), 2.0)
+      repeatInfinite = glslCompiler.preludeAdd flags.glslPrelude, "(mod(#{ro} + #{glsl.mul repeatHalfOffsets, repeatParity}, #{repeatOffsets}) - #{repeatHalfOffsets})"
+      repeatRO = "#{repeatInfinite} + step(#{glsl.mul (glsl.vec3Lit limits), 0.5}, abs(#{ro})) * Infinity"
       glslCompiler.preludePush flags.glslPrelude, repeatRO
       return
     material: (stack, node, flags) ->

@@ -725,270 +725,313 @@ mecha.generator =
     return optimizeASM(compileASMNode(concreteSolidModel));
   };
 
-  glsl = {
-    subscript: function(a, index) {
-      if (Array.isArray(a)) {
-        return a[index];
-      } else {
-        return "" + a + "[" + index + "]";
+  glsl = (function() {
+    var api, isArrayType;
+    isArrayType = function(a, typeString) {
+      var element, _i, _len;
+      for (_i = 0, _len = a.length; _i < _len; _i++) {
+        element = a[_i];
+        if (typeof element !== typeString) return false;
       }
-    },
-    mul: function(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a * b;
-      } else if (typeof a === 'number') {
-        switch (a) {
-          case 0:
-            return 0;
-          case 1:
-            return b;
-          case -1:
-            return "-" + b;
-          default:
-            return "" + ((a | 0) === a ? a + '.0' : a) + " * " + b;
-        }
-      } else if (typeof b === 'number') {
-        switch (b) {
-          case 0:
-            return 0;
-          case 1:
-            return a;
-          case -1:
-            return "-" + a;
-          default:
-            return "" + a + " * " + ((b | 0) === b ? b + '.0' : b);
-        }
-      } else {
-        return "" + a + " * " + b;
-      }
-    },
-    div: function(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a / b;
-      } else if (typeof a === 'number') {
-        switch (a) {
-          case 0:
-            return 0;
-          default:
-            return "" + ((a | 0) === a ? a + '.0' : a) + " / " + b;
-        }
-      } else if (typeof b === 'number') {
-        switch (b) {
-          case 0:
-            return "" + a + " / 0.0";
-          default:
-            return "" + a + " / " + ((b | 0) === b ? b + '.0' : b);
-        }
-      } else {
-        return "" + a + " / " + b;
-      }
-    },
-    add: function(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a + b;
-      } else if (typeof a === 'number') {
-        switch (a) {
-          case 0:
-            return b;
-          default:
-            return "" + ((a | 0) === a ? a + '.0' : a) + " + " + b;
-        }
-      } else if (typeof b === 'number') {
-        return glsl.add(b, a);
-      } else {
-        return "" + a + " + " + b;
-      }
-    },
-    sub: function(a, b) {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a - b;
-      } else if (typeof a === 'number') {
-        switch (a) {
-          case 0:
-            return glsl.neg(b);
-          default:
-            return "" + ((a | 0) === a ? a + '.0' : a) + " - " + b;
-        }
-      } else if (typeof b === 'number') {
-        switch (b) {
-          case 0:
-            return a;
-          default:
-            return "" + a + " - " + ((b | 0) === b ? b + '.0' : b);
-        }
-      } else {
-        return "" + a + " - " + b;
-      }
-    },
-    neg: function(a) {
-      if (typeof a === 'number') {
-        return -a;
-      } else {
-        return "-" + a;
-      }
-    },
-    min: function(a, b) {
-      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
-      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
-        return Math.min(a, b);
-      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
-        return "min(" + a + ", " + b + ")";
-      } else if (typeof a === 'string') {
-        return "min(" + a + ", " + (glsl.literal(b)) + ")";
-      } else if (typeof b === 'string') {
-        return "min(" + (glsl.literal(a)) + ", " + b + ")";
-      } else if (Array.isArray(a && Array.isArray(b))) {
-        if (a.length !== b.length) {
-          throw "Cannot perform min operation with array operands of different lengths";
-        }
-        numbersOnly = true;
-        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
-            numbersOnly = false;
-            break;
-          }
-        }
-        if (numbersOnly) {
-          _results = [];
-          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
-            _results.push(Math.min(a[i], b[i]));
-          }
-          return _results;
+      return true;
+    };
+    return api = {
+      subscript: function(a, index) {
+        if (Array.isArray(a)) {
+          return a[index];
         } else {
-          return "min(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+          return "" + a + "[" + index + "]";
         }
-      } else {
-        throw "Operands passed to the min operation have incorrect types.";
-      }
-    },
-    max: function(a, b) {
-      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
-      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
-        return Math.max(a, b);
-      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
-        return "max(" + a + ", " + b + ")";
-      } else if (typeof a === 'string') {
-        return "max(" + a + ", " + (glsl.literal(b)) + ")";
-      } else if (typeof b === 'string') {
-        return "max(" + (glsl.literal(a)) + ", " + b + ")";
-      } else if (Array.isArray(a && Array.isArray(b))) {
-        if (a.length !== b.length) {
-          throw "Cannot perform operation with arrays of different lengths";
-        }
-        numbersOnly = true;
-        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
-            numbersOnly = false;
-            break;
+      },
+      mul: function(a, b) {
+        if (typeof a === 'number' && typeof b === 'number') {
+          return a * b;
+        } else if (typeof a === 'number') {
+          switch (a) {
+            case 0:
+              return 0;
+            case 1:
+              return b;
+            case -1:
+              return "-" + b;
+            default:
+              return "" + (glsl.floatLit(a)) + " * " + b;
           }
-        }
-        if (numbersOnly) {
-          _results = [];
-          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
-            _results.push(Math.max(a[i], b[i]));
+        } else if (typeof b === 'number') {
+          switch (b) {
+            case 0:
+              return 0;
+            case 1:
+              return a;
+            case -1:
+              return "-" + a;
+            default:
+              return "" + a + " * " + (glsl.floatLit(b));
           }
-          return _results;
         } else {
-          return "max(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+          return "" + a + " * " + b;
         }
-      } else {
-        throw "Operands passed to the max operation have incorrect types.";
-      }
-    },
-    mini: function(a, b) {
-      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
-      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
-        return Math.min(a, b);
-      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
-        return "min(" + a + ", " + b + ")";
-      } else if (typeof a === 'string' || typeof b === 'string') {
-        return "max(" + a + ", " + b + ")";
-      } else if (Array.isArray(a && Array.isArray(b))) {
-        if (a.length !== b.length) {
-          throw "Cannot perform operation with arrays of different lengths";
-        }
-        numbersOnly = true;
-        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
-            numbersOnly = false;
-            break;
+      },
+      mod: function(a, b) {
+        var i, _ref, _results;
+        if (typeof a === 'number' && typeof b === 'number') {
+          return a % b;
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform mod operation with array operands of different lengths";
           }
-        }
-        if (numbersOnly) {
-          _results = [];
-          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
-            _results.push(Math.max(a[i], b[i]));
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] % b[i]);
+            }
+            return _results;
+          } else {
+            return "mod(" + (glsl.vecLit(a)) + "," + (glsl.vecLit(b)) + ")";
           }
-          return _results;
+        } else if (typeof a === 'number') {
+          switch (a) {
+            case 0:
+              return 0;
+            default:
+              return "mod(" + (glsl.floatLit(a)) + "," + b + ")";
+          }
+        } else if (typeof b === 'number') {
+          switch (b) {
+            case 0:
+              return NaN;
+            default:
+              return "mod(" + a + "," + (glsl.floatLit(b)) + ")";
+          }
         } else {
-          return "max(vec3(" + a + "), vec3(" + b + "))";
+          return "mod(" + a + "," + b + ")";
         }
-      } else {
-        throw "Operands passed to the max operation have incorrect types.";
-      }
-    },
-    maxi: function(a, b) {
-      var i, numbersOnly, _ref, _ref2, _ref3, _ref4, _results;
-      if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
-        return Math.max(a, b);
-      } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
-        return "max(" + a + ", " + b + ")";
-      } else if (typeof a === 'string' || typeof b === 'string') {
-        return "max(" + a + ", " + b + ")";
-      } else if (Array.isArray(a && Array.isArray(b))) {
-        if (a.length !== b.length) {
-          throw "Cannot perform operation with arrays of different lengths";
-        }
-        numbersOnly = true;
-        for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
-          if (typeof a[i] !== 'number' || typeof b[i] !== 'number') {
-            numbersOnly = false;
-            break;
+      },
+      div: function(a, b) {
+        if (typeof a === 'number' && typeof b === 'number') {
+          return a / b;
+        } else if (typeof a === 'number') {
+          switch (a) {
+            case 0:
+              return 0;
+            default:
+              return "" + (glsl.floatLit(a)) + " / " + b;
           }
-        }
-        if (numbersOnly) {
-          _results = [];
-          for (i = 0, _ref4 = a.length; 0 <= _ref4 ? i < _ref4 : i > _ref4; 0 <= _ref4 ? i++ : i--) {
-            _results.push(Math.max(a[i], b[i]));
+        } else if (typeof b === 'number') {
+          switch (b) {
+            case 0:
+              return "" + a + " / 0.0";
+            default:
+              return "" + a + " / " + (glsl.floatLit(b));
           }
-          return _results;
         } else {
-          return "max(vec3(" + a + "), vec3(" + b + "))";
+          return "" + a + " / " + b;
         }
-      } else {
-        throw "Operands passed to the max operation have incorrect types.";
-      }
-    },
-    literal: function(a) {
-      if (typeof a === 'string') {
-        return a;
-      } else if (typeof a === 'number') {
-        return glsl.floatLit(a);
-      } else if (Array.isArray(a)) {
-        return glsl.vec3Lit(a);
-      }
-    },
-    floatLit: function(a) {
-      if (typeof a === 'string') {
-        return a;
-      } else {
-        if ((a | 0) === a) {
-          return a + '.0';
+      },
+      add: function(a, b) {
+        if (typeof a === 'number' && typeof b === 'number') {
+          return a + b;
+        } else if (typeof a === 'number') {
+          switch (a) {
+            case 0:
+              return b;
+            default:
+              return "" + (glsl.floatLit(a)) + " + " + b;
+          }
+        } else if (typeof b === 'number') {
+          return glsl.add(b, a);
         } else {
+          return "" + a + " + " + b;
+        }
+      },
+      sub: function(a, b) {
+        if (typeof a === 'number' && typeof b === 'number') {
+          return a - b;
+        } else if (typeof a === 'number') {
+          switch (a) {
+            case 0:
+              return glsl.neg(b);
+            default:
+              return "" + (glsl.floatLit(a)) + " - " + b;
+          }
+        } else if (typeof b === 'number') {
+          switch (b) {
+            case 0:
+              return a;
+            default:
+              return "" + a + " - " + (glsl.floatLit(b));
+          }
+        } else {
+          return "" + a + " - " + b;
+        }
+      },
+      neg: function(a) {
+        if (typeof a === 'number') {
+          return -a;
+        } else {
+          return "-" + a;
+        }
+      },
+      min: function(a, b) {
+        var i, _ref, _ref2, _ref3, _results;
+        if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+          return Math.min(a, b);
+        } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+          return "min(" + a + ", " + b + ")";
+        } else if (typeof a === 'string') {
+          return "min(" + a + ", " + (glsl.literal(b)) + ")";
+        } else if (typeof b === 'string') {
+          return "min(" + (glsl.literal(a)) + ", " + b + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform min operation with array operands of different lengths";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+              _results.push(Math.min(a[i], b[i]));
+            }
+            return _results;
+          } else {
+            return "min(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+          }
+        } else {
+          throw "Operands passed to the min operation have incorrect types.";
+        }
+      },
+      max: function(a, b) {
+        var i, _ref, _ref2, _ref3, _results;
+        if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+          return Math.max(a, b);
+        } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+          return "max(" + a + ", " + b + ")";
+        } else if (typeof a === 'string') {
+          return "max(" + a + ", " + (glsl.literal(b)) + ")";
+        } else if (typeof b === 'string') {
+          return "max(" + (glsl.literal(a)) + ", " + b + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform operation with arrays of different lengths";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+              _results.push(Math.max(a[i], b[i]));
+            }
+            return _results;
+          } else {
+            return "max(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+          }
+        } else {
+          throw "Operands passed to the max operation have incorrect types.";
+        }
+      },
+      mini: function(a, b) {
+        var i, _ref, _ref2, _ref3, _results;
+        if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+          return Math.min(a, b);
+        } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+          return "min(" + a + ", " + b + ")";
+        } else if (typeof a === 'string' || typeof b === 'string') {
+          return "max(" + a + ", " + b + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform operation with arrays of different lengths";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+              _results.push(Math.max(a[i], b[i]));
+            }
+            return _results;
+          } else {
+            return "max(vec3(" + a + "), vec3(" + b + "))";
+          }
+        } else {
+          throw "Operands passed to the max operation have incorrect types.";
+        }
+      },
+      maxi: function(a, b) {
+        var i, _ref, _ref2, _ref3, _results;
+        if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
+          return Math.max(a, b);
+        } else if ((typeof a === (_ref2 = typeof b) && _ref2 === 'string')) {
+          return "max(" + a + ", " + b + ")";
+        } else if (typeof a === 'string' || typeof b === 'string') {
+          return "max(" + a + ", " + b + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform operation with arrays of different lengths";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+              _results.push(Math.max(a[i], b[i]));
+            }
+            return _results;
+          } else {
+            return "max(vec3(" + a + "), vec3(" + b + "))";
+          }
+        } else {
+          throw "Operands passed to the max operation have incorrect types.";
+        }
+      },
+      literal: function(a) {
+        if (typeof a === 'string') {
           return a;
+        } else if (typeof a === 'number') {
+          return glsl.floatLit(a);
+        } else if (Array.isArray(a)) {
+          return glsl.vecLit(a);
+        }
+      },
+      floatLit: function(a) {
+        if (typeof a === 'string') {
+          return a;
+        } else {
+          if ((a | 0) === a) {
+            return a + '.0';
+          } else {
+            return a;
+          }
+        }
+      },
+      vecLit: function(a) {
+        if (a.length > 1 && a.length < 5) {
+          return glsl["vec" + a.length + "Lit"](a);
+        } else {
+          throw "Cannot create vector literal with length " + a.length + ".";
+        }
+      },
+      vec2Lit: function(a) {
+        if (typeof a === 'string') {
+          return a;
+        } else if (typeof a === 'number') {
+          return "vec2(" + (glsl.floatLit(a)) + ")";
+        } else {
+          return "vec2(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + ")";
+        }
+      },
+      vec3Lit: function(a) {
+        if (typeof a === 'string') {
+          return a;
+        } else if (typeof a === 'number') {
+          return "vec3(" + (glsl.floatLit(a)) + ")";
+        } else {
+          return "vec3(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + ")";
+        }
+      },
+      vec4Lit: function(a) {
+        if (typeof a === 'string') {
+          return a;
+        } else if (typeof a === 'number') {
+          return "vec4(" + (glsl.floatLit(a)) + ")";
+        } else {
+          return "vec4(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + "," + (glsl.floatLit(a[3])) + ")";
         }
       }
-    },
-    vec3Lit: function(a) {
-      if (typeof a === 'string') {
-        return a;
-      } else if (typeof a === 'number') {
-        return "vec3(" + (glsl.floatLit(a)) + ")";
-      } else {
-        return "vec3(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + ")";
-      }
-    }
-  };
+    };
+  })();
 
   glslLibrary = {
     distanceFunctions: {
@@ -1199,7 +1242,7 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var index, limits, o, offsets, repeatHalfOffsets, repeatInfinite, repeatOffsets, repeatRO, ro;
+        var index, limits, o, offsets, repeatHalfOffsets, repeatInfinite, repeatOffsets, repeatParity, repeatRO, ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         offsets = (function() {
           var _len, _ref, _results;
@@ -1223,8 +1266,9 @@ mecha.generator =
         })();
         repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
         repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
-        repeatInfinite = glslCompiler.preludeAdd(flags.glslPrelude, "(mod(" + ro + " + " + repeatHalfOffsets + ", " + repeatOffsets + ") - " + repeatHalfOffsets + ")");
-        repeatRO = "" + repeatInfinite + " + step(" + (glsl.vec3Lit(limits)) + " - " + repeatHalfOffsets + ", abs(" + ro + ")) * Infinity";
+        repeatParity = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mod(glsl.vec3Lit(node.attr.count), 2.0));
+        repeatInfinite = glslCompiler.preludeAdd(flags.glslPrelude, "(mod(" + ro + " + " + (glsl.mul(repeatHalfOffsets, repeatParity)) + ", " + repeatOffsets + ") - " + repeatHalfOffsets + ")");
+        repeatRO = "" + repeatInfinite + " + step(" + (glsl.mul(glsl.vec3Lit(limits), 0.5)) + ", abs(" + ro + ")) * Infinity";
         glslCompiler.preludePush(flags.glslPrelude, repeatRO);
       },
       material: function(stack, node, flags) {
