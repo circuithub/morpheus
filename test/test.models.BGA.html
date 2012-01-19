@@ -17,7 +17,7 @@
 // See https://gist.github.com/82b35723a7b65f558356
 
 var chipDimensions = range("Chip Dimensions", [0.8, 0.8, 0.2], [0.5,0.5,0.2], [1.0,1.0,0.5]), // assuming we're working in centimeters
-    balls = range("Balls", [1,1], [1,1], [10,10], [1,1]),
+    ballCount = range("Ball Count", [3,3], [1,1], [10,10], [1,1]),
     ballPitch  = range("Ball Pitch", 0.1, 0.1, 5.0), // Could also calculate this relative to chipDimensions...
     ballRadius = range("Ball Radius", 0.05, 0.02, 0.15),
     alignMarkRadius = range("Alignment Mark Radius", 0.075, 0.075, 0.2),
@@ -30,7 +30,7 @@ difference(
   .translate({ offset: [chipDimensions.index(0).div(2.0).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(1).div(2.0).sub(alignMarkRadius).sub(borderGap), 0.0] })
 )
 .material({ color: [0.1, 0.1, 0.1] }),
-repeat({ count: [4, 3, 1], offset: [0.2, 0.2, 0.0] },
+repeat({ count: [ballCount.index(0), ballCount.index(1), 1], offset: [0.2, 0.2, 0.0] },
   sphere({ radius: ballRadius })
 )
 .material({ color: [0.8, 0.8, 0.8] })

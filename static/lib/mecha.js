@@ -1250,7 +1250,7 @@ mecha.generator =
           _results = [];
           for (index = 0, _len = _ref.length; index < _len; index++) {
             o = _ref[index];
-            _results.push(node.attr.count[index] > 1 ? o : 0.0);
+            _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? o : 0.0);
           }
           return _results;
         })();
@@ -1260,7 +1260,7 @@ mecha.generator =
           _results = [];
           for (index = 0, _len = _ref.length; index < _len; index++) {
             o = _ref[index];
-            _results.push(node.attr.count[index] > 1 ? glsl.mul(glsl.maxi(1, node.attr.count[index]), o) : Infinity);
+            _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? glsl.mul(glsl.max(1, node.attr.count[index]), o) : Infinity);
           }
           return _results;
         })();
