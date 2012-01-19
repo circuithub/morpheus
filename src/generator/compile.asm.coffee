@@ -28,13 +28,13 @@ compileASM = (concreteSolidModel) ->
         #  val: node.attr.dimensions[2] * -0.5
         #  axis: 2
         asm.halfspace 
-          val: glsl.mul(glsl.subscript(node.attr.dimensions,0), 0.5)
+          val: glsl.mul (glsl.index node.attr.dimensions, 0), 0.5
           axis: 0
         asm.halfspace 
-          val: glsl.mul(glsl.subscript(node.attr.dimensions,1), 0.5)
+          val: glsl.mul (glsl.index node.attr.dimensions, 1), 0.5
           axis: 1
         asm.halfspace 
-          val: glsl.mul(glsl.subscript(node.attr.dimensions,2), 0.5)
+          val: glsl.mul (glsl.index node.attr.dimensions, 2), 0.5
           axis: 2
       ]
       # TODO: Implement chamfer

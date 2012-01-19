@@ -487,13 +487,13 @@ mecha.generator =
         var halfspaces;
         halfspaces = [
           asm.halfspace({
-            val: glsl.mul(glsl.subscript(node.attr.dimensions, 0), 0.5),
+            val: glsl.mul(glsl.index(node.attr.dimensions, 0), 0.5),
             axis: 0
           }), asm.halfspace({
-            val: glsl.mul(glsl.subscript(node.attr.dimensions, 1), 0.5),
+            val: glsl.mul(glsl.index(node.attr.dimensions, 1), 0.5),
             axis: 1
           }), asm.halfspace({
-            val: glsl.mul(glsl.subscript(node.attr.dimensions, 2), 0.5),
+            val: glsl.mul(glsl.index(node.attr.dimensions, 2), 0.5),
             axis: 2
           })
         ];
@@ -736,7 +736,7 @@ mecha.generator =
       return true;
     };
     return api = {
-      subscript: function(a, index) {
+      index: function(a, index) {
         if (Array.isArray(a)) {
           return a[index];
         } else {

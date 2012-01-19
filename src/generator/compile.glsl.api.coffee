@@ -8,7 +8,7 @@ glsl = do ->
     return true
 
   api =
-    subscript: (a, index) ->
+    index: (a, index) ->
       if Array.isArray a
         return a[index]
       else
