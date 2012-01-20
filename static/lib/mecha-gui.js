@@ -132,44 +132,33 @@ mecha.gui =
   };
 
   mouseMove = function(event) {
-    /*
-      # TODO: Get an accurate time measurement since the last mouseMove event
-      # Get the delta position of the mouse over this frame
-      delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]]
-      deltaLength = SceneJS_math_lenVec2 delta
-    
-      # Activate the appropriate mouse dragging mode
-      state.viewport.mouse.leftDragDistance += deltaLength if state.viewport.mouse.leftDown
-      state.viewport.mouse.middleDragDistance += deltaLength if state.viewport.mouse.middleDown
-    
-      if state.viewport.mouse.leftDown and event.which == 1
-        # Calculate the orbit angle to apply to the lookAt
-        orbitAngles = [0.0,0.0]
-        SceneJS_math_mulVec2Scalar delta, constants.camera.orbitSpeedFactor / deltaLength, orbitAngles
-        orbitAngles = [
-          Math.clamp orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed
-          Math.clamp orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed
-        ]
-        # Guard against bad delta values
-        orbitAngles[0] = 0.0 if (isNaN orbitAngles[0]) or (Math.abs orbitAngles[0]) == Infinity
-        orbitAngles[1] = 0.0 if (isNaN orbitAngles[1]) or (Math.abs orbitAngles[1]) == Infinity
-        orbitLookAtNode (state.scene.findNode 'main-lookAt'), orbitAngles, [0.0,0.0,1.0]
-    
-      state.viewport.mouse.last = [event.clientX, event.clientY]
-    */
+    var delta, deltaLength, orbitAngles;
+    delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
+    deltaLength = gl.vec2.length(delta);
+    if (state.viewport.mouse.leftDown) {
+      state.viewport.mouse.leftDragDistance += deltaLength;
+    }
+    if (state.viewport.mouse.middleDown) {
+      state.viewport.mouse.middleDragDistance += deltaLength;
+    }
+    if (state.viewport.mouse.leftDown && event.which === 1) {
+      orbitAngles = [0.0, 0.0];
+      gl.vec2.mul(orbitAngles, delta, constants.camera.orbitSpeedFactor / deltaLength);
+      orbitAngles = [Math.clamp(orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed), Math.clamp(orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed)];
+      if ((isNaN(orbitAngles[0])) || (Math.abs(orbitAngles[0])) === Infinity) {
+        orbitAngles[0] = 0.0;
+      }
+      if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
+        orbitAngles[1] = 0.0;
+      }
+    }
+    return state.viewport.mouse.last = [event.clientX, event.clientY];
   };
 
   mouseWheel = function(event) {
-    /*
-      # TODO: When the camera projection mode is ortho then this will need to scale the view
-      # See http://www.javascriptkit.com/javatutors/onmousewheel.shtml
-      # But also note, unfortunately firefox actually appears to give different values of event.detail some times.
-      # It is likely that this is due to a user having changed his scroll speed settings, thus we'll clamp the value to 1 or -1
-      delta = if event.wheelDelta? then event.wheelDelta / -120.0 else Math.clamp event.detail, -1.0, 1.0
-    
-      zoomDistance = delta * constants.camera.zoomSpeedFactor #* zoomLimits[1] 
-      zoomLookAtNode (state.scene.findNode 'main-lookAt'), zoomDistance #, zoomLimits
-    */
+    var delta, zoomDistance;
+    delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
+    return zoomDistance = delta * constants.camera.zoomSpeedFactor;
   };
 
   keyDown = function(event) {};

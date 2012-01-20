@@ -44,6 +44,10 @@ createScene = (context) ->
   return
 
 runScene = (canvas, idleCallback) ->
+  # Setup rendering parameters
+  state.context.viewport 0, 0, canvas.width, canvas.height
+  state.context.clearColor 0.0, 0.0, 0.0, 0.0
+
   # Run the scene with an idle callback function
   callback = ->
     if gl.update()
@@ -52,11 +56,6 @@ runScene = (canvas, idleCallback) ->
     else
       idleCallback()
     self.nextFrame = window.requestAnimationFrame callback, canvas
-  
-  # Setup 
-  state.context.viewport 0, 0, canvas.width, canvas.height
-  state.context.clearColor 0.0, 0.0, 0.0, 0.0
-
   state.nextFrame = window.requestAnimationFrame callback, canvas
   return
 

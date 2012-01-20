@@ -37,6 +37,16 @@ glQueryMath.vec2.subtract = function(result,a,b) {
   result[1] = a[1] - b[1];
   return result;
 };
+glQueryMath.vec2.mul = function(result,a,b) {
+  result[0] = a[0] * b;
+  result[1] = a[1] * b;
+  return result;
+};
+glQueryMath.vec2.div = function(result,a,b) {
+  result[0] = a[0] / b;
+  result[1] = a[1] / b;
+  return result;
+};
 glQueryMath.vec2.neg = function(result,a) {
   result[0] = -a[0];
   result[1] = -a[1];
@@ -108,6 +118,20 @@ glQueryMath.vec4.subtract = function(result,a,b) {
   result[1] = a[1] - b[1];
   result[2] = a[2] - b[2];
   result[3] = a[3] - b[3];
+  return result;
+};
+glQueryMath.vec4.mul = function(result,a,b) {
+  result[0] = a[0] * b;
+  result[1] = a[1] * b;
+  result[2] = a[2] * b;
+  result[3] = a[3] * b;
+  return result;
+};
+glQueryMath.vec4.div = function(result,a,b) {
+  result[0] = a[0] / b;
+  result[1] = a[1] / b;
+  result[2] = a[2] / b;
+  result[3] = a[3] / b;
   return result;
 };
 glQueryMath.vec4.neg = function(result,a) {
