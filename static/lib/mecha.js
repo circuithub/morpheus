@@ -743,6 +743,49 @@ mecha.generator =
           return "" + a + "[" + index + "]";
         }
       },
+      dot: function(a, b) {
+        var i, _ref, _results;
+        if (typeof a === 'string' || typeof b === 'string') {
+          return "dot(" + (glsl.literal(a)) + ", " + (glsl.literal(b)) + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform dot product operation with array operands of different lengths.";
+          }
+          if (a.length < 2 || a.length > 4) {
+            throw "Cannot perform dot product operation on vectors of " + a.length + " dimensions.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] * b[i]);
+            }
+            return _results;
+          } else {
+            return "dot(" + (glsl.vecLit(a)) + ", " + (glsl.vecLit(b)) + ")";
+          }
+        } else {
+          throw "Cannot perform dot product operation on operands with types '" + (typeof a) + "' and '" + (typeof b) + "'.";
+        }
+      },
+      cross: function(a, b) {
+        if (typeof a === 'string' || typeof b === 'string') {
+          return "cross(" + (glsl.literal(a)) + ", " + (glsl.literal(b)) + ")";
+        } else if (Array.isArray(a && Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform cross product operation with array operands of different lengths.";
+          }
+          if (a.length !== 3) {
+            throw "Cannot perform cross product operation on vectors of " + a.length + " dimensions.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+          } else {
+            return "cross(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(b)) + ")";
+          }
+        } else {
+          throw "Cannot perform cross operation on operands with types '" + (typeof a) + "' and '" + (typeof b) + "'.";
+        }
+      },
       mul: function(a, b) {
         if (typeof a === 'number' && typeof b === 'number') {
           return a * b;
@@ -778,7 +821,7 @@ mecha.generator =
           return a % b;
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform mod operation with array operands of different lengths";
+            throw "Cannot perform mod operation with array operands of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];
@@ -884,7 +927,7 @@ mecha.generator =
           return "min(" + (glsl.literal(a)) + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform min operation with array operands of different lengths";
+            throw "Cannot perform min operation with array operands of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];
@@ -911,7 +954,7 @@ mecha.generator =
           return "max(" + (glsl.literal(a)) + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform operation with arrays of different lengths";
+            throw "Cannot perform operation with arrays of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];
@@ -936,7 +979,7 @@ mecha.generator =
           return "max(" + a + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform operation with arrays of different lengths";
+            throw "Cannot perform operation with arrays of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];
@@ -961,7 +1004,7 @@ mecha.generator =
           return "max(" + a + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform operation with arrays of different lengths";
+            throw "Cannot perform operation with arrays of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];

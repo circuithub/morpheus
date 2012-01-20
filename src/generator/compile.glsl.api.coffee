@@ -13,6 +13,36 @@ glsl = do ->
         return a[index]
       else
         "#{a}[#{index}]"
+
+    dot: (a, b) ->
+      if typeof a == 'string' or typeof b == 'string'
+        "dot(#{glsl.literal a}, #{glsl.literal b})"
+      else if Array.isArray a and Array.isArray b
+        if a.length != b.length
+          throw "Cannot perform dot product operation with array operands of different lengths."
+        if a.length < 2 or a.length > 4
+          throw "Cannot perform dot product operation on vectors of #{a.length} dimensions."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          (a[i] * b[i]) for i in [0...a.length]
+        else
+          "dot(#{glsl.vecLit a}, #{glsl.vecLit b})"
+      else 
+        throw "Cannot perform dot product operation on operands with types '#{typeof a}' and '#{typeof b}'."
+
+    cross: (a, b) ->
+      if typeof a == 'string' or typeof b == 'string'
+        "cross(#{glsl.literal a}, #{glsl.literal b})"
+      else if Array.isArray a and Array.isArray b
+        if a.length != b.length
+          throw "Cannot perform cross product operation with array operands of different lengths."
+        if a.length != 3
+          throw "Cannot perform cross product operation on vectors of #{a.length} dimensions."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] ]
+        else
+          "cross(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
+      else 
+        throw "Cannot perform cross operation on operands with types '#{typeof a}' and '#{typeof b}'."
     
     mul: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
@@ -47,7 +77,7 @@ glsl = do ->
         a % b
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform mod operation with array operands of different lengths"
+          throw "Cannot perform mod operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (a[i] % b[i]) for i in [0...a.length]
         else
@@ -156,7 +186,7 @@ glsl = do ->
         "min(#{glsl.literal a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform min operation with array operands of different lengths"
+          throw "Cannot perform min operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.min a[i], b[i]) for i in [0...a.length]
         else 
@@ -175,7 +205,7 @@ glsl = do ->
         "max(#{glsl.literal a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform operation with arrays of different lengths"
+          throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
@@ -192,7 +222,7 @@ glsl = do ->
         "max(#{a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform operation with arrays of different lengths"
+          throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
@@ -209,7 +239,7 @@ glsl = do ->
         "max(#{a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform operation with arrays of different lengths"
+          throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (Math.max a[i], b[i]) for i in [0...a.length]
         else 
