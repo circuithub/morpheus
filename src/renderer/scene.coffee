@@ -40,6 +40,7 @@ createScene = (context) ->
   .vertexElem(ibo, 6*6, gl.UNSIGNED_SHORT, 0)
   .uniform('view', gl.matrix4.newLookAt([10.0,10.0,10.0], [0.0,0.0,0.0], [0.0,0.0,1.0]))
   .uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0))
+  .uniform('model', state.rotation)
   .triangles()
   return
 

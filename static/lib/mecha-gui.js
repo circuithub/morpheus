@@ -151,6 +151,7 @@ mecha.gui =
       if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
         orbitAngles[1] = 0.0;
       }
+      mecha.renderer.modelRotate('scene', orbitAngles);
     }
     return state.viewport.mouse.last = [event.clientX, event.clientY];
   };

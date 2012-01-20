@@ -57,6 +57,8 @@ mouseMove = (event) ->
 
     # TODO: Replace this....
     #orbitLookAtNode (state.scene.findNode 'main-lookAt'), orbitAngles, [0.0,0.0,1.0]
+    
+    mecha.renderer.modelRotate 'scene', orbitAngles
 
   state.viewport.mouse.last = [event.clientX, event.clientY]
 

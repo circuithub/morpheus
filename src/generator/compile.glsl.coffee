@@ -36,13 +36,14 @@ compileGLSL = (abstractSolidModel, params) ->
     const vec3 sceneTranslation = vec3(#{sceneTranslation});
     uniform mat4 projection;
     uniform mat4 view;
+    uniform mat3 model;
     attribute vec3 position;
     varying vec3 modelPosition;
     #{if usePerspectiveProjection then "varying vec3 viewPosition;" else ""}
     void main(void) {
       modelPosition = position;
       #{if usePerspectiveProjection then "viewPosition = (view * vec4(position, 1.0)).xyz;" else ""}
-      gl_Position = projection * view * vec4(position, 1.0);
+      gl_Position = projection * view * vec4(model * position, 1.0);
     }
     
     """

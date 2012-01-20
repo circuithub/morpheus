@@ -89,9 +89,9 @@ mecha.renderer =
     }
   };
 
-  modelRotate = function(modelName, axis, angle) {
-    gl.matrix3.mul(state.rotation, state.rotation, gl.matrix3.newAxisRotation(axis, angle));
-    return (gl(modelName)).uniform('rotation', state.rotation);
+  modelRotate = function(modelName, angles) {
+    gl.matrix3.rotateXZ(state.rotation, state.rotation, angles);
+    return (gl(modelName)).uniform('model', state.rotation);
   };
 
   createScene = function(context) {
@@ -107,7 +107,7 @@ mecha.renderer =
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
     gl.scene({
       'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).triangles();
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
   };
 
   runScene = function(canvas, idleCallback) {
