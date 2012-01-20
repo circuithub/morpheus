@@ -27,19 +27,19 @@ MathMemoryPool = {
 };
 
 glQueryMath.vec2 = {};
-glQueryMath.vec2.add = function(a,b,dest) {
-  dest[0] = a[0] + b[0]; 
-  dest[1] = a[1] + b[1];
-  return dest;
+glQueryMath.vec2.add = function(result,a,b) {
+  result[0] = a[0] + b[0]; 
+  result[1] = a[1] + b[1];
+  return result;
 };
-glQueryMath.vec2.subtract = function(a,b,dest) {
-  dest[0] = a[0] - b[0];
-  dest[1] = a[1] - b[1];
-  return dest;
+glQueryMath.vec2.subtract = function(result,a,b) {
+  result[0] = a[0] - b[0];
+  result[1] = a[1] - b[1];
+  return result;
 };
-glQueryMath.vec2.neg = function(a,dest) {
-  dest[0] = -a[0];
-  dest[1] = -a[1];
+glQueryMath.vec2.neg = function(result,a) {
+  result[0] = -a[0];
+  result[1] = -a[1];
 };
 glQueryMath.vec2.dot = function(a,b) {
   return a[0] * b[0] + a[1] * b[1];
@@ -49,72 +49,72 @@ glQueryMath.vec2.length = function(a) {
 };
 
 glQueryMath.vec3 = {};
-glQueryMath.vec3.add = function(dest,a,b) {
-  dest[0] = a[0] + b[0]; 
-  dest[1] = a[1] + b[1];
-  dest[2] = a[2] + b[2]; 
-  return dest;
+glQueryMath.vec3.add = function(result,a,b) {
+  result[0] = a[0] + b[0]; 
+  result[1] = a[1] + b[1];
+  result[2] = a[2] + b[2]; 
+  return result;
 };
-glQueryMath.vec3.sub = function(dest,a,b) {
-  dest[0] = a[0] - b[0];
-  dest[1] = a[1] - b[1];
-  dest[2] = a[2] - b[2];
-  return dest;
+glQueryMath.vec3.sub = function(result,a,b) {
+  result[0] = a[0] - b[0];
+  result[1] = a[1] - b[1];
+  result[2] = a[2] - b[2];
+  return result;
 };
-glQueryMath.vec3.mul = function(dest,a,b) {
-  dest[0] = a[0] * b;
-  dest[1] = a[1] * b;
-  dest[2] = a[2] * b;
-  return dest;
+glQueryMath.vec3.mul = function(result,a,b) {
+  result[0] = a[0] * b;
+  result[1] = a[1] * b;
+  result[2] = a[2] * b;
+  return result;
 };
-glQueryMath.vec3.div = function(dest,a,b) {
-  dest[0] = a[0] / b;
-  dest[1] = a[1] / b;
-  dest[2] = a[2] / b;
-  return dest;
+glQueryMath.vec3.div = function(result,a,b) {
+  result[0] = a[0] / b;
+  result[1] = a[1] / b;
+  result[2] = a[2] / b;
+  return result;
 };
-glQueryMath.vec3.neg = function(dest,a) {
-  dest[0] = -a[0];
-  dest[1] = -a[1];
-  dest[2] = -a[2];
-  return dest;
+glQueryMath.vec3.neg = function(result,a) {
+  result[0] = -a[0];
+  result[1] = -a[1];
+  result[2] = -a[2];
+  return result;
 };
 glQueryMath.vec3.dot = function(a,b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 };
-glQueryMath.vec3.cross = function(dest,a,b) {
-  dest[0] = a[1] * b[2] - a[2] * b[1];
-  dest[1] = a[2] * b[0] - a[0] * b[2];
-  dest[2] = a[0] * b[1] - a[1] * b[0];
-  return dest;
+glQueryMath.vec3.cross = function(result,a,b) {
+  result[0] = a[1] * b[2] - a[2] * b[1];
+  result[1] = a[2] * b[0] - a[0] * b[2];
+  result[2] = a[0] * b[1] - a[1] * b[0];
+  return result;
 };
 glQueryMath.vec3.length = function(a) {
   return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 };
-glQueryMath.vec3.normalize = function(dest,a) {
-  return glQueryMath.vec3.div(dest, a, glQueryMath.vec3.length(a));
+glQueryMath.vec3.normalize = function(result,a) {
+  return glQueryMath.vec3.div(result, a, glQueryMath.vec3.length(a));
 };
 
 glQueryMath.vec4 = {};
-glQueryMath.vec4.add = function(a,b,dest) {
-  dest[0] = a[0] + b[0]; 
-  dest[1] = a[1] + b[1];
-  dest[2] = a[2] + b[2]; 
-  dest[3] = a[3] + b[3];
-  return dest;
+glQueryMath.vec4.add = function(result,a,b) {
+  result[0] = a[0] + b[0]; 
+  result[1] = a[1] + b[1];
+  result[2] = a[2] + b[2]; 
+  result[3] = a[3] + b[3];
+  return result;
 };
-glQueryMath.vec4.subtract = function(a,b,dest) {
-  dest[0] = a[0] - b[0];
-  dest[1] = a[1] - b[1];
-  dest[2] = a[2] - b[2];
-  dest[3] = a[3] - b[3];
-  return dest;
+glQueryMath.vec4.subtract = function(result,a,b) {
+  result[0] = a[0] - b[0];
+  result[1] = a[1] - b[1];
+  result[2] = a[2] - b[2];
+  result[3] = a[3] - b[3];
+  return result;
 };
-glQueryMath.vec4.neg = function(a,dest) {
-  dest[0] = -a[0];
-  dest[1] = -a[1];
-  dest[2] = -a[2];
-  dest[3] = -a[3];
+glQueryMath.vec4.neg = function(result,a) {
+  result[0] = -a[0];
+  result[1] = -a[1];
+  result[2] = -a[2];
+  result[3] = -a[3];
 };
 glQueryMath.vec4.dot = function(a,b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
@@ -124,6 +124,18 @@ glQueryMath.vec4.length = function(a) {
 };
 
 glQueryMath.matrix3 = {};
+
+glQueryMath.matrix3.mul = function(result,a,b) {
+  r[0*3+0] = a[0*3+0] * b[0*3+0] + a[0*3+1] * b[1*3+0] + a[0*3+2] * b[2*3+0];
+  r[0*3+1] = a[0*3+0] * b[0*3+1] + a[0*3+1] * b[1*3+1] + a[0*3+2] * b[2*3+1];
+  r[0*3+2] = a[0*3+0] * b[0*3+2] + a[0*3+1] * b[1*3+2] + a[0*3+2] * b[2*3+2];
+  r[1*3+0] = a[1*3+0] * b[0*3+0] + a[1*3+1] * b[1*3+0] + a[1*3+2] * b[2*3+0];
+  r[1*3+1] = a[1*3+0] * b[0*3+1] + a[1*3+1] * b[1*3+1] + a[1*3+2] * b[2*3+1];
+  r[1*3+2] = a[1*3+0] * b[0*3+2] + a[1*3+1] * b[1*3+2] + a[1*3+2] * b[2*3+2];
+  r[2*3+0] = a[2*3+0] * b[0*3+0] + a[2*3+1] * b[1*3+0] + a[2*3+2] * b[2*3+0];
+  r[2*3+1] = a[2*3+0] * b[0*3+1] + a[2*3+1] * b[1*3+1] + a[2*3+2] * b[2*3+1];
+  r[2*3+2] = a[2*3+0] * b[0*3+2] + a[2*3+1] * b[1*3+2] + a[2*3+2] * b[2*3+2];
+}
 // Module for setting 3x3 matrix values
 
 // Axis-angle rotation matrix using the right hand rule
