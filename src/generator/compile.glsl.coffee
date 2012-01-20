@@ -104,6 +104,7 @@ compileGLSL = (abstractSolidModel, params) ->
     #endif
     const float Infinity = (1.0/0.0);
     uniform mat4 view;
+    uniform mat3 model;
     varying vec3 modelPosition;
     #{if usePerspectiveProjection then "varying vec3 viewPosition;" else ""}
 
@@ -137,7 +138,7 @@ compileGLSL = (abstractSolidModel, params) ->
       const int steps = 64;
       const float threshold = 0.005;
       vec3 rayOrigin = modelPosition;
-      vec3 rayDir = (vec4(0.0,0.0,-1.0,0.0) * view).xyz;
+      vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;
       vec3 prevRayOrigin = rayOrigin;
       bool hit = false;
       float dist = Infinity;
