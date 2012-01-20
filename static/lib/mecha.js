@@ -1242,34 +1242,48 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var index, limits, o, offsets, repeatHalfOffsets, repeatInfinite, repeatOffsets, repeatParity, repeatRO, ro;
+        var index, limits, o, offsets, repeatHalfOffsets, repeatOffsets, repeatParity, ro;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
-        offsets = (function() {
-          var _len, _ref, _results;
-          _ref = node.attr.offset;
-          _results = [];
-          for (index = 0, _len = _ref.length; index < _len; index++) {
-            o = _ref[index];
-            _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? o : 0.0);
-          }
-          return _results;
-        })();
-        limits = (function() {
-          var _len, _ref, _results;
-          _ref = node.attr.offset;
-          _results = [];
-          for (index = 0, _len = _ref.length; index < _len; index++) {
-            o = _ref[index];
-            _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? glsl.mul(glsl.max(1, node.attr.count[index]), o) : Infinity);
-          }
-          return _results;
-        })();
-        repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
-        repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
-        repeatParity = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mod(glsl.vec3Lit(node.attr.count), 2.0));
-        repeatInfinite = glslCompiler.preludeAdd(flags.glslPrelude, "(mod(" + ro + " + " + (glsl.mul(repeatHalfOffsets, repeatParity)) + ", " + repeatOffsets + ") - " + repeatHalfOffsets + ")");
-        repeatRO = "" + repeatInfinite + " + step(" + (glsl.mul(glsl.vec3Lit(limits), 0.5)) + ", abs(" + ro + ")) * Infinity";
-        glslCompiler.preludePush(flags.glslPrelude, repeatRO);
+        if (!(node.attr.count != null)) {
+          offsets = (function() {
+            var _i, _len, _ref, _results;
+            _ref = node.attr.offset;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              o = _ref[_i];
+              _results.push(o);
+            }
+            return _results;
+          })();
+          repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
+          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
+          glslCompiler.preludePush(flags.glslPrelude, "mod(abs(" + ro + " + " + repeatHalfOffsets + "), " + repeatOffsets + ")}");
+        } else {
+          offsets = (function() {
+            var _len, _ref, _results;
+            _ref = node.attr.offset;
+            _results = [];
+            for (index = 0, _len = _ref.length; index < _len; index++) {
+              o = _ref[index];
+              _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? o : 0.0);
+            }
+            return _results;
+          })();
+          repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
+          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
+          limits = (function() {
+            var _len, _ref, _results;
+            _ref = node.attr.offset;
+            _results = [];
+            for (index = 0, _len = _ref.length; index < _len; index++) {
+              o = _ref[index];
+              _results.push(glsl.mul(glsl.max(1, node.attr.count[index]), o));
+            }
+            return _results;
+          })();
+          repeatParity = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mod(glsl.vec3Lit(node.attr.count), 2.0));
+          glslCompiler.preludePush(flags.glslPrelude, glsl.vec3Lit(100.0));
+        }
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.push(flags.materials.length);
