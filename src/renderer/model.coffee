@@ -31,6 +31,6 @@ modelArguments = (modelName, args) ->
   return
 
 modelRotate = (modelName, angles) ->
-  gl.matrix3.rotateXZ state.rotation, state.rotation, angles
+  gl.matrix3.rotateZY state.rotation, state.rotation, angles
   (gl modelName).uniform 'model', state.rotation
 
