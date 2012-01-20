@@ -1167,7 +1167,7 @@ mecha.generator =
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          mat = gl.setMatrix3AxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
+          mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
@@ -2010,7 +2010,7 @@ mecha.renderer =
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
     gl.scene({
       'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.setMatrix4LookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.setMatrix4Ortho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).triangles();
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).triangles();
   };
 
   runScene = function(canvas, idleCallback) {

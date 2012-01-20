@@ -34,7 +34,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
       if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
-        mat = gl.setMatrix3AxisRotation node.attr.axis, -math_degToRad * node.attr.angle
+        mat = gl.matrix3.newAxisRotation node.attr.axis, -math_degToRad * node.attr.angle
         glslCompiler.preludePush flags.glslPrelude, "(mat3(#{mat}) * #{ro})"
       else
         # Modify only the components that are needed (yz / xz / xy)

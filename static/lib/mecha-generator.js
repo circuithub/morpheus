@@ -1167,7 +1167,7 @@ mecha.generator =
         var components, cosAngle, mat, ro, sinAngle;
         ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
         if (Array.isArray(node.attr.axis)) {
-          mat = gl.setMatrix3AxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
+          mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
