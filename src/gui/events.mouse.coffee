@@ -2,9 +2,6 @@
 # Program state should not be manipulated outside events files
 
 mouseDown = (event) ->
-  if not state.scene?
-    return
-  
   state.viewport.mouse.last = [event.clientX, event.clientY]
   
   # Activate the appropriate mouse button mode
@@ -14,6 +11,8 @@ mouseDown = (event) ->
 
   # TODO: Replace this...
   ### Pick the object under the mouse
+  if not state.scene?
+    return
   if event.which == 1 # Left mouse button
     coords = mouseCoordsWithinElement event
     state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]

@@ -2038,7 +2038,6 @@ mecha.gui =
   windowResize = function() {};
 
   mouseDown = function(event) {
-    if (!(state.scene != null)) return;
     state.viewport.mouse.last = [event.clientX, event.clientY];
     switch (event.which) {
       case 1:
@@ -2047,6 +2046,8 @@ mecha.gui =
         return state.viewport.mouse.middleDown = true;
     }
     /* Pick the object under the mouse
+    if not state.scene?
+      return
     if event.which == 1 # Left mouse button
       coords = mouseCoordsWithinElement event
       state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]
