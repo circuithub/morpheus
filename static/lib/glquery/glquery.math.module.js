@@ -126,6 +126,7 @@ glQueryMath.vec4.length = function(a) {
 glQueryMath.matrix3 = {};
 
 glQueryMath.matrix3.mul = function(result,a,b) {
+  var r = MathMemoryPool.matrix3[0];
   r[0*3+0] = a[0*3+0] * b[0*3+0] + a[0*3+1] * b[1*3+0] + a[0*3+2] * b[2*3+0];
   r[0*3+1] = a[0*3+0] * b[0*3+1] + a[0*3+1] * b[1*3+1] + a[0*3+2] * b[2*3+1];
   r[0*3+2] = a[0*3+0] * b[0*3+2] + a[0*3+1] * b[1*3+2] + a[0*3+2] * b[2*3+2];
@@ -135,6 +136,8 @@ glQueryMath.matrix3.mul = function(result,a,b) {
   r[2*3+0] = a[2*3+0] * b[0*3+0] + a[2*3+1] * b[1*3+0] + a[2*3+2] * b[2*3+0];
   r[2*3+1] = a[2*3+0] * b[0*3+1] + a[2*3+1] * b[1*3+1] + a[2*3+2] * b[2*3+1];
   r[2*3+2] = a[2*3+0] * b[0*3+2] + a[2*3+1] * b[1*3+2] + a[2*3+2] * b[2*3+2];
+  for (var i = 0; i < 9; ++i)
+    result[i] = r[i];
 }
 // Module for setting 3x3 matrix values
 
