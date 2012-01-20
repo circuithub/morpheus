@@ -30,3 +30,7 @@ modelArguments = (modelName, args) ->
     (gl modelName).uniform name, val
   return
 
+modelRotate = (modelName, axis, angle) ->
+  gl.matrix3.mul state.rotation, state.rotation, (gl.matrix3.newAxisRotation axis, angle)
+  (gl modelName).uniform 'rotation', state.rotation
+

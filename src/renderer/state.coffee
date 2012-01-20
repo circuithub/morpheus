@@ -9,4 +9,9 @@ state =
     program: null
     vs: null
     fs: null
+  rotation: [
+    1.0,0.0,0.0,
+    0.0,1.0,0.0,
+    0.0,0.0,1.0
+  ]
 

@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelShaders, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
+  var createScene, exports, gl, lookAtToQuaternion, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, modifySubAttr, orbitLookAt, orbitLookAtNode, recordToVec3, recordToVec4, runScene, state, vec3ToRecord, vec4ToRecord, zoomLookAt, zoomLookAtNode;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -48,7 +48,8 @@ mecha.renderer =
       program: null,
       vs: null,
       fs: null
-    }
+    },
+    rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
   };
 
   modifySubAttr = function(node, attr, subAttr, value) {
@@ -208,6 +209,11 @@ mecha.renderer =
     }
   };
 
+  modelRotate = function(modelName, axis, angle) {
+    gl.matrix3.mul(state.rotation, state.rotation, gl.matrix3.newAxisRotation(axis, angle));
+    return (gl(modelName)).uniform('rotation', state.rotation);
+  };
+
   createScene = function(context) {
     var ibo, indices, positions, vbo;
     state.context = context;
@@ -249,6 +255,8 @@ mecha.renderer =
   exports.modelShaders = modelShaders;
 
   exports.modelArguments = modelArguments;
+
+  exports.modelRotate = modelRotate;
 
   return exports;
 
