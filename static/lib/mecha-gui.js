@@ -121,7 +121,6 @@ mecha.gui =
   };
 
   mouseUp = function(event) {
-    if (!(state.scene != null)) return;
     switch (event.which) {
       case 1:
         state.viewport.mouse.leftDown = false;

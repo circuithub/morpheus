@@ -19,9 +19,6 @@ mouseDown = (event) ->
   ###
 
 mouseUp = (event) ->
-  if not state.scene?  
-    return
-  
   # De-activate the appropriate mouse button and dragging modes
   switch event.which
     when 1 
