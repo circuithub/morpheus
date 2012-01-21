@@ -32,9 +32,16 @@ glslCompiler.preludePush = (prelude, value, valueType) ->
 glslCompiler.preludePop = (prelude) ->
   return prelude.pop()[0]
 
+# Get the top variable name in the prelude (with safety checks)
+glslCompiler.preludeTop = (prelude) ->
+  if not Array.isArray prelude or prelude.length == 0
+    throw "Could not retrieve top value from prelude."
+  return prelude[prelude.length - 1][0]
+
 # Add a value to the prelude without pushing it onto the stack
 glslCompiler.preludeAdd = (prelude, value, valueType) ->
   name = 'r' + prelude.counter
   prelude.counter += 1
   prelude.code += "  #{if valueType? then valueType else 'vec3'} #{name} = #{value};\n"
   return name
+
