@@ -25,13 +25,13 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       return
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       glslCompiler.preludePush flags.glslPrelude, "#{ro} - vec3(#{node.attr.offset})"
       return
     rotate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
       # Note that we're using the right-hand rules for basis vectors as well as rotations as is the standard convention in physics and math
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
         mat = gl.matrix3.newAxisRotation node.attr.axis, -math_degToRad * node.attr.angle
@@ -61,7 +61,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
     scale: (stack, node, flags) ->
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if Array.isArray node.attr.value
         mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
@@ -69,7 +69,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       return
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       axes = [false, false, false]
       (axes[a] = true) for a in node.attr.axes
       if axes[0] and axes[1] and axes[2]
@@ -80,7 +80,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       return
     repeat: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       #parameterizedCount = false
       #(parameterizedCount = true) for c in node.attr.count where typeof c == 'number'
       if not node.attr.count?
@@ -89,18 +89,20 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
         glslCompiler.preludePush flags.glslPrelude, "mod(abs(#{ro} + #{repeatHalfOffsets}), #{repeatOffsets})}"
       else
-        offsets = ((if typeof node.attr.count[index] == 'string' or node.attr.count[index] > 1 then o else 0.0) for o,index in node.attr.offset)
+        offsets = (o for o in node.attr.offset)
+        #offsets = ((if typeof node.attr.count[index] == 'string' or node.attr.count[index] > 1 then o else 0.0) for o,index in node.attr.offset)
         repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
-        repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
-        limits = ((glsl.mul (glsl.max 1, node.attr.count[index]), o) for o,index in node.attr.offset)
-        repeatParity = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mod (glsl.vec3Lit node.attr.count), 2.0)
-        # TODO: Busy here...
-        #repeatDistance = glsl.floor (glsl.div "abs(#{ro})", repeatOffsets)
+        #repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
+        #limits = ((glsl.mul (glsl.max 1, node.attr.count[index]), o) for o,index in node.attr.offset)
+        #repeatParity = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mod (glsl.vec3Lit node.attr.count), 2.0)
+        repeatCells = glsl.min node.attr.count, glsl.floor (glsl.div "abs(#{ro})", repeatOffsets)
         #glslCompiler.preludePush flags.glslPrelude, repeatInfinite
+        repeatRO = glsl.sub ro, (glsl.mul repeatCells, repeatOffsets)
         #repeatRO = "#{repeatInfinite} + step(#{glsl.mul (glsl.vec3Lit limits), 0.5}, abs(#{ro})) * Infinity"
         #repeatRO = "#{repeatInfinite} + step(#{glsl.mul (glsl.vec3Lit limits), 0.5}, abs(#{ro})) * "
         #repeatRO = "#{repeatInfinite} + step(#{glsl.mul (glsl.vec3Lit limits), 0.5}, abs(#{ro})) * (#{ro} - "
-        glslCompiler.preludePush flags.glslPrelude, glsl.vec3Lit 100.0
+        glslCompiler.preludePush flags.glslPrelude, repeatRO
+        #glslCompiler.preludePush flags.glslPrelude, glsl.vec3Lit 100.0
       return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
@@ -210,7 +212,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       collectCode codes, node.nodes
 
       # Corner compilation
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       cornersState = 
         codes: []
         hs: shallowClone node.halfSpaces
@@ -306,7 +308,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         return
       
       ###
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if flags.invert
         node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
       else
@@ -315,7 +317,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
 
       ## Generate half-space primitive when it cannot be compiled into a corner
       if typeof node.attr.val == 'string'
-        ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+        ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
         if flags.invert
           node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
         else
@@ -344,7 +346,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
               else
                 # This may occur in special cases where we cannot do normal corner compilation
                 # (Such as a separate transformation on the plane itself - with a wedge node for example)
-                ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+                ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
                 if flags.invert
                   node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
                 else
@@ -353,7 +355,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       # ###
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       planeCoords = ['yz','xz','xy'][node.attr.axis]
       if not flags.invert
         node.code = primitiveCallback (glsl.sub "length(#{ro}.#{planeCoords})", node.attr.radius), flags
@@ -361,7 +363,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         node.code = primitiveCallback (glsl.sub node.attr.radius, "length(#{ro}.#{planeCoords})"), flags
       stack[0].nodes.push node
     sphere: (stack, node, flags) ->
-      ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if not flags.invert
         node.code = primitiveCallback (glsl.sub "length(#{ro})", node.attr.radius), flags
       else

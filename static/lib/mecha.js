@@ -1087,23 +1087,19 @@ mecha.generator =
         }
       },
       literal: function(a) {
-        if (typeof a === 'string') {
-          return a;
-        } else if (typeof a === 'number') {
+        if (typeof a === 'number') {
           return glsl.floatLit(a);
         } else if (Array.isArray(a)) {
           return glsl.vecLit(a);
+        } else {
+          return a;
         }
       },
       floatLit: function(a) {
-        if (typeof a === 'string') {
-          return a;
+        if (typeof a === 'number' && (a | 0) === a) {
+          return a + '.0';
         } else {
-          if ((a | 0) === a) {
-            return a + '.0';
-          } else {
-            return a;
-          }
+          return a;
         }
       },
       vecLit: function(a) {
@@ -1114,30 +1110,30 @@ mecha.generator =
         }
       },
       vec2Lit: function(a) {
-        if (typeof a === 'string') {
-          return a;
-        } else if (typeof a === 'number') {
+        if (typeof a === 'number') {
           return "vec2(" + (glsl.floatLit(a)) + ")";
-        } else {
+        } else if (Array.isArray(a)) {
           return "vec2(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + ")";
+        } else {
+          return a;
         }
       },
       vec3Lit: function(a) {
-        if (typeof a === 'string') {
-          return a;
-        } else if (typeof a === 'number') {
+        if (typeof a === 'number') {
           return "vec3(" + (glsl.floatLit(a)) + ")";
-        } else {
+        } else if (Array.isArray(a)) {
           return "vec3(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + ")";
+        } else {
+          return a;
         }
       },
       vec4Lit: function(a) {
-        if (typeof a === 'string') {
-          return a;
-        } else if (typeof a === 'number') {
+        if (typeof a === 'number') {
           return "vec4(" + (glsl.floatLit(a)) + ")";
-        } else {
+        } else if (Array.isArray(a)) {
           return "vec4(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + "," + (glsl.floatLit(a[3])) + ")";
+        } else {
+          return a;
         }
       }
     };
@@ -1235,6 +1231,13 @@ mecha.generator =
     return prelude.pop()[0];
   };
 
+  glslCompiler.preludeTop = function(prelude) {
+    if (!Array.isArray(prelude || prelude.length === 0)) {
+      throw "Could not retrieve top value from prelude.";
+    }
+    return prelude[prelude.length - 1][0];
+  };
+
   glslCompiler.preludeAdd = function(prelude, value, valueType) {
     var name;
     name = 'r' + prelude.counter;
@@ -1270,12 +1273,12 @@ mecha.generator =
       bevel: function(stack, node, flags) {},
       translate: function(stack, node, flags) {
         var ro;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         glslCompiler.preludePush(flags.glslPrelude, "" + ro + " - vec3(" + node.attr.offset + ")");
       },
       rotate: function(stack, node, flags) {
         var components, cosAngle, mat, ro, sinAngle;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (Array.isArray(node.attr.axis)) {
           mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
@@ -1321,7 +1324,7 @@ mecha.generator =
         for (i = 0; i <= 5; i++) {
           node.halfSpaces.push(null);
         }
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (Array.isArray(node.attr.value)) {
           mecha.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
         } else {
@@ -1330,7 +1333,7 @@ mecha.generator =
       },
       mirror: function(stack, node, flags) {
         var a, axes, axesCodes, i, ro, _i, _len, _ref;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         axes = [false, false, false];
         _ref = node.attr.axes;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -1352,8 +1355,8 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var index, limits, o, offsets, repeatHalfOffsets, repeatOffsets, repeatParity, ro;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        var o, offsets, repeatCells, repeatHalfOffsets, repeatOffsets, repeatRO, ro;
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (!(node.attr.count != null)) {
           offsets = (function() {
             var _i, _len, _ref, _results;
@@ -1370,29 +1373,19 @@ mecha.generator =
           glslCompiler.preludePush(flags.glslPrelude, "mod(abs(" + ro + " + " + repeatHalfOffsets + "), " + repeatOffsets + ")}");
         } else {
           offsets = (function() {
-            var _len, _ref, _results;
+            var _i, _len, _ref, _results;
             _ref = node.attr.offset;
             _results = [];
-            for (index = 0, _len = _ref.length; index < _len; index++) {
-              o = _ref[index];
-              _results.push(typeof node.attr.count[index] === 'string' || node.attr.count[index] > 1 ? o : 0.0);
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              o = _ref[_i];
+              _results.push(o);
             }
             return _results;
           })();
           repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
-          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
-          limits = (function() {
-            var _len, _ref, _results;
-            _ref = node.attr.offset;
-            _results = [];
-            for (index = 0, _len = _ref.length; index < _len; index++) {
-              o = _ref[index];
-              _results.push(glsl.mul(glsl.max(1, node.attr.count[index]), o));
-            }
-            return _results;
-          })();
-          repeatParity = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mod(glsl.vec3Lit(node.attr.count), 2.0));
-          glslCompiler.preludePush(flags.glslPrelude, glsl.vec3Lit(100.0));
+          repeatCells = glsl.min(node.attr.count, glsl.floor(glsl.div("abs(" + ro + ")", repeatOffsets)));
+          repeatRO = glsl.sub(ro, glsl.mul(repeatCells, repeatOffsets));
+          glslCompiler.preludePush(flags.glslPrelude, repeatRO);
         }
       },
       material: function(stack, node, flags) {
@@ -1530,7 +1523,7 @@ mecha.generator =
         return _results;
       };
       collectCode(codes, node.nodes);
-      ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+      ro = glslCompiler.preludeTop(flags.glslPrelude);
       cornersState = {
         codes: [],
         hs: shallowClone(node.halfSpaces)
@@ -1638,7 +1631,7 @@ mecha.generator =
           return;
         }
         /*
-              ro = flags.glslPrelude[flags.glslPrelude.length-1][0] # Current ray origin
+              ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
               if flags.invert
                 node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
               else
@@ -1646,7 +1639,7 @@ mecha.generator =
               #
         */
         if (typeof node.attr.val === 'string') {
-          ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+          ro = glslCompiler.preludeTop(flags.glslPrelude);
           if (flags.invert) {
             node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
           } else {
@@ -1677,7 +1670,7 @@ mecha.generator =
                 case 'mirror':
                   continue;
                 default:
-                  ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+                  ro = glslCompiler.preludeTop(flags.glslPrelude);
                   if (flags.invert) {
                     node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
                   } else {
@@ -1692,7 +1685,7 @@ mecha.generator =
       },
       cylinder: function(stack, node, flags) {
         var planeCoords, ro;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         planeCoords = ['yz', 'xz', 'xy'][node.attr.axis];
         if (!flags.invert) {
           node.code = primitiveCallback(glsl.sub("length(" + ro + "." + planeCoords + ")", node.attr.radius), flags);
@@ -1703,7 +1696,7 @@ mecha.generator =
       },
       sphere: function(stack, node, flags) {
         var ro;
-        ro = flags.glslPrelude[flags.glslPrelude.length - 1][0];
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (!flags.invert) {
           node.code = primitiveCallback(glsl.sub("length(" + ro + ")", node.attr.radius), flags);
         } else {
