@@ -17,6 +17,9 @@ glsl = do ->
     floor: (a) ->
       "floor(#{glsl.literal a})"
 
+    abs: (a) ->
+      "abs(#{glsl.literal a})"
+
     dot: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
         "dot(#{a}, #{b})"

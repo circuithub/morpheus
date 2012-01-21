@@ -746,6 +746,9 @@ mecha.generator =
       floor: function(a) {
         return "floor(" + (glsl.literal(a)) + ")";
       },
+      abs: function(a) {
+        return "abs(" + (glsl.literal(a)) + ")";
+      },
       dot: function(a, b) {
         var i, _ref, _results;
         if (typeof a === 'string' || typeof b === 'string') {
@@ -1383,8 +1386,9 @@ mecha.generator =
             return _results;
           })();
           repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
-          repeatCells = glsl.min(node.attr.count, glsl.floor(glsl.div("abs(" + ro + ")", repeatOffsets)));
-          repeatRO = glsl.sub(ro, glsl.mul(repeatCells, repeatOffsets));
+          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
+          repeatCells = glsl.min(node.attr.count, glsl.floor(glsl.div(glsl.abs(ro), repeatOffsets)));
+          repeatRO = glsl.sub(glsl.abs(ro), glsl.sub(glsl.mul(repeatCells, repeatOffsets), repeatHalfOffsets));
           glslCompiler.preludePush(flags.glslPrelude, repeatRO);
         }
       },
