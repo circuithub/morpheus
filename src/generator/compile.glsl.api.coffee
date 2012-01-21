@@ -253,18 +253,18 @@ glsl = do ->
         throw "Operands passed to the max operation have incorrect types."
 
     literal: (a) ->
-      if typeof a == 'string'
-        a
-      else if typeof a == 'number'
+      if typeof a == 'number'
         glsl.floatLit a
       else if Array.isArray a
         glsl.vecLit a
+      else
+        a
       
     floatLit: (a) ->
-      if typeof a == 'string'
-        a
+      if typeof a == 'number' and (a | 0) == a 
+        a + '.0'
       else
-        if (a | 0) == a then a + '.0' else a
+        a
     
     vecLit: (a) ->
       if a.length > 1 and a.length < 5
@@ -273,26 +273,26 @@ glsl = do ->
         throw "Cannot create vector literal with length #{a.length}."
 
     vec2Lit: (a) ->
-      if typeof a == 'string'
-        a
-      else if typeof a == 'number'
+      if typeof a == 'number'
         "vec2(#{glsl.floatLit a})"
-      else
+      else if Array.isArray a
         "vec2(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]})"
+      else
+        a
 
     vec3Lit: (a) ->
-      if typeof a == 'string'
-        a
-      else if typeof a == 'number'
+      if typeof a == 'number'
         "vec3(#{glsl.floatLit a})"
-      else
+      else if Array.isArray a
         "vec3(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]})"
+      else
+        a
 
     vec4Lit: (a) ->
-      if typeof a == 'string'
-        a
-      else if typeof a == 'number'
+      if typeof a == 'number'
         "vec4(#{glsl.floatLit a})"
-      else
+      else if Array.isArray a
         "vec4(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]},#{glsl.floatLit a[3]})"
+      else
+        a
 
