@@ -14,9 +14,12 @@ glsl = do ->
       else
         "#{a}[#{index}]"
 
+    floor: (a) ->
+      "floor(#{glsl.literal a})"
+
     dot: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
-        "dot(#{glsl.literal a}, #{glsl.literal b})"
+        "dot(#{a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform dot product operation with array operands of different lengths."
@@ -31,7 +34,7 @@ glsl = do ->
 
     cross: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
-        "cross(#{glsl.literal a}, #{glsl.literal b})"
+        "cross(#{a}, #{b})"
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
           throw "Cannot perform cross product operation with array operands of different lengths."
@@ -51,33 +54,34 @@ glsl = do ->
         switch a
           when 0 then 0
           when 1 then b
-          when -1 then "-#{b}"
+          when -1 then "-#{glsl.literal b}"
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.floatLit a} * #{b}"
+            "#{glsl.floatLit a} * #{glsl.literal b}"
       else if typeof b == 'number'
         switch b
           when 0 then 0
           when 1 then a
-          when -1 then "-#{a}"
+          when -1 then "-#{glsl.literal a}"
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} * #{glsl.floatLit b}"
+            "#{glsl.literal a} * #{glsl.floatLit b}"
+      else if (Array.isArray a) and (Array.isArray b)
+        if a.length != b.length
+          throw "Cannot perform multiply operation with array operands of different lengths."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          (a[i] * b[i]) for i in [0...a.length]
+        else
+          "#{glsl.vecLit a} * #{glsl.vecLit b}"
       else 
-        "#{a} * #{b}"
-      # TODO: handle vectors
-      # else if Array.isArray a
-      # else if Array.isArray b
-      # TODO: handle uniforms
-      # else if typeof a == 'object'
-      # else if typeof b == 'object'
+        "#{glsl.literal a} * #{glsl.literal b}"
 
     mod: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
         a % b
       else if Array.isArray a and Array.isArray b
         if a.length != b.length
-          throw "Cannot perform mod operation with array operands of different lengths."
+          throw "Cannot perform modulo operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
           (a[i] % b[i]) for i in [0...a.length]
         else
@@ -105,21 +109,22 @@ glsl = do ->
           when 0 then 0
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.floatLit a} / #{b}"
+            "#{glsl.floatLit a} / #{glsl.literal b}"
       else if typeof b == 'number'
         switch b
-          when 0 then "#{a} / 0.0" # infinity
+          when 0 then "#{glsl.literal a} / 0.0" # infinity
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} / #{glsl.floatLit b}"
-      else 
-        "#{a} / #{b}"
-      # TODO: handle vectors
-      # else if Array.isArray a
-      # else if Array.isArray b
-      # TODO: handle uniforms
-      # else if typeof a == 'object'
-      # else if typeof b == 'object'
+            "#{glsl.literal a} / #{glsl.floatLit b}"
+      else if (Array.isArray a) and (Array.isArray b)
+        if a.length != b.length
+          throw "Cannot perform divide operation with array operands of different lengths."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          (a[i] / b[i]) for i in [0...a.length]
+        else
+          "#{glsl.vecLit a} / #{glsl.vecLit b}"
+      else
+        "#{glsl.literal a} / #{glsl.literal b}"
 
     add: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
@@ -129,17 +134,18 @@ glsl = do ->
           when 0 then b
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.floatLit a} + #{b}"
+            "#{glsl.floatLit a} + #{glsl.literal b}"
       else if typeof b == 'number'
         glsl.add b, a
+      else if (Array.isArray a) and (Array.isArray b)
+        if a.length != b.length
+          throw "Cannot perform add operation with array operands of different lengths."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          (a[i] + b[i]) for i in [0...a.length]
+        else
+          "#{glsl.vecLit a} + #{glsl.vecLit b}"
       else 
-        "#{a} + #{b}"
-      # TODO: handle vectors
-      # else if Array.isArray a
-      # else if Array.isArray b
-      # TODO: handle uniforms
-      # else if typeof a == 'object'
-      # else if typeof b == 'object'
+        "#{glsl.literal a} + #{glsl.literal b}"
 
     sub: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
@@ -149,31 +155,30 @@ glsl = do ->
           when 0 then glsl.neg b
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.floatLit a} - #{b}"
+            "#{glsl.floatLit a} - #{glsl.literal b}"
       else if typeof b == 'number'
         switch b
           when 0 then a
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "#{a} - #{glsl.floatLit b}"
+            "#{glsl.literal a} - #{glsl.floatLit b}"
+      else if (Array.isArray a) and (Array.isArray b)
+        if a.length != b.length
+          throw "Cannot perform subtract operation with array operands of different lengths."
+        if (isArrayType a, 'number') and (isArrayType b, 'number')
+          (a[i] - b[i]) for i in [0...a.length]
+        else
+          "#{glsl.vecLit a} - #{glsl.vecLit b}"
       else 
-        "#{a} - #{b}"
-      # TODO: handle vectors
-      # else if Array.isArray a
-      # else if Array.isArray b
-      # TODO: handle uniforms
-      # else if typeof a == 'object'
-      # else if typeof b == 'object'
+        "#{glsl.literal a} - #{glsl.literal b}"
 
     neg: (a) ->
       if typeof a == 'number'
         -a 
+      else if (Array.isArray a) and (isArrayType a, 'number')
+        -ai for ai in a
       else
-        "-#{a}"
-      # TODO: handle vectors
-      # else if Array.isArray a
-      # TODO: handle uniforms
-      # else if typeof a == 'object'
+        "-#{glsl.literal a}"
 
     min: (a,b) ->
       if typeof a == typeof b == 'number'

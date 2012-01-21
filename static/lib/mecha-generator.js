@@ -743,10 +743,13 @@ mecha.generator =
           return "" + a + "[" + index + "]";
         }
       },
+      floor: function(a) {
+        return "floor(" + (glsl.literal(a)) + ")";
+      },
       dot: function(a, b) {
         var i, _ref, _results;
         if (typeof a === 'string' || typeof b === 'string') {
-          return "dot(" + (glsl.literal(a)) + ", " + (glsl.literal(b)) + ")";
+          return "dot(" + a + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform dot product operation with array operands of different lengths.";
@@ -769,7 +772,7 @@ mecha.generator =
       },
       cross: function(a, b) {
         if (typeof a === 'string' || typeof b === 'string') {
-          return "cross(" + (glsl.literal(a)) + ", " + (glsl.literal(b)) + ")";
+          return "cross(" + a + ", " + b + ")";
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform cross product operation with array operands of different lengths.";
@@ -787,6 +790,7 @@ mecha.generator =
         }
       },
       mul: function(a, b) {
+        var i, _ref, _results;
         if (typeof a === 'number' && typeof b === 'number') {
           return a * b;
         } else if (typeof a === 'number') {
@@ -796,9 +800,9 @@ mecha.generator =
             case 1:
               return b;
             case -1:
-              return "-" + b;
+              return "-" + (glsl.literal(b));
             default:
-              return "" + (glsl.floatLit(a)) + " * " + b;
+              return "" + (glsl.floatLit(a)) + " * " + (glsl.literal(b));
           }
         } else if (typeof b === 'number') {
           switch (b) {
@@ -807,12 +811,25 @@ mecha.generator =
             case 1:
               return a;
             case -1:
-              return "-" + a;
+              return "-" + (glsl.literal(a));
             default:
-              return "" + a + " * " + (glsl.floatLit(b));
+              return "" + (glsl.literal(a)) + " * " + (glsl.floatLit(b));
+          }
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform multiply operation with array operands of different lengths.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] * b[i]);
+            }
+            return _results;
+          } else {
+            return "" + (glsl.vecLit(a)) + " * " + (glsl.vecLit(b));
           }
         } else {
-          return "" + a + " * " + b;
+          return "" + (glsl.literal(a)) + " * " + (glsl.literal(b));
         }
       },
       mod: function(a, b) {
@@ -821,7 +838,7 @@ mecha.generator =
           return a % b;
         } else if (Array.isArray(a && Array.isArray(b))) {
           if (a.length !== b.length) {
-            throw "Cannot perform mod operation with array operands of different lengths.";
+            throw "Cannot perform modulo operation with array operands of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
             _results = [];
@@ -851,6 +868,7 @@ mecha.generator =
         }
       },
       div: function(a, b) {
+        var i, _ref, _results;
         if (typeof a === 'number' && typeof b === 'number') {
           return a / b;
         } else if (typeof a === 'number') {
@@ -858,20 +876,34 @@ mecha.generator =
             case 0:
               return 0;
             default:
-              return "" + (glsl.floatLit(a)) + " / " + b;
+              return "" + (glsl.floatLit(a)) + " / " + (glsl.literal(b));
           }
         } else if (typeof b === 'number') {
           switch (b) {
             case 0:
-              return "" + a + " / 0.0";
+              return "" + (glsl.literal(a)) + " / 0.0";
             default:
-              return "" + a + " / " + (glsl.floatLit(b));
+              return "" + (glsl.literal(a)) + " / " + (glsl.floatLit(b));
+          }
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform divide operation with array operands of different lengths.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] / b[i]);
+            }
+            return _results;
+          } else {
+            return "" + (glsl.vecLit(a)) + " / " + (glsl.vecLit(b));
           }
         } else {
-          return "" + a + " / " + b;
+          return "" + (glsl.literal(a)) + " / " + (glsl.literal(b));
         }
       },
       add: function(a, b) {
+        var i, _ref, _results;
         if (typeof a === 'number' && typeof b === 'number') {
           return a + b;
         } else if (typeof a === 'number') {
@@ -879,15 +911,29 @@ mecha.generator =
             case 0:
               return b;
             default:
-              return "" + (glsl.floatLit(a)) + " + " + b;
+              return "" + (glsl.floatLit(a)) + " + " + (glsl.literal(b));
           }
         } else if (typeof b === 'number') {
           return glsl.add(b, a);
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform add operation with array operands of different lengths.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] + b[i]);
+            }
+            return _results;
+          } else {
+            return "" + (glsl.vecLit(a)) + " + " + (glsl.vecLit(b));
+          }
         } else {
-          return "" + a + " + " + b;
+          return "" + (glsl.literal(a)) + " + " + (glsl.literal(b));
         }
       },
       sub: function(a, b) {
+        var i, _ref, _results;
         if (typeof a === 'number' && typeof b === 'number') {
           return a - b;
         } else if (typeof a === 'number') {
@@ -895,24 +941,45 @@ mecha.generator =
             case 0:
               return glsl.neg(b);
             default:
-              return "" + (glsl.floatLit(a)) + " - " + b;
+              return "" + (glsl.floatLit(a)) + " - " + (glsl.literal(b));
           }
         } else if (typeof b === 'number') {
           switch (b) {
             case 0:
               return a;
             default:
-              return "" + a + " - " + (glsl.floatLit(b));
+              return "" + (glsl.literal(a)) + " - " + (glsl.floatLit(b));
+          }
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform subtract operation with array operands of different lengths.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
+            _results = [];
+            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              _results.push(a[i] - b[i]);
+            }
+            return _results;
+          } else {
+            return "" + (glsl.vecLit(a)) + " - " + (glsl.vecLit(b));
           }
         } else {
-          return "" + a + " - " + b;
+          return "" + (glsl.literal(a)) + " - " + (glsl.literal(b));
         }
       },
       neg: function(a) {
+        var ai, _i, _len, _results;
         if (typeof a === 'number') {
           return -a;
+        } else if ((Array.isArray(a)) && (isArrayType(a, 'number'))) {
+          _results = [];
+          for (_i = 0, _len = a.length; _i < _len; _i++) {
+            ai = a[_i];
+            _results.push(-ai);
+          }
+          return _results;
         } else {
-          return "-" + a;
+          return "-" + (glsl.literal(a));
         }
       },
       min: function(a, b) {
