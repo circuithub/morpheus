@@ -1390,10 +1390,10 @@ mecha.generator =
           node.halfSpaces.push(null);
         }
         ro = glslCompiler.preludeTop(flags.glslPrelude);
-        if (Array.isArray(node.attr.value)) {
+        if (Array.isArray(node.attr.factor)) {
           mecha.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
         } else {
-          glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.value));
+          glslCompiler.preludePush(flags.glslPrelude, glsl.div(ro, node.attr.factor));
         }
       },
       mirror: function(stack, node, flags) {
@@ -1420,27 +1420,17 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var cell, cellClamp, cellClampInterval, cellFloor, cellMax, cellMin, halfCells, halfInterval, halfParity, interval, o, offsets, parity, preludeVar, repeatHalfOffsets, repeatOffsets, ro, roSubParity;
+        var cell, cellClamp, cellClampInterval, cellFloor, cellMax, cellMin, halfCells, halfInterval, halfParity, interval, parity, preludeVar, ro, roSubParity;
         ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (!(node.attr.count != null)) {
-          offsets = (function() {
-            var _i, _len, _ref, _results;
-            _ref = node.attr.offset;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              o = _ref[_i];
-              _results.push(o);
-            }
-            return _results;
-          })();
-          repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
-          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
-          glslCompiler.preludePush(flags.glslPrelude, "mod(abs(" + ro + " + " + repeatHalfOffsets + "), " + repeatOffsets + ")}");
+          interval = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(node.attr.interval), 'vec3');
+          halfInterval = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, interval), 'vec3');
+          glslCompiler.preludePush(flags.glslPrelude, "mod(abs(" + ro + " + " + halfInterval + "), " + interval + ")}");
         } else {
           preludeVar = function(a, type) {
             return glslCompiler.preludeAdd(flags.glslPrelude, a, type);
           };
-          interval = preludeVar(glsl.vec3Lit(node.attr.offset), 'vec3');
+          interval = preludeVar(glsl.vec3Lit(node.attr.interval), 'vec3');
           halfInterval = preludeVar(glsl.mul(0.5, interval), 'vec3');
           parity = preludeVar(glsl.mod(node.attr.count, "vec3(2.0)"));
           halfParity = preludeVar(glsl.mul(0.5, parity));
@@ -1677,8 +1667,8 @@ mecha.generator =
         } else if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_INTERSECT) {
           compileCompositeNode('Scale', maxCallback, stack, node, flags);
         }
-        if (!Array.isArray(node.attr.value)) {
-          node.code = modifyCallback(node.code, glsl.mul("(" + node.code + ")", node.attr.value));
+        if (!Array.isArray(node.attr.factor)) {
+          node.code = modifyCallback(node.code, glsl.mul("(" + node.code + ")", node.attr.factor));
         }
         glslCompiler.preludePop(flags.glslPrelude);
         return stack[0].nodes.push(node);

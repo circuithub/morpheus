@@ -304,6 +304,10 @@ mecha.api =
         }
       };
 
+      MechaExpression.prototype.neg = function() {
+        return this.update("-(" + (this.serialize()) + ")");
+      };
+
       return MechaExpression;
 
     })();

@@ -62,10 +62,10 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       node.halfSpaces = []
       node.halfSpaces.push null for i in [0..5]
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
-      if Array.isArray node.attr.value
+      if Array.isArray node.attr.factor
         mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
-        glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.value)
+        glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.factor)
       return
     mirror: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
@@ -84,15 +84,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       #parameterizedCount = false
       #(parameterizedCount = true) for c in node.attr.count where typeof c == 'number'
       if not node.attr.count?
-        offsets = (o for o in node.attr.offset)
-        repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
-        repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
-        glslCompiler.preludePush flags.glslPrelude, "mod(abs(#{ro} + #{repeatHalfOffsets}), #{repeatOffsets})}"
-        #repeatRO = glsl.mul (glsl.sub (glsl.fract (glsl.div ro, repeatOffsets)), glsl.vec3Lit [0.5, 0.5, 0.5]), repeatOffsets
+        interval = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit node.attr.interval), 'vec3'
+        halfInterval = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, interval), 'vec3'
+        glslCompiler.preludePush flags.glslPrelude, "mod(abs(#{ro} + #{halfInterval}), #{interval})}"
+        #repeatRO = glsl.mul (glsl.sub (glsl.fract (glsl.div ro, interval)), glsl.vec3Lit [0.5, 0.5, 0.5]), interval
       else
         preludeVar = (a,type) -> glslCompiler.preludeAdd flags.glslPrelude, a, type
         
-        interval = preludeVar (glsl.vec3Lit node.attr.offset), 'vec3'
+        interval = preludeVar (glsl.vec3Lit node.attr.interval), 'vec3'
         halfInterval = preludeVar (glsl.mul 0.5, interval), 'vec3'
         parity = preludeVar (glsl.mod node.attr.count, "vec3(2.0)") # todo: [2.0,2.0,2.0] (optimization)
         halfParity = preludeVar (glsl.mul 0.5, parity)
@@ -292,8 +291,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         compileCompositeNode 'Scale', minCallback, stack, node, flags
       else if flags.composition[flags.composition.length-1] == glslCompiler.COMPOSITION_INTERSECT
         compileCompositeNode 'Scale', maxCallback, stack, node, flags
-      if not Array.isArray node.attr.value
-        node.code = modifyCallback node.code, (glsl.mul "(#{node.code})", node.attr.value)
+      if not Array.isArray node.attr.factor
+        node.code = modifyCallback node.code, (glsl.mul "(#{node.code})", node.attr.factor)
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
     mirror: (stack, node, flags) ->
