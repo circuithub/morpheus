@@ -174,6 +174,8 @@ do () ->
         @update "(#{@serialize()}) - #{arg}.0"
       else
         @update "(#{@serialize()}) - #{arg}"
+    neg: () ->
+      @update "-(#{@serialize()})"
   
   window.range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
