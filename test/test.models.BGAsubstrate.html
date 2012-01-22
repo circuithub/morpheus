@@ -16,30 +16,35 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = range("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
+var chipDimensions = range("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]),
+    substrateDimensions = range("Substrate Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.2]),
     ballCount = range("Ball Count", [2,2], [1,1], [10,10], [1,1]),
-    ballPitch  = range("Ball Pitch", [0.1,0.1], [0.1,0.1], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
+    ballPitch = range("Ball Pitch", [0.1,0.1], [0.1,0.1], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
     ballDiameter = range("Ball Diameter", 0.1, 0.05, 0.15),
     alignMarkRadius = range("Alignment Mark Radius", 0.075, 0.02, 0.2),
     borderGap = range("Border Gap", 0.05, 0.01, 0.1);
 
-// Chip body
+//* Chip body + alignment mark
 difference(
   box({ dimensions: chipDimensions })
   .bevel({ radius: 0.1 }),
   cylinder({ radius: alignMarkRadius, axis: 2, length: 0.05 })
-  .translate({ offset: [
-    chipDimensions.index(0).mul(0.5).sub(alignMarkRadius).sub(borderGap),
-    chipDimensions.index(1).div(2.0).sub(alignMarkRadius).sub(borderGap),
-    chipDimensions.index(2).div(2.0) ] })
+  .translate({ offset: [chipDimensions.index(0).mul(0.5).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(1).mul(0.5).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(2).mul(0.5)] })
 )
-.material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
-// Ball grid
+.material({ color: [0.2, 0.2, 0.2] }), // Charcoal (plastic)
+//*/
+//* Substrate
+box({ dimensions: substrateDimensions })
+.translate({ offset: [0.0, 0.0, chipDimensions.index(2).mul(-0.5).add(substrateDimensions.index(2).mul(-0.5))] })
+.material({ color: [0.3, 0.8, 0.3] }), // Substrate (fiber glass / plastic / ceramic)
+//*/
+//* Ball grid
 repeat({ count: [ballCount.index(0), ballCount.index(1), 1], interval: [ballPitch.index(0), ballPitch.index(1), 0.5] },
   sphere({ radius: ballDiameter.mul(0.5) })
 )
+.translate({ offset: [0.0, 0.0, chipDimensions.index(2).mul(-0.5).sub(substrateDimensions.index(2))] })
 .material({ color: [0.8, 0.8, 0.8] }) // Solder
-.translate({ offset: [0.0, 0.0, chipDimensions.index(2).div(2.0).neg()] })
+//*/
   </script>
 
   <!-- Stylesheet -->
