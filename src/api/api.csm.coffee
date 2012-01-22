@@ -163,7 +163,7 @@ do () ->
     add: (arg) ->
       if arg instanceof MechaExpression
         @update "(#{@serialize()}) + (#{arg.serialize()})"
-      if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) + #{arg}.0"
       else
         @update "(#{@serialize()}) + #{arg}"
