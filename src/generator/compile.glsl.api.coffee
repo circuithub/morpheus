@@ -15,10 +15,28 @@ glsl = do ->
         "#{a}[#{index}]"
 
     floor: (a) ->
-      "floor(#{glsl.literal a})"
+      if (Array.isArray a) and (isArrayType a, 'number')
+        (Math.floor ai) for ai in a
+      else if typeof a == 'number'
+        Math.floor a
+      else
+        "floor(#{glsl.literal a})"
+
+    fract: (a) ->
+      if (Array.isArray a) and (isArrayType a, 'number')
+        (ai - Math.floor ai) for ai in a
+      else if typeof a == 'number'
+        a - Math.floor a
+      else
+        "fract(#{glsl.literal a})"
 
     abs: (a) ->
-      "abs(#{glsl.literal a})"
+      if (Array.isArray a) and (isArrayType a, 'number')
+        (Math.abs ai) for ai in a
+      else if typeof a == 'number'
+        Math.abs a
+      else
+        "abs(#{glsl.literal a})"
 
     dot: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
@@ -94,15 +112,15 @@ glsl = do ->
           when 0 then 0
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "mod(#{glsl.floatLit a},#{b})"
+            "mod(#{glsl.floatLit a},#{glsl.literal b})"
       else if typeof b == 'number'
         switch b
           when 0 then NaN
           else 
             # Number must not be integers (bitwise op converts operand to integer)
-            "mod(#{a},#{glsl.floatLit b})"
+            "mod(#{glsl.literal a},#{glsl.floatLit b})"
       else 
-        "mod(#{a},#{b})"
+        "mod(#{glsl.literal a},#{glsl.literal b})"
 
     div: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
@@ -221,6 +239,23 @@ glsl = do ->
       else
         throw "Operands passed to the max operation have incorrect types."
 
+    clamp: (a,min,max) ->
+      # TODO: (Optimization) if only min or max is a string we can transform this into a glsl min / max operation...
+      # TODO: also check for `min` and/or `max` that are scalar arguments with a vector `a` argument
+      if typeof a == typeof min == typeof max == 'number'
+        Math.clamp a, min, max
+      else if typeof a == typeof min == typeof max == 'string'
+        "clamp(#{a}, #{min}, #{max})"
+      else if Array.isArray a and Array.isArray min and Array.isArray max
+        if a.length != b.length
+          throw "Cannot perform clamp operation with array operands of different lengths."
+        if (isArrayType a, 'number') and (isArrayType min, 'number') and (isArrayType max, 'number')
+          (Math.clamp a[i], min[i], max[i]) for i in [0...a.length]
+        else 
+          "clamp(#{glsl.vec3Lit a}, #{glsl.vec3Lit min}, #{glsl.vec3Lit max})"
+      else
+        "clamp(#{if typeof a == 'string' then a else glsl.literal a}, #{if typeof min == 'string' then min else glsl.literal min}, #{if typeof max == 'string' then max else glsl.literal max})"
+
     mini: (a,b) ->
       if typeof a == typeof b == 'number'
         Math.min a, b
@@ -261,13 +296,13 @@ glsl = do ->
       else if Array.isArray a
         glsl.vecLit a
       else
-        a
+        "(#{a})"
       
     floatLit: (a) ->
       if typeof a == 'number' and (a | 0) == a 
         a + '.0'
       else
-        a
+        "(#{a})"
     
     vecLit: (a) ->
       if a.length > 1 and a.length < 5
@@ -281,7 +316,7 @@ glsl = do ->
       else if Array.isArray a
         "vec2(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]})"
       else
-        a
+        "(#{a})"
 
     vec3Lit: (a) ->
       if typeof a == 'number'
@@ -289,7 +324,7 @@ glsl = do ->
       else if Array.isArray a
         "vec3(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]})"
       else
-        a
+        "(#{a})"
 
     vec4Lit: (a) ->
       if typeof a == 'number'
@@ -297,5 +332,5 @@ glsl = do ->
       else if Array.isArray a
         "vec4(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]},#{glsl.floatLit a[3]})"
       else
-        a
+        "(#{a})"
 

@@ -35,7 +35,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       if Array.isArray node.attr.axis
         # Compute a matrix for the angle-axis rotation
         mat = gl.matrix3.newAxisRotation node.attr.axis, -math_degToRad * node.attr.angle
-        glslCompiler.preludePush flags.glslPrelude, "(mat3(#{mat}) * #{ro})"
+        glslCompiler.preludePush flags.glslPrelude, "mat3(#{mat}) * #{ro}"
       else
         # Modify only the components that are needed (yz / xz / xy)
         cosAngle = Math.cos -math_degToRad * node.attr.angle
@@ -88,17 +88,24 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
         repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
         glslCompiler.preludePush flags.glslPrelude, "mod(abs(#{ro} + #{repeatHalfOffsets}), #{repeatOffsets})}"
+        #repeatRO = glsl.mul (glsl.sub (glsl.fract (glsl.div ro, repeatOffsets)), glsl.vec3Lit [0.5, 0.5, 0.5]), repeatOffsets
       else
-        offsets = (o for o in node.attr.offset)
-        #TODO: handle the case where node offset is 0.0
-        #offsets = ((if typeof node.attr.count[index] == 'string' or node.attr.count[index] > 1 then o else 0.0) for o,index in node.attr.offset)
-        repeatOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.vec3Lit offsets), 'vec3'
-        repeatHalfOffsets = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mul 0.5, repeatOffsets), 'vec3'
-        #limits = ((glsl.mul (glsl.max 1, node.attr.count[index]), o) for o,index in node.attr.offset)
-        #repeatParity = glslCompiler.preludeAdd flags.glslPrelude, (glsl.mod (glsl.vec3Lit node.attr.count), 2.0)
-        repeatCells = glsl.min node.attr.count, glsl.floor (glsl.div (glsl.abs ro), repeatOffsets)
-        repeatRO = glsl.sub (glsl.abs ro), (glsl.sub (glsl.mul repeatCells, repeatOffsets), repeatHalfOffsets)
-        glslCompiler.preludePush flags.glslPrelude, repeatRO
+        preludeVar = (a,type) -> glslCompiler.preludeAdd flags.glslPrelude, a, type
+        
+        interval = preludeVar (glsl.vec3Lit node.attr.offset), 'vec3'
+        halfInterval = preludeVar (glsl.mul 0.5, interval), 'vec3'
+        parity = preludeVar (glsl.mod node.attr.count, "vec3(2.0)") # todo: [2.0,2.0,2.0] (optimization)
+        halfParity = preludeVar (glsl.mul 0.5, parity)
+        roSubParity = glsl.sub ro, (glsl.mul halfParity, interval)
+        cell = preludeVar (glsl.div roSubParity, interval)
+        cellFloor = preludeVar (glsl.floor cell)
+        halfCells = glsl.mul node.attr.count, 0.5
+        cellMin = preludeVar (glsl.sub (glsl.neg halfCells), halfParity)
+        cellMax = preludeVar (glsl.sub (glsl.sub halfCells, halfParity), "vec3(1.0)") # todo: [1.0,1.0,1.0] (optimization)
+        cellClamp = glsl.clamp cellFloor, cellMin, cellMax
+        cellClampInterval = glsl.mul cellClamp, interval
+        glslCompiler.preludePush flags.glslPrelude, (glsl.sub (glsl.sub roSubParity, cellClampInterval), halfInterval)
+
       return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length

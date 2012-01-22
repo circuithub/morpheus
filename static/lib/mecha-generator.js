@@ -744,10 +744,49 @@ mecha.generator =
         }
       },
       floor: function(a) {
-        return "floor(" + (glsl.literal(a)) + ")";
+        var ai, _i, _len, _results;
+        if ((Array.isArray(a)) && (isArrayType(a, 'number'))) {
+          _results = [];
+          for (_i = 0, _len = a.length; _i < _len; _i++) {
+            ai = a[_i];
+            _results.push(Math.floor(ai));
+          }
+          return _results;
+        } else if (typeof a === 'number') {
+          return Math.floor(a);
+        } else {
+          return "floor(" + (glsl.literal(a)) + ")";
+        }
+      },
+      fract: function(a) {
+        var ai, _i, _len, _results;
+        if ((Array.isArray(a)) && (isArrayType(a, 'number'))) {
+          _results = [];
+          for (_i = 0, _len = a.length; _i < _len; _i++) {
+            ai = a[_i];
+            _results.push(ai - Math.floor(ai));
+          }
+          return _results;
+        } else if (typeof a === 'number') {
+          return a - Math.floor(a);
+        } else {
+          return "fract(" + (glsl.literal(a)) + ")";
+        }
       },
       abs: function(a) {
-        return "abs(" + (glsl.literal(a)) + ")";
+        var ai, _i, _len, _results;
+        if ((Array.isArray(a)) && (isArrayType(a, 'number'))) {
+          _results = [];
+          for (_i = 0, _len = a.length; _i < _len; _i++) {
+            ai = a[_i];
+            _results.push(Math.abs(ai));
+          }
+          return _results;
+        } else if (typeof a === 'number') {
+          return Math.abs(a);
+        } else {
+          return "abs(" + (glsl.literal(a)) + ")";
+        }
       },
       dot: function(a, b) {
         var i, _ref, _results;
@@ -857,17 +896,17 @@ mecha.generator =
             case 0:
               return 0;
             default:
-              return "mod(" + (glsl.floatLit(a)) + "," + b + ")";
+              return "mod(" + (glsl.floatLit(a)) + "," + (glsl.literal(b)) + ")";
           }
         } else if (typeof b === 'number') {
           switch (b) {
             case 0:
               return NaN;
             default:
-              return "mod(" + a + "," + (glsl.floatLit(b)) + ")";
+              return "mod(" + (glsl.literal(a)) + "," + (glsl.floatLit(b)) + ")";
           }
         } else {
-          return "mod(" + a + "," + b + ")";
+          return "mod(" + (glsl.literal(a)) + "," + (glsl.literal(b)) + ")";
         }
       },
       div: function(a, b) {
@@ -1039,6 +1078,29 @@ mecha.generator =
           throw "Operands passed to the max operation have incorrect types.";
         }
       },
+      clamp: function(a, min, max) {
+        var i, _ref, _ref2, _ref3, _ref4, _ref5, _results;
+        if (((typeof a === (_ref2 = typeof min) && _ref2 === (_ref = typeof max)) && _ref === 'number')) {
+          return Math.clamp(a, min, max);
+        } else if (((typeof a === (_ref4 = typeof min) && _ref4 === (_ref3 = typeof max)) && _ref3 === 'string')) {
+          return "clamp(" + a + ", " + min + ", " + max + ")";
+        } else if (Array.isArray(a && Array.isArray(min && Array.isArray(max)))) {
+          if (a.length !== b.length) {
+            throw "Cannot perform clamp operation with array operands of different lengths.";
+          }
+          if ((isArrayType(a, 'number')) && (isArrayType(min, 'number')) && (isArrayType(max, 'number'))) {
+            _results = [];
+            for (i = 0, _ref5 = a.length; 0 <= _ref5 ? i < _ref5 : i > _ref5; 0 <= _ref5 ? i++ : i--) {
+              _results.push(Math.clamp(a[i], min[i], max[i]));
+            }
+            return _results;
+          } else {
+            return "clamp(" + (glsl.vec3Lit(a)) + ", " + (glsl.vec3Lit(min)) + ", " + (glsl.vec3Lit(max)) + ")";
+          }
+        } else {
+          return "clamp(" + (typeof a === 'string' ? a : glsl.literal(a)) + ", " + (typeof min === 'string' ? min : glsl.literal(min)) + ", " + (typeof max === 'string' ? max : glsl.literal(max)) + ")";
+        }
+      },
       mini: function(a, b) {
         var i, _ref, _ref2, _ref3, _results;
         if ((typeof a === (_ref = typeof b) && _ref === 'number')) {
@@ -1095,14 +1157,14 @@ mecha.generator =
         } else if (Array.isArray(a)) {
           return glsl.vecLit(a);
         } else {
-          return a;
+          return "(" + a + ")";
         }
       },
       floatLit: function(a) {
         if (typeof a === 'number' && (a | 0) === a) {
           return a + '.0';
         } else {
-          return a;
+          return "(" + a + ")";
         }
       },
       vecLit: function(a) {
@@ -1118,7 +1180,7 @@ mecha.generator =
         } else if (Array.isArray(a)) {
           return "vec2(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + ")";
         } else {
-          return a;
+          return "(" + a + ")";
         }
       },
       vec3Lit: function(a) {
@@ -1127,7 +1189,7 @@ mecha.generator =
         } else if (Array.isArray(a)) {
           return "vec3(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + ")";
         } else {
-          return a;
+          return "(" + a + ")";
         }
       },
       vec4Lit: function(a) {
@@ -1136,7 +1198,7 @@ mecha.generator =
         } else if (Array.isArray(a)) {
           return "vec4(" + (glsl.floatLit(a[0])) + "," + (glsl.floatLit(a[1])) + "," + (glsl.floatLit(a[2])) + "," + (glsl.floatLit(a[3])) + ")";
         } else {
-          return a;
+          return "(" + a + ")";
         }
       }
     };
@@ -1284,7 +1346,7 @@ mecha.generator =
         ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (Array.isArray(node.attr.axis)) {
           mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
-          glslCompiler.preludePush(flags.glslPrelude, "(mat3(" + mat + ") * " + ro + ")");
+          glslCompiler.preludePush(flags.glslPrelude, "mat3(" + mat + ") * " + ro);
         } else {
           cosAngle = Math.cos(-math_degToRad * node.attr.angle);
           sinAngle = Math.sin(-math_degToRad * node.attr.angle);
@@ -1358,7 +1420,7 @@ mecha.generator =
         }
       },
       repeat: function(stack, node, flags) {
-        var o, offsets, repeatCells, repeatHalfOffsets, repeatOffsets, repeatRO, ro;
+        var cell, cellClamp, cellClampInterval, cellFloor, cellMax, cellMin, halfCells, halfInterval, halfParity, interval, o, offsets, parity, preludeVar, repeatHalfOffsets, repeatOffsets, ro, roSubParity;
         ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (!(node.attr.count != null)) {
           offsets = (function() {
@@ -1375,21 +1437,22 @@ mecha.generator =
           repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
           glslCompiler.preludePush(flags.glslPrelude, "mod(abs(" + ro + " + " + repeatHalfOffsets + "), " + repeatOffsets + ")}");
         } else {
-          offsets = (function() {
-            var _i, _len, _ref, _results;
-            _ref = node.attr.offset;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              o = _ref[_i];
-              _results.push(o);
-            }
-            return _results;
-          })();
-          repeatOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.vec3Lit(offsets), 'vec3');
-          repeatHalfOffsets = glslCompiler.preludeAdd(flags.glslPrelude, glsl.mul(0.5, repeatOffsets), 'vec3');
-          repeatCells = glsl.min(node.attr.count, glsl.floor(glsl.div(glsl.abs(ro), repeatOffsets)));
-          repeatRO = glsl.sub(glsl.abs(ro), glsl.sub(glsl.mul(repeatCells, repeatOffsets), repeatHalfOffsets));
-          glslCompiler.preludePush(flags.glslPrelude, repeatRO);
+          preludeVar = function(a, type) {
+            return glslCompiler.preludeAdd(flags.glslPrelude, a, type);
+          };
+          interval = preludeVar(glsl.vec3Lit(node.attr.offset), 'vec3');
+          halfInterval = preludeVar(glsl.mul(0.5, interval), 'vec3');
+          parity = preludeVar(glsl.mod(node.attr.count, "vec3(2.0)"));
+          halfParity = preludeVar(glsl.mul(0.5, parity));
+          roSubParity = glsl.sub(ro, glsl.mul(halfParity, interval));
+          cell = preludeVar(glsl.div(roSubParity, interval));
+          cellFloor = preludeVar(glsl.floor(cell));
+          halfCells = glsl.mul(node.attr.count, 0.5);
+          cellMin = preludeVar(glsl.sub(glsl.neg(halfCells), halfParity));
+          cellMax = preludeVar(glsl.sub(glsl.sub(halfCells, halfParity), "vec3(1.0)"));
+          cellClamp = glsl.clamp(cellFloor, cellMin, cellMax);
+          cellClampInterval = glsl.mul(cellClamp, interval);
+          glslCompiler.preludePush(flags.glslPrelude, glsl.sub(glsl.sub(roSubParity, cellClampInterval), halfInterval));
         }
       },
       material: function(stack, node, flags) {
