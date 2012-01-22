@@ -255,11 +255,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       stack[0].nodes.push node
     union: (stack, node, flags) ->
       flags.composition.pop()
-      compileCompositeNode 'Union', minCallback, stack, node, flags
+      compileCompositeNode 'Union', (if not flags.invert then minCallback else maxCallback), stack, node, flags
       stack[0].nodes.push node
     intersect: (stack, node, flags) ->
       flags.composition.pop()
-      compileCompositeNode 'Intersect', maxCallback, stack, node, flags
+      compileCompositeNode 'Intersect', (if not flags.invert then maxCallback else minCallback), stack, node, flags
       stack[0].nodes.push node
     chamfer: (stack, node, flags) ->
       # NOTE: From now on chamfer must be on the outside of an intersect/union

@@ -1631,12 +1631,12 @@ mecha.generator =
       },
       union: function(stack, node, flags) {
         flags.composition.pop();
-        compileCompositeNode('Union', minCallback, stack, node, flags);
+        compileCompositeNode('Union', (!flags.invert ? minCallback : maxCallback), stack, node, flags);
         return stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
         flags.composition.pop();
-        compileCompositeNode('Intersect', maxCallback, stack, node, flags);
+        compileCompositeNode('Intersect', (!flags.invert ? maxCallback : minCallback), stack, node, flags);
         return stack[0].nodes.push(node);
       },
       chamfer: function(stack, node, flags) {
