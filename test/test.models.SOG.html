@@ -19,7 +19,7 @@
 var chipDimensions = range("Chip Dimensions", [0.6, 0.6, 0.4], [0.4,0.4,0.2], [1.0,1.0,0.5]), // assuming we're working in centimeters
     pinCount = range("Pin Count", 2, 1, 10, 1),
     pinPitch  = range("Pin Pitch", 0.2, 0.1, 0.5),
-    pinDimensions = range("Pin Dimensions", [0.5, 0.1, 0.1], [0.2,0.1,0.1], [0.5,0.3,0.3]),
+    pinDimensions = range("Pin Dimensions", [0.5, 0.1, 0.1], [0.3,0.05,0.05], [1.5,0.2,0.2]),
     alignMarkRadius = range("Alignment Mark Radius", 0.075, 0.02, 0.2),
     borderGap = range("Border Gap", 0.05, 0.01, 0.1);
 
@@ -39,8 +39,10 @@ difference(
 repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
   box({ dimensions: pinDimensions })
 )
-.material({ color: [0.8, 0.8, 0.8] }) // Copper alloy
 .translate({ offset: [chipDimensions.index(0).mul(0.5), 0.0, 0.0] })
+.mirror({ axes: [0] })
+.material({ color: [0.8, 0.8, 0.8] }) // Copper alloy
+
 //*/
   </script>
 
