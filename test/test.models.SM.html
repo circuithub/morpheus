@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<!--
+      Mecha - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Mecha</title>
+  <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
+  <meta name='author' content='Your Name'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+// See https://gist.github.com/82b35723a7b65f558356
+
+var chipDimensions = range("Chip Dimensions", [0.5, 0.4, 0.4], [0.15,0.1,0.1], [1.5,1.0,1.0]),
+    pinWidth = range("Pin Width", 0.2, 0.05, 0.4),
+    pinExtrude = range("Pin Extrude", 0.02, 0.005, 0.04);
+
+//* Chip body
+box({ dimensions: chipDimensions })
+.material({ color: [0.6, 0.45, 0.3] }), // ???
+//*/
+//* Pins
+box({ dimensions: [pinWidth, chipDimensions.index(1).add(pinExtrude), chipDimensions.index(2).add(pinExtrude)] })
+.translate({ offset: [chipDimensions.index(0).add(pinWidth).mul(0.5),0.0,0.0] })
+.mirror({ axes: [0] })
+.material({ color: [0.8,0.8,0.8] }) // Copper alloy ???
+//*/
+  </script>
+
+  <!-- Stylesheet -->
+  <style type='text/css' media='screen'>
+    /* Resets */
+    
+    /* Normalization (taken from http://necolas.github.com/normalize.css/ and a little bit from html5 boilerplate) */
+    
+    /* General styling */
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* Application styling */
+    #mecha-editor {
+      position: relative;
+      float: left;
+      width: 502px;
+      height: 512px;
+      margin: 0 10px;
+    }
+    #mecha-source-code {
+      display: block;
+      width: 100%;
+      height: 480px;
+      resize: none;
+    }
+    #mecha-source-compile {
+      position: absolute;
+      right: 0;
+    }
+    #mecha-controls {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='scenejsLog' style='display:block;'></div>
+
+  <div id='mecha-layout'>
+    <form id='mecha-editor'></form>
+    <div id='mecha-gui'></div>
+    <div id='mecha-controls'></div>
+  </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
+  <script src='../static/lib/glquery/glquery.js'></script>
+  <script src='../static/lib/glquery/glquery.math.module.js'></script>
+  <!--<link rel='jsandbox' href='../static/lib/jsandbox/jsandbox-worker.js'>
+  <link rel='api' href='../static/lib/mecha-api.js'>-->
+  <script src='../static/lib/jsandbox/jsandbox.js'></script>
+  <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
+  
+  <!-- Application logic -->
+  
+  <script src='../static/lib/mecha.js'></script>
+  
+  <script>
+    window.onload = function(){
+      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+      mecha.gui.create('mecha-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
+      mecha.gui.createControls('mecha-controls');
+    };
+  </script>
+</body>
+</html>
