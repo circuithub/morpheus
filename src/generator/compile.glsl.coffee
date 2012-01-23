@@ -137,7 +137,7 @@ compileGLSL = (abstractSolidModel, params) ->
     
     void main(void) {
       // Constants
-      const int steps = 64;
+      const int steps = 84;
       const float threshold = 0.005;
       
       vec3 rayOrigin = modelPosition;
@@ -193,12 +193,28 @@ compileGLSL = (abstractSolidModel, params) ->
       //*/
 
       /* Cel shading
-      const float cellA = 0.1;
-      const float cellB = 0.3;
-      const float cellC = 0.6;
-      //float diffuse = max(step(diffuse, cellA)*cellA, max(step(diffuse, cellB)*cellB, step(diffuse, cellC)*cellC);
-      float diffuse = min(max(diffuse, cellA), min(max(diffuse, cellb), max(diffuse, cellC));
-      vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
+      const float cellA = 0.3;
+      const float cellB = 0.4;
+      const float cellC = 0.5;
+      const float cellD = 1.0 - cellA;
+      diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));
+      //*/
+
+      //* Ambient occlusion
+      const float aoIterations = 5.0;
+      const float aoFactor = 2.0;
+      const float aoDistanceFactor = 1.6;
+      const float aoDistanceDelta = 0.1 / 5.0;
+      float ao = 1.0;
+      float invPow2 = 1.0;
+      vec3 aoDirDist = normal * aoDistanceDelta;
+      vec3 aoPos = prevRayOrigin;
+      for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {
+        invPow2 *= aoDistanceFactor * 0.5;
+        aoPos += aoDirDist;
+        ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));
+      }
+      diffuse *= max(ao, 0.0);
       //*/
       
       gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
