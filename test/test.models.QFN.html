@@ -38,15 +38,27 @@ difference(
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
 //* Pins
-repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
-  box({ dimensions: pinDimensions })
-)
-.translate({ offset: [
-  chipDimensions.index(0).sub(pinDimensions.index(0)).mul(0.5).add(pinExtrude),
-  0.0, 
-  chipDimensions.index(2).sub(pinDimensions.index(2)).mul(-0.5).sub(pinExtrude) ] })
-.mirror({ axes: [0] })
-.material({ color: [0.8, 0.8, 0.8] }), // Copper alloy
+material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
+  // Vertical pins
+  repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
+    box({ dimensions: pinDimensions })
+  )
+  .translate({ offset: [
+    chipDimensions.index(0).sub(pinDimensions.index(0)).mul(0.5).add(pinExtrude),
+    0.0, 
+    chipDimensions.index(2).sub(pinDimensions.index(2)).mul(-0.5).sub(pinExtrude) ] })
+  .mirror({ axes: [0] }),
+
+  // Horizontal pins
+  repeat({ count: [pinCount, 1, 1], interval: [pinPitch, 0.5, 0.5] },
+    box({ dimensions: [pinDimensions.index(1), pinDimensions.index(0), pinDimensions.index(2)] })
+  )
+  .translate({ offset: [
+    0.0,
+    chipDimensions.index(1).sub(pinDimensions.index(0)).mul(0.5).add(pinExtrude), 
+    chipDimensions.index(2).sub(pinDimensions.index(2)).mul(-0.5).sub(pinExtrude) ] })
+  .mirror({ axes: [1] })
+),
 //*/
 //* Thermal pad
 box({ dimensions:  [thermalPadDimensions.index(0),thermalPadDimensions.index(1), pinExtrude.mul(2.0)]  })

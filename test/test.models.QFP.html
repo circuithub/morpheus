@@ -36,7 +36,7 @@ difference(
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
 //* Pins
-union(
+material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
   // Vertical
   repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
     box({ dimensions: pinDimensions })
@@ -50,7 +50,6 @@ union(
   .translate({ offset: [0.0, chipDimensions.index(1).mul(0.5).add(pinDimensions.index(0).mul(0.5)), 0.0] })
   .mirror({ axes: [1] })
 )
-.material({ color: [0.8, 0.8, 0.8] }) // Copper alloy
 
 //*/
   </script>
