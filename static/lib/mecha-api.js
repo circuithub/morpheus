@@ -285,9 +285,8 @@ mecha.api =
 
       MechaExpression.prototype.add = function(arg) {
         if (arg instanceof MechaExpression) {
-          this.update("(" + (this.serialize()) + ") + (" + (arg.serialize()) + ")");
-        }
-        if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+          return this.update("(" + (this.serialize()) + ") + (" + (arg.serialize()) + ")");
+        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
           return this.update("(" + (this.serialize()) + ") + " + arg + ".0");
         } else {
           return this.update("(" + (this.serialize()) + ") + " + arg);

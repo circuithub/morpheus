@@ -29,7 +29,10 @@ difference(
   box({ dimensions: chipDimensions })
   .bevel({ radius: 0.1 }),
   cylinder({ radius: alignMarkRadius, axis: 2, length: 0.05 })
-  .translate({ offset: [chipDimensions.index(0).mul(0.5).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(1).mul(0.5).sub(alignMarkRadius).sub(borderGap), chipDimensions.index(2).mul(0.5)] })
+  .translate({ offset: [
+    chipDimensions.index(0).mul(-0.5).add(alignMarkRadius).add(borderGap),
+    chipDimensions.index(1).mul(0.5).sub(alignMarkRadius).sub(borderGap),
+    chipDimensions.index(2).mul(0.5) ] })
 )
 .material({ color: [0.2, 0.2, 0.2] }), // Charcoal (plastic)
 //*/

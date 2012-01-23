@@ -16,10 +16,10 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = range("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
-    ballCount = range("Ball Count", [2,2], [1,1], [10,10], [1,1]),
-    ballPitch  = range("Ball Pitch", [0.1,0.1], [0.1,0.1], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
-    ballDiameter = range("Ball Diameter", 0.1, 0.05, 0.15),
+var chipDimensions = range("Chip Dimensions", [0.6, 0.6, 0.4], [0.4,0.4,0.2], [1.0,1.0,0.5]), // assuming we're working in centimeters
+    pinCount = range("Pin Count", 2, 1, 10, 1),
+    pinPitch  = range("Pin Pitch", 0.2, 0.1, 0.5),
+    pinDimensions = range("Pin Dimensions", [0.5, 0.1, 0.1], [0.2,0.1,0.1], [0.5,0.3,0.3]),
     alignMarkRadius = range("Alignment Mark Radius", 0.075, 0.02, 0.2),
     borderGap = range("Border Gap", 0.05, 0.01, 0.1);
 
@@ -35,12 +35,12 @@ difference(
 )
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
-//* Ball grid
-repeat({ count: [ballCount.index(0), ballCount.index(1), 1], interval: [ballPitch.index(0), ballPitch.index(1), 0.5] },
-  sphere({ radius: ballDiameter.mul(0.5) })
+//* Pins
+repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
+  box({ dimensions: pinDimensions })
 )
-.material({ color: [0.8, 0.8, 0.8] }) // Solder
-.translate({ offset: [0.0, 0.0, chipDimensions.index(2).mul(-0.5)] })
+.material({ color: [0.8, 0.8, 0.8] }) // Copper alloy
+.translate({ offset: [chipDimensions.index(0).mul(0.5), 0.0, 0.0] })
 //*/
   </script>
 
