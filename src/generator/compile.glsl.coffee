@@ -181,7 +181,7 @@ compileGLSL = (abstractSolidModel, params) ->
       vec3 normal = sceneNormal(prevRayOrigin);
 
       //* Regular diffuse shading
-      float diffuse = ambientFactor + diffuseFactor * dot(normal, lightDir);
+      float diffuse = dot(normal, lightDir);
       //*/
       //* Phong reflection model
       vec3 reflectDir = reflect(-rayDir, normal);
@@ -189,10 +189,15 @@ compileGLSL = (abstractSolidModel, params) ->
       //*/
 
       /* Cel shading
+      const float cellA = 0.1;
+      const float cellB = 0.3;
+      const float cellC = 0.6;
+      //float diffuse = max(step(diffuse, cellA)*cellA, max(step(diffuse, cellB)*cellB, step(diffuse, cellC)*cellC);
+      float diffuse = min(max(diffuse, cellA), min(max(diffuse, cellA), max(diffuse, cellB));
       vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
       //*/
       
-      gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
+      gl_FragColor = vec4(diffuseColor * (ambientFactor + diffuseFactor * diffuse) + specular, 1.0);
     }
 
     """
