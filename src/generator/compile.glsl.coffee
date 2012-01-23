@@ -174,18 +174,25 @@ compileGLSL = (abstractSolidModel, params) ->
       // Lighting parameters
       const float ambientFactor = 0.7;
       const float diffuseFactor = 1.0 - ambientFactor;
+      const float specularFactor = 0.3;
+      const float specularPhongShininess = 10.0;
       const vec3 lightPos = vec3(1.5,2.5, 4.0);
-      vec3 ldir = normalize(lightPos - prevRayOrigin);
+      vec3 lightDir = normalize(lightPos - prevRayOrigin);
+      vec3 normal = sceneNormal(prevRayOrigin);
 
       //* Regular diffuse shading
-      vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
+      float diffuse = ambientFactor + diffuseFactor * dot(normal, lightDir);
+      //*/
+      //* Phong reflection model
+      vec3 reflectDir = reflect(-rayDir, normal);
+      vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));
       //*/
 
       /* Cel shading
       vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
       //*/
       
-      gl_FragColor = vec4(diffuse, 1.0);
+      gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
     }
 
     """
