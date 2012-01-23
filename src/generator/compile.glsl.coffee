@@ -1,6 +1,7 @@
 # Compile the abstract solid model to GLSL for shaders
 
 # TODO: Would be nice if CoffeeScript supported '''#{tag}''' syntax
+# TODO: Split
 
 compileGLSL = (abstractSolidModel, params) ->
   rayOrigin = 'ro'
@@ -135,8 +136,10 @@ compileGLSL = (abstractSolidModel, params) ->
     #{sceneMaterial idResult.flags.materials}
     
     void main(void) {
+      // Constants
       const int steps = 64;
       const float threshold = 0.005;
+      
       vec3 rayOrigin = modelPosition;
       vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;
       vec3 prevRayOrigin = rayOrigin;
@@ -167,9 +170,21 @@ compileGLSL = (abstractSolidModel, params) ->
       //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
       vec3 diffuseColor = sceneMaterial(prevRayOrigin);
       //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
-      const vec3 lightPos = vec3(1.5,1.5, 4.0);
+            
+      // Lighting parameters
+      const float ambientFactor = 0.7;
+      const float diffuseFactor = 1.0 - ambientFactor;
+      const vec3 lightPos = vec3(1.5,2.5, 4.0);
       vec3 ldir = normalize(lightPos - prevRayOrigin);
-      vec3 diffuse = diffuseColor * dot(sceneNormal(prevRayOrigin), ldir);
+
+      //* Regular diffuse shading
+      vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
+      //*/
+
+      /* Cel shading
+      vec3 diffuse = diffuseColor * (ambientFactor + diffuseFactor * dot(sceneNormal(prevRayOrigin), ldir));
+      //*/
+      
       gl_FragColor = vec4(diffuse, 1.0);
     }
 
