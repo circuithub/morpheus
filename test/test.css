@@ -85,6 +85,12 @@ label {
   cursor: pointer; 
 }
 
+/* Application styling */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* Mecha styling */
 #mecha-editor {
   position: relative;
@@ -92,6 +98,7 @@ label {
   width: 502px;
   height: 512px;
   margin: 0 10px;
+  font-size: small;
 }
 #mecha-source-code {
   display: block;
@@ -101,7 +108,4 @@ label {
 }
 #mecha-source-compile {
   float: right;
-}
-#mecha-source-autocompile, #mecha-source-compile, #mecha-source-code {
-  font-size: small;
 }
