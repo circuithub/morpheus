@@ -50,7 +50,7 @@
 
   <script>
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), "var d = range('D',[0.5,0.5,0.5],[0.0,0.0,0.0],[0.9,0.9,0.9]);\nbox({ dimensions: d })");
+      mecha.editor.create(document.getElementById('mecha-editor'), "var b = range('B',0.1,0.0,0.2);\nbox({ dimensions: [0.5,0.5,0.5] }).bevel({ radius: b })");
       mecha.gui.create('mecha-gui');
       mecha.gui.createControls('mecha-controls');
     };
