@@ -109,3 +109,8 @@ html, body {
 #mecha-source-compile {
   float: right;
 }
+#mecha-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
