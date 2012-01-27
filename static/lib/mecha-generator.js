@@ -179,6 +179,12 @@ mecha.generator =
         attr: attr
       };
     },
+    corner: function(attr) {
+      return {
+        type: 'corner',
+        attr: attr
+      };
+    },
     cylinder: function(attr) {
       return {
         type: 'cylinder',
@@ -484,22 +490,18 @@ mecha.generator =
         }
       },
       box: function(node) {
-        var halfspaces;
-        halfspaces = [
-          asm.halfspace({
-            val: glsl.mul(glsl.index(node.attr.dimensions, 0), 0.5),
-            axis: 0
-          }), asm.halfspace({
-            val: glsl.mul(glsl.index(node.attr.dimensions, 1), 0.5),
-            axis: 1
-          }), asm.halfspace({
-            val: glsl.mul(glsl.index(node.attr.dimensions, 2), 0.5),
-            axis: 2
-          })
-        ];
-        return asm.mirror({
+        /*
+              if Array.isArray node.attr.dimensions
+                halfspaces = for i in [0..2]
+                  asm.halfspace 
+                    val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
+                    axis: i
+                asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
+        */        return asm.mirror({
           axes: [0, 1, 2]
-        }, asm.intersect(halfspaces[0], halfspaces[1], halfspaces[2]));
+        }, asm.corner({
+          val: glsl.mul(node.attr.dimensions, 0.5)
+        }));
       },
       sphere: function(node) {
         return asm.sphere({
@@ -1312,7 +1314,7 @@ mecha.generator =
   };
 
   glslCompilerDistance = function(primitiveCallback, minCallback, maxCallback, modifyCallback) {
-    var compileCompositeNode, compileCorner, postDispatch, preDispatch, rayOrigin;
+    var compileCompositeNode, postDispatch, preDispatch, rayOrigin;
     rayOrigin = 'ro';
     preDispatch = {
       invert: function(stack, node, flags) {
@@ -1451,104 +1453,93 @@ mecha.generator =
       },
       "default": function(stack, node, flags) {}
     };
-    compileCorner = function(ro, flags, state, chamferRadius, bevelRadius) {
-      var axisCombinations, cornerSize, cornerSpaces, cornerWithSigns, dist, h, radius, remainingHalfSpaces, roComponents, roWithSigns, signs, _i, _len, _ref;
-      remainingHalfSpaces = 0;
-      _ref = state.hs;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        h = _ref[_i];
-        if (h !== null) remainingHalfSpaces += 1;
-      }
-      if (remainingHalfSpaces > 0) {
-        cornerSpaces = 0;
-        if (state.hs[0] !== null || state.hs[3] !== null) cornerSpaces += 1;
-        if (state.hs[1] !== null || state.hs[4] !== null) cornerSpaces += 1;
-        if (state.hs[2] !== null || state.hs[5] !== null) cornerSpaces += 1;
-        radius = cornerSpaces === 1 || bevelRadius > chamferRadius ? 0 : chamferRadius;
-        cornerSize = [state.hs[0] !== null ? state.hs[0] - radius : state.hs[3] !== null ? -state.hs[3] + radius : 0, state.hs[1] !== null ? state.hs[1] - radius : state.hs[4] !== null ? -state.hs[4] + radius : 0, state.hs[2] !== null ? state.hs[2] - radius : state.hs[5] !== null ? -state.hs[5] + radius : 0];
-        signs = [state.hs[0] === null && state.hs[3] !== null, state.hs[1] === null && state.hs[4] !== null, state.hs[2] === null && state.hs[5] !== null];
-        roComponents = [signs[0] ? "-" + ro + ".x" : "" + ro + ".x", signs[1] ? "-" + ro + ".y" : "" + ro + ".y", signs[2] ? "-" + ro + ".z" : "" + ro + ".z"];
-        roWithSigns = !(signs[0] || signs[1] || signs[2]) ? "" + ro : (signs[0] || state.hs[3] === null) && (signs[1] || state.hs[4] === null) && (signs[2] || state.hs[5] === null) ? "-" + ro : glslCompiler.preludeAdd(flags.glslPrelude, "vec3(" + roComponents[0] + ", " + roComponents[1] + ", " + roComponents[2] + ")");
-        cornerWithSigns = "vec3(" + cornerSize + ")";
-        dist = glslCompiler.preludeAdd(flags.glslPrelude, "" + roWithSigns + " - " + cornerWithSigns);
-        if (cornerSpaces > 1) {
-          if (radius > 0) {
-            state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0)) - " + radius, flags));
-          } else if (bevelRadius > 0) {
-            axisCombinations = [];
-            if (state.hs[0] !== null || state.hs[3] !== null) {
-              axisCombinations.push(0);
-            }
-            if (state.hs[1] !== null || state.hs[4] !== null) {
-              axisCombinations.push(1);
-            }
-            if (state.hs[2] !== null || state.hs[5] !== null) {
-              axisCombinations.push(2);
-            }
-            glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[0]] + " + " + roComponents[axisCombinations[1]] + " - " + (cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[1]] - bevelRadius), "float");
-            if (axisCombinations.length === 3) {
-              glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[0]] + " + " + roComponents[axisCombinations[2]] + " - " + (cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[2]] - bevelRadius), "float");
-              glslCompiler.preludePush(flags.glslPrelude, "" + roComponents[axisCombinations[1]] + " + " + roComponents[axisCombinations[2]] + " - " + (cornerSize[axisCombinations[1]] + cornerSize[axisCombinations[2]] - bevelRadius), "float");
-            }
-            switch (axisCombinations.length) {
-              case 2:
-                state.codes.push(primitiveCallback("max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + ")", flags));
-                break;
-              case 3:
-                state.codes.push(primitiveCallback("max(max(max(length(max(" + dist + ", 0.0)), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + "), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + "), " + math_invsqrt2 + " * " + (glslCompiler.preludePop(flags.glslPrelude)) + ")", flags));
-            }
-          } else {
-            state.codes.push(primitiveCallback("length(max(" + dist + ", 0.0))", flags));
-          }
-          if (state.hs[0] !== null || state.hs[3] !== null) {
-            if (state.hs[0] !== null) {
-              state.hs[0] = null;
-            } else {
-              state.hs[3] = null;
-            }
-          }
-          if (state.hs[1] !== null || state.hs[4] !== null) {
-            if (state.hs[1] !== null) {
-              state.hs[1] = null;
-            } else {
-              state.hs[4] = null;
-            }
-          }
-          if (state.hs[2] !== null || state.hs[5] !== null) {
-            if (state.hs[2] !== null) {
-              state.hs[2] = null;
-            } else {
-              state.hs[5] = null;
-            }
-          }
-          remainingHalfSpaces -= cornerSpaces;
-        } else {
-          if (state.hs[0] !== null || state.hs[3] !== null) {
-            state.codes.push(primitiveCallback("" + dist + ".x", flags));
-            if (state.hs[0] !== null) {
-              state.hs[0] = null;
-            } else {
-              state.hs[3] = null;
-            }
-          } else if (state.hs[1] !== null || state.hs[4] !== null) {
-            state.codes.push(primitiveCallback("" + dist + ".y", flags));
-            if (state.hs[1] !== null) {
-              state.hs[1] = null;
-            } else {
-              state.hs[4] = null;
-            }
-          } else if (state.hs[2] !== null || state.hs[5] !== null) {
-            state.codes.push(primitiveCallback("" + dist + ".z", flags));
-            if (state.hs[2] !== null) {
-              state.hs[2] = null;
-            } else {
-              state.hs[5] = null;
-            }
-          }
-          remainingHalfSpaces -= 1;
-        }
-      }
-    };
+    /*
+    
+      # TODO: This is overly complex and broken... need a better optimization method for corners....
+      # (Perhaps one that lets the GLSL compiler precompute operations between uniforms (e.g. glsl.min(param0, param1)
+    
+      compileCorner = (ro, flags, state, chamferRadius, bevelRadius) ->
+        remainingHalfSpaces = 0
+        remainingHalfSpaces += 1 for h in state.hs when h != null
+    
+        #if remainingHalfSpaces == 1
+        #  # Find the axis (from 0 to 5) for the halfSpace node
+        #  for index in [0..5] when state.hs[index] != null
+        #    state.codes.push primitiveCallback (if index > 2 then "#{ro}[#{index - 3}] - #{state.hs[index]}" else "-#{ro}[#{index}] + #{state.hs[index]}"), flags
+        #    state.hs[index] = null
+        #    break
+        #  remainingHalfSpaces -= 1
+        #else if remainingHalfSpaces > 1
+        if remainingHalfSpaces > 0
+          cornerSpaces = 0
+          cornerSpaces += 1 if state.hs[0] != null or state.hs[3] != null
+          cornerSpaces += 1 if state.hs[1] != null or state.hs[4] != null
+          cornerSpaces += 1 if state.hs[2] != null or state.hs[5] != null
+          chamferRadius = 0 if cornerSpaces == 1 or bevelRadius != 0
+          cornerSize = [
+            if state.hs[0] != null then (glsl.sub state.hs[0], radius) else if state.hs[3] != null then (glsl.sub radius, state.hs[3]) else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
+            if state.hs[1] != null then (glsl.sub state.hs[1], radius) else if state.hs[4] != null then (glsl.sub radius, state.hs[4]) else 0,
+            if state.hs[2] != null then (glsl.sub state.hs[2], radius) else if state.hs[5] != null then (glsl.sub radius, state.hs[5]) else 0]
+          signs = [
+            state.hs[0] == null and state.hs[3] != null,
+            state.hs[1] == null and state.hs[4] != null,
+            state.hs[2] == null and state.hs[5] != null]
+          roComponents  = [
+            if signs[0] then "-#{ro}.x" else "#{ro}.x", 
+            if signs[1] then "-#{ro}.y" else "#{ro}.y", 
+            if signs[2] then "-#{ro}.z" else "#{ro}.z"]
+          roWithSigns = 
+            if not (signs[0] or signs[1] or signs[2])
+              "#{ro}"
+            else if (signs[0] or state.hs[3] == null) and (signs[1] or state.hs[4] == null) and (signs[2] or state.hs[5] == null)
+              "-#{ro}"
+            else
+              glslCompiler.preludeAdd flags.glslPrelude, "vec3(#{roComponents[0]}, #{roComponents[1]}, #{roComponents[2]})"
+          cornerWithSigns = glsl.vec3Lit cornerSize
+          dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} - #{glsl.vec3Lit cornerSize}"
+    
+          # Special cases
+          if cornerSpaces > 1
+            if radius > 0
+              state.codes.push primitiveCallback "length(max(#{dist}, 0.0)) - #{radius}", flags
+            else if bevelRadius > 0
+              axisCombinations = []
+              axisCombinations.push 0 if state.hs[0] != null or state.hs[3] != null
+              axisCombinations.push 1 if state.hs[1] != null or state.hs[4] != null
+              axisCombinations.push 2 if state.hs[2] != null or state.hs[5] != null
+              # TODO: assert(axisCombinations.length >= 2)
+              glslCompiler.preludePush flags.glslPrelude, "#{roComponents[axisCombinations[0]]} + #{roComponents[axisCombinations[1]]} - #{cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[1]] - bevelRadius}", "float"
+              if axisCombinations.length == 3
+                glslCompiler.preludePush flags.glslPrelude, "#{roComponents[axisCombinations[0]]} + #{roComponents[axisCombinations[2]]} - #{cornerSize[axisCombinations[0]] + cornerSize[axisCombinations[2]] - bevelRadius}", "float"
+                glslCompiler.preludePush flags.glslPrelude, "#{roComponents[axisCombinations[1]]} + #{roComponents[axisCombinations[2]]} - #{cornerSize[axisCombinations[1]] + cornerSize[axisCombinations[2]] - bevelRadius}", "float"
+              switch axisCombinations.length
+                when 2
+                  state.codes.push primitiveCallback "max(length(max(#{dist}, 0.0)), #{math_invsqrt2} * #{glslCompiler.preludePop flags.glslPrelude})", flags
+                when 3
+                  state.codes.push primitiveCallback "max(max(max(length(max(#{dist}, 0.0)), #{math_invsqrt2} * #{glslCompiler.preludePop flags.glslPrelude}), #{math_invsqrt2} * #{glslCompiler.preludePop flags.glslPrelude}), #{math_invsqrt2} * #{glslCompiler.preludePop flags.glslPrelude})", flags
+            else # bevelRadius == chamferRadius == 0
+              state.codes.push primitiveCallback "length(max(#{dist}, 0.0))", flags
+            if state.hs[0] != null or state.hs[3] != null
+              if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
+            if state.hs[1] != null or state.hs[4] != null
+              if state.hs[1] != null then state.hs[1] = null else state.hs[4] = null
+            if state.hs[2] != null or state.hs[5] != null
+              if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
+            remainingHalfSpaces -= cornerSpaces
+          else
+            # General cases
+            if state.hs[0] != null or state.hs[3] != null
+              state.codes.push primitiveCallback "#{dist}.x", flags
+              if state.hs[0] != null then state.hs[0] = null else state.hs[3] = null
+            else if state.hs[1] != null or state.hs[4] != null
+              state.codes.push primitiveCallback "#{dist}.y", flags
+              if state.hs[1] != null then state.hs[1] = null else state.hs[4] = null
+            else if state.hs[2] != null or state.hs[5] != null
+              state.codes.push primitiveCallback "#{dist}.z", flags
+              if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
+            remainingHalfSpaces -= 1
+        return
+    */
     compileCompositeNode = function(name, cmpCallback, stack, node, flags) {
       var bevelRadius, c, chamferRadius, codes, collectCode, cornersState, h, ro, s, _i, _j, _k, _len, _len2, _len3, _ref, _results;
       if (node.nodes.length === 0) {
@@ -1606,9 +1597,12 @@ mecha.generator =
         }
         break;
       }
-      compileCorner(ro, flags, cornersState, chamferRadius, bevelRadius);
-      compileCorner(ro, flags, cornersState, chamferRadius, bevelRadius);
-      codes = codes.concat(cornersState.codes);
+      /* Compile the first and a possible second corner
+      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
+      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
+      codes = codes.concat cornersState.codes
+      #
+      */
       _ref = cornersState.hs;
       for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
         h = _ref[_j];
@@ -1682,60 +1676,112 @@ mecha.generator =
         return stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
-        var index, ro, s, translateOffset, val, _i, _len;
+        var ro;
         if (node.nodes.length !== 0) {
           mecha.logInternalError("GLSL Compiler: Halfspace node is not empty.");
           return;
         }
-        /*
-              ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
-              if flags.invert
-                node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
+        if (flags.invert) {
+          node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+        } else {
+          node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+        }
+        /* Generate half-space primitive when it cannot be compiled into a corner
+        #if typeof node.attr.val == 'string'
+        #  ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+        #  if flags.invert
+        #    node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+        #  else
+        #    node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+        #else
+        # Bin half-spaces for corner compilation
+        translateOffset = 0.0
+        for s in stack
+          if s.halfSpaces?
+            # Assign to the halfspace bins for corner compilation
+            index = node.attr.axis + (if flags.invert then 3 else 0)
+            val = glsl.add node.attr.val, translateOffset
+            s.halfSpaces[index] =
+              if s.halfSpaces[index] == null
+                 val
+              else if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
+                if index < 3
+                  glsl.max s.halfSpaces[index], val
+                else
+                  glsl.min s.halfSpaces[index], val
               else
-                node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
-              #
+                if index < 3
+                  glsl.min s.halfSpaces[index], val
+                else
+                  glsl.max s.halfSpaces[index], val
+          else
+            switch s.type
+              when 'translate'
+                translateOffset = glsl.add translateOffset, s.attr.offset[node.attr.axis]
+                continue # Search for preceding intersect/union node 
+              when 'invert', 'mirror'
+                continue # Search for preceding intersect/union node
+              else
+                # This may occur in special cases where we cannot do normal corner compilation
+                # (Such as a separate transformation on the plane itself - with a wedge node for example)
+                ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+                if flags.invert
+                  node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+                else
+                  node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+          break
+        #
         */
-        if (typeof node.attr.val === 'string') {
-          ro = glslCompiler.preludeTop(flags.glslPrelude);
+        return stack[0].nodes.push(node);
+      },
+      corner: function(stack, node, flags) {
+        var bevelRadius, chamferRadius, cornerDist, cornerVal, diagonalDist, dist, ro, roSigned, s, _i, _len;
+        ro = glslCompiler.preludeTop(flags.glslPrelude);
+        dist = glslCompiler.preludeAdd(flags.glslPrelude, glsl.sub(ro, node.attr.val));
+        chamferRadius = 0;
+        bevelRadius = 0;
+        for (_i = 0, _len = stack.length; _i < _len; _i++) {
+          s = stack[_i];
+          switch (s.type) {
+            case 'chamfer':
+              chamferRadius = s.attr.radius;
+              break;
+            case 'bevel':
+              bevelRadius = s.attr.radius;
+              break;
+            case 'translate':
+            case 'rotate':
+            case 'scale':
+            case 'invert':
+            case 'mirror':
+            case 'repeat':
+              continue;
+          }
+          break;
+        }
+        if (bevelRadius !== 0) {
+          roSigned = glslCompiler.preludeAdd(flags.glslPrelude, flags.invert ? "-" + ro : "" + ro);
+          cornerVal = typeof node.attr.val === 'string' ? glslCompiler.preludeAdd(flags.glslPrelude, node.attr.val) : node.attr.val;
+          diagonalDist = ["(" + roSigned + "[0] + " + roSigned + "[1] - (" + (glsl.add(glsl.index(cornerVal, 0), glsl.index(cornerVal, 1))) + "))", "(" + roSigned + "[0] + " + roSigned + "[2] - (" + (glsl.add(glsl.index(cornerVal, 0), glsl.index(cornerVal, 2))) + "))", "(" + roSigned + "[1] + " + roSigned + "[2] - (" + (glsl.add(glsl.index(cornerVal, 1), glsl.index(cornerVal, 2))) + "))"];
           if (flags.invert) {
-            node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
+            cornerDist = "length(min(" + dist + ", 0.0))";
+            node.code = primitiveCallback("min(min(min(" + cornerDist + ", " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 0)) + " - " + bevelRadius + "), " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 1)) + " - " + bevelRadius + "), " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 2)) + " - " + bevelRadius + ")", flags);
           } else {
-            node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
+            cornerDist = "length(max(" + dist + ", 0.0))";
+            node.code = primitiveCallback("max(max(max(" + cornerDist + ", " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 0)) + " + " + bevelRadius + "), " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 1)) + " + " + bevelRadius + "), " + math_invsqrt2 + " * " + (glsl.index(diagonalDist, 2)) + " + " + bevelRadius + ")", flags);
+          }
+        } else if (chamferRadius !== 0) {
+          if (flags.invert) {
+            node.code = primitiveCallback("length(min(" + (glsl.add(dist, chamferRadius)) + ", 0.0)) - " + chamferRadius, flags);
+          } else {
+            node.code = primitiveCallback("length(max(" + (glsl.add(dist, chamferRadius)) + ", 0.0)) - " + chamferRadius, flags);
           }
         } else {
-          translateOffset = 0.0;
-          for (_i = 0, _len = stack.length; _i < _len; _i++) {
-            s = stack[_i];
-            if (s.halfSpaces != null) {
-              index = node.attr.axis + (flags.invert ? 3 : 0);
-              val = glsl.add(node.attr.val, translateOffset);
-              if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
-                if (s.halfSpaces[index] === null || (index < 3 && val > s.halfSpaces[index]) || (index > 2 && val < s.halfSpaces[index])) {
-                  s.halfSpaces[index] = val;
-                }
-              } else {
-                if (s.halfSpaces[index] === null || (index < 3 && val < s.halfSpaces[index]) || (index > 2 && val > s.halfSpaces[index])) {
-                  s.halfSpaces[index] = val;
-                }
-              }
-            } else {
-              switch (s.type) {
-                case 'translate':
-                  translateOffset = glsl.add(translateOffset, s.attr.offset[node.attr.axis]);
-                  continue;
-                case 'invert':
-                case 'mirror':
-                  continue;
-                default:
-                  ro = glslCompiler.preludeTop(flags.glslPrelude);
-                  if (flags.invert) {
-                    node.code = primitiveCallback(glsl.sub(node.attr.val, "" + ro + "[" + node.attr.axis + "]"), flags);
-                  } else {
-                    node.code = primitiveCallback(glsl.sub("" + ro + "[" + node.attr.axis + "]", node.attr.val), flags);
-                  }
-              }
-            }
-            break;
+          if (flags.invert) {
+            node.code = primitiveCallback("length(min(" + dist + ", 0.0))", flags);
+          } else {
+            node.code = primitiveCallback("length(max(" + dist + ", 0.0))", flags);
           }
         }
         return stack[0].nodes.push(node);

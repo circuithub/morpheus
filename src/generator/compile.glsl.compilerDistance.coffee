@@ -90,7 +90,6 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         #repeatRO = glsl.mul (glsl.sub (glsl.fract (glsl.div ro, interval)), glsl.vec3Lit [0.5, 0.5, 0.5]), interval
       else
         preludeVar = (a,type) -> glslCompiler.preludeAdd flags.glslPrelude, a, type
-        
         interval = preludeVar (glsl.vec3Lit node.attr.interval), 'vec3'
         halfInterval = preludeVar (glsl.mul 0.5, interval), 'vec3'
         parity = preludeVar (glsl.mod node.attr.count, "vec3(2.0)") # todo: [2.0,2.0,2.0] (optimization)
@@ -104,7 +103,6 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         cellClamp = glsl.clamp cellFloor, cellMin, cellMax
         cellClampInterval = glsl.mul cellClamp, interval
         glslCompiler.preludePush flags.glslPrelude, (glsl.sub (glsl.sub roSubParity, cellClampInterval), halfInterval)
-
       return
     material: (stack, node, flags) ->
       flags.materialIdStack.push flags.materials.length
@@ -114,9 +112,15 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       return
 
   # Compile a single corner
+  ###
+
+  # TODO: This is overly complex and broken... need a better optimization method for corners....
+  # (Perhaps one that lets the GLSL compiler precompute operations between uniforms (e.g. glsl.min(param0, param1)
+
   compileCorner = (ro, flags, state, chamferRadius, bevelRadius) ->
     remainingHalfSpaces = 0
     remainingHalfSpaces += 1 for h in state.hs when h != null
+
     #if remainingHalfSpaces == 1
     #  # Find the axis (from 0 to 5) for the halfSpace node
     #  for index in [0..5] when state.hs[index] != null
@@ -130,11 +134,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       cornerSpaces += 1 if state.hs[0] != null or state.hs[3] != null
       cornerSpaces += 1 if state.hs[1] != null or state.hs[4] != null
       cornerSpaces += 1 if state.hs[2] != null or state.hs[5] != null
-      radius = if cornerSpaces == 1 or bevelRadius > chamferRadius then 0 else chamferRadius
+      chamferRadius = 0 if cornerSpaces == 1 or bevelRadius != 0
       cornerSize = [
-        if state.hs[0] != null then state.hs[0] - radius else if state.hs[3] != null then -state.hs[3] + radius else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
-        if state.hs[1] != null then state.hs[1] - radius else if state.hs[4] != null then -state.hs[4] + radius else 0,
-        if state.hs[2] != null then state.hs[2] - radius else if state.hs[5] != null then -state.hs[5] + radius else 0]
+        if state.hs[0] != null then (glsl.sub state.hs[0], radius) else if state.hs[3] != null then (glsl.sub radius, state.hs[3]) else 0, #TODO: zero for cornersize might be the wrong choice... (possibly something large instead?)
+        if state.hs[1] != null then (glsl.sub state.hs[1], radius) else if state.hs[4] != null then (glsl.sub radius, state.hs[4]) else 0,
+        if state.hs[2] != null then (glsl.sub state.hs[2], radius) else if state.hs[5] != null then (glsl.sub radius, state.hs[5]) else 0]
       signs = [
         state.hs[0] == null and state.hs[3] != null,
         state.hs[1] == null and state.hs[4] != null,
@@ -150,8 +154,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           "-#{ro}"
         else
           glslCompiler.preludeAdd flags.glslPrelude, "vec3(#{roComponents[0]}, #{roComponents[1]}, #{roComponents[2]})"
-      cornerWithSigns = "vec3(#{cornerSize})"
-      dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} - #{cornerWithSigns}"
+      cornerWithSigns = glsl.vec3Lit cornerSize
+      dist = glslCompiler.preludeAdd flags.glslPrelude, "#{roWithSigns} - #{glsl.vec3Lit cornerSize}"
 
       # Special cases
       if cornerSpaces > 1
@@ -194,60 +198,62 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           if state.hs[2] != null then state.hs[2] = null else state.hs[5] = null
         remainingHalfSpaces -= 1
     return
+  ###
 
   compileCompositeNode = (name, cmpCallback, stack, node, flags) ->
-      # Check that composite node is not empty
-      if node.nodes.length == 0
-        mecha.logInternalError "GLSL Compiler: Union node is empty."
-        return
-      codes = []
+    # Check that composite node is not empty
+    if node.nodes.length == 0
+      mecha.logInternalError "GLSL Compiler: Union node is empty."
+      return
+    codes = []
 
-      # Collect the source code for all the child nodes
-      # Some nodes are only modifiers, so it's necessary to collect their children 
-      # to apply the correct composite operation
-      collectCode = (codes, nodes) -> 
-        for node in nodes
-          codes.push node.code if node.code?
-          switch node.type
-            when 'translate','rotate','mirror','repeat','invert','material','chamfer','bevel'
-              collectCode codes, node.nodes
-      collectCode codes, node.nodes
+    # Collect the source code for all the child nodes
+    # Some nodes are only modifiers, so it's necessary to collect their children 
+    # to apply the correct composite operation
+    collectCode = (codes, nodes) -> 
+      for node in nodes
+        codes.push node.code if node.code?
+        switch node.type
+          when 'translate','rotate','mirror','repeat','invert','material','chamfer','bevel'
+            collectCode codes, node.nodes
+    collectCode codes, node.nodes
 
-      # Corner compilation
-      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
-      cornersState = 
-        codes: []
-        hs: shallowClone node.halfSpaces
-      
-      # Determine whether the composite should be chamfered / beveled in some way
-      chamferRadius = 0
-      bevelRadius = 0
-      for s in stack
-        switch s.type
-          when 'chamfer'
-            chamferRadius = s.attr.radius
-          when 'bevel'
-            bevelRadius = s.attr.radius
-          when 'translate','rotate','scale','invert','mirror','repeat'
-            continue
-        break
+    # Corner compilation
+    ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+    cornersState = 
+      codes: []
+      hs: shallowClone node.halfSpaces
+    
+    # Determine whether the composite should be chamfered / beveled in some way
+    chamferRadius = 0
+    bevelRadius = 0
+    for s in stack
+      switch s.type
+        when 'chamfer'
+          chamferRadius = s.attr.radius
+        when 'bevel'
+          bevelRadius = s.attr.radius
+        when 'translate','rotate','scale','invert','mirror','repeat'
+          continue
+      break
 
-      # Compile the first and a possible second corner
-      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
-      compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
-      codes = codes.concat cornersState.codes
+    ### Compile the first and a possible second corner
+    compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
+    compileCorner ro, flags, cornersState, chamferRadius, bevelRadius
+    codes = codes.concat cornersState.codes
+    # ###
 
-      # Post-condition: All halfspaces must be accounted for
-      for h in cornersState.hs when h != null
-        mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
-        break
+    # Post-condition: All halfspaces must be accounted for
+    for h in cornersState.hs when h != null
+      mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
+      break
 
-      # Calculate the composite distances
-      node.code = codes.shift()
-      for c in codes
-        node.code = cmpCallback c, node.code, flags
-      #if node.type == 'chamfer'
-      #  node.code += " - #{node.attr.radius}"
+    # Calculate the composite distances
+    node.code = codes.shift()
+    for c in codes
+      node.code = cmpCallback c, node.code, flags
+    #if node.type == 'chamfer'
+    #  node.code += " - #{node.attr.radius}"
     
   postDispatch =
     invert: (stack, node, flags) ->
@@ -309,7 +315,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
         return
       
-      ###
+      ## Generate code for halfspace primitives directly (without corner compilation)
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if flags.invert
         node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
@@ -317,44 +323,100 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
       # ###
 
-      ## Generate half-space primitive when it cannot be compiled into a corner
-      if typeof node.attr.val == 'string'
-        ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
-        if flags.invert
-          node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
-        else
-          node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
-      else
-        # Bin half-spaces for corner compilation
-        translateOffset = 0.0
-        for s in stack
-          if s.halfSpaces?
-            # Assign to the halfspace bins for corner compilation
-            index = node.attr.axis + (if flags.invert then 3 else 0)
-            val = glsl.add node.attr.val, translateOffset
-            if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
-              if s.halfSpaces[index] == null or (index < 3 and val > s.halfSpaces[index]) or (index > 2 and val < s.halfSpaces[index])
-                s.halfSpaces[index] = val
-            else
-              if s.halfSpaces[index] == null or (index < 3 and val < s.halfSpaces[index]) or (index > 2 and val > s.halfSpaces[index])
-                s.halfSpaces[index] = val
-          else
-            switch s.type
-              when 'translate'
-                translateOffset = glsl.add translateOffset, s.attr.offset[node.attr.axis]
-                continue # Search for preceding intersect/union node 
-              when 'invert', 'mirror'
-                continue # Search for preceding intersect/union node
+      ### Generate half-space primitive when it cannot be compiled into a corner
+      #if typeof node.attr.val == 'string'
+      #  ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+      #  if flags.invert
+      #    node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+      #  else
+      #    node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+      #else
+      # Bin half-spaces for corner compilation
+      translateOffset = 0.0
+      for s in stack
+        if s.halfSpaces?
+          # Assign to the halfspace bins for corner compilation
+          index = node.attr.axis + (if flags.invert then 3 else 0)
+          val = glsl.add node.attr.val, translateOffset
+          s.halfSpaces[index] =
+            if s.halfSpaces[index] == null
+               val
+            else if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION
+              if index < 3
+                glsl.max s.halfSpaces[index], val
               else
-                # This may occur in special cases where we cannot do normal corner compilation
-                # (Such as a separate transformation on the plane itself - with a wedge node for example)
-                ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
-                if flags.invert
-                  node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
-                else
-                  node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
-          break
+                glsl.min s.halfSpaces[index], val
+            else
+              if index < 3
+                glsl.min s.halfSpaces[index], val
+              else
+                glsl.max s.halfSpaces[index], val
+        else
+          switch s.type
+            when 'translate'
+              translateOffset = glsl.add translateOffset, s.attr.offset[node.attr.axis]
+              continue # Search for preceding intersect/union node 
+            when 'invert', 'mirror'
+              continue # Search for preceding intersect/union node
+            else
+              # This may occur in special cases where we cannot do normal corner compilation
+              # (Such as a separate transformation on the plane itself - with a wedge node for example)
+              ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+              if flags.invert
+                node.code = primitiveCallback (glsl.sub node.attr.val, "#{ro}[#{node.attr.axis}]"), flags
+              else
+                node.code = primitiveCallback (glsl.sub "#{ro}[#{node.attr.axis}]", node.attr.val), flags
+        break
       # ###
+      stack[0].nodes.push node
+    corner: (stack,node,flags) ->
+      ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
+      dist = glslCompiler.preludeAdd flags.glslPrelude, glsl.sub ro, node.attr.val
+      # TODO: Optimization - handle rotations
+      # TODO: pass bevel/chamfer along as state - and refactor (probably use the last state rather than 
+      #       picking the max radius)
+      
+      # Determine whether the composite should be chamfered / beveled in some way
+      chamferRadius = 0
+      bevelRadius = 0
+      for s in stack
+        switch s.type
+          when 'chamfer'
+            chamferRadius = s.attr.radius
+          when 'bevel'
+            bevelRadius = s.attr.radius
+          when 'translate','rotate','scale','invert','mirror','repeat'
+            continue
+        break
+      #console.log "NODE ATTR", node.attr
+      # TODO: Need to squareroot chamfer radius??? (so that 
+      if bevelRadius != 0
+        # TODO: BUSY HERE
+        # TODO: Previous bevel implementation is wrong
+        roSigned = glslCompiler.preludeAdd flags.glslPrelude, if flags.invert then "-#{ro}" else "#{ro}"
+        cornerVal = if typeof node.attr.val == 'string' then (glslCompiler.preludeAdd flags.glslPrelude, node.attr.val) else node.attr.val
+        # Diagonal distance is calculated by transforming ro into the rotational space
+        diagonalDist = [
+          "(#{roSigned}[0] + #{roSigned}[1] - (#{glsl.add (glsl.index cornerVal, 0), (glsl.index cornerVal, 1)}))",
+          "(#{roSigned}[0] + #{roSigned}[2] - (#{glsl.add (glsl.index cornerVal, 0), (glsl.index cornerVal, 2)}))",
+          "(#{roSigned}[1] + #{roSigned}[2] - (#{glsl.add (glsl.index cornerVal, 1), (glsl.index cornerVal, 2)}))"
+        ]
+        if flags.invert
+          cornerDist = "length(min(#{dist}, 0.0))"
+          node.code = primitiveCallback "min(min(min(#{cornerDist}, #{math_invsqrt2} * #{glsl.index diagonalDist, 0} - #{bevelRadius}), #{math_invsqrt2} * #{glsl.index diagonalDist, 1} - #{bevelRadius}), #{math_invsqrt2} * #{glsl.index diagonalDist, 2} - #{bevelRadius})", flags
+        else
+          cornerDist = "length(max(#{dist}, 0.0))"
+          node.code = primitiveCallback "max(max(max(#{cornerDist}, #{math_invsqrt2} * #{glsl.index diagonalDist, 0} + #{bevelRadius}), #{math_invsqrt2} * #{glsl.index diagonalDist, 1} + #{bevelRadius}), #{math_invsqrt2} * #{glsl.index diagonalDist, 2} + #{bevelRadius})", flags
+      else if chamferRadius != 0
+        if flags.invert
+          node.code = primitiveCallback "length(min(#{glsl.add dist, chamferRadius}, 0.0)) - #{chamferRadius}", flags
+        else
+          node.code = primitiveCallback "length(max(#{glsl.add dist, chamferRadius}, 0.0)) - #{chamferRadius}", flags
+      else # bevelRadius == chamferRadius == 0
+        if flags.invert
+          node.code = primitiveCallback "length(min(#{dist}, 0.0))", flags
+        else
+          node.code = primitiveCallback "length(max(#{dist}, 0.0))", flags
       stack[0].nodes.push node
     cylinder: (stack, node, flags) ->
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin

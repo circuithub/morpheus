@@ -45,6 +45,9 @@ asm =
   halfspace: (attr) ->
     type: 'halfspace'
     attr: attr
+  corner: (attr) ->
+    type: 'corner'
+    attr: attr
   cylinder: (attr) ->
     type: 'cylinder'
     attr: attr
