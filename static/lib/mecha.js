@@ -709,6 +709,7 @@ mecha.generator =
         offset = node.attr.offset != null ? node.attr.offset : 0;
         offsetVec = [0.0, 0.0, 0.0];
         offsetVec[node.attr.offsetAxis] = offset;
+        console.log("OFFSET VEC", offsetVec);
         direction = node.attr.direction != null ? node.attr.direction : 1;
         if (!(node.attr.radius != null) || node.attr.radius === 0) {
           return asm.union(asm.intersect.apply(asm, __slice.call((function() {
@@ -720,24 +721,28 @@ mecha.generator =
               _results.push(compileASMNode(n));
             }
             return _results;
-          })()).concat([direction === 1 ? asm.rotate({
+          })()).concat([direction === 1 ? asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
             axis: node.attr.axis,
             angle: glsl.mul(0.5, node.attr.angle)
           }, asm.halfspace({
-            val: node.attr.offset,
+            val: 0.0,
             axis: node.attr.offsetAxis
-          })) : asm.invert(asm.rotate({
-            axis: node.attr.axis,
-            angle: node.attr.angle
-          }, asm.halfspace({
-            val: node.attr.offset,
-            axis: node.attr.axis
-          })))])), asm.translate({
+          }))) : asm.invert(asm.translate({
             offset: offsetVec
           }, asm.rotate({
             axis: node.attr.axis,
             angle: node.attr.angle
-          }, asm.intersect.apply(asm, __slice.call((function() {
+          }, asm.halfspace({
+            val: 0.0,
+            axis: node.attr.axis
+          }))))])), asm.intersect(asm.translate({
+            offset: offsetVec
+          }, asm.rotate.apply(asm, [{
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }].concat(__slice.call((function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
             _results = [];
@@ -746,10 +751,15 @@ mecha.generator =
               _results.push(compileASMNode(n));
             }
             return _results;
-          })()).concat([asm.invert(asm.halfspace({
-            val: node.attr.offset,
+          })())))), asm.invert(asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: glsl.mul(0.5, node.attr.angle)
+          }, asm.halfspace({
+            val: 0.0,
             axis: node.attr.offsetAxis
-          }))])))));
+          }))))));
         } else {
           _ref = node.nodes;
           _results = [];

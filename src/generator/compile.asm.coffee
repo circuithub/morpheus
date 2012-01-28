@@ -115,19 +115,29 @@ compileASM = (concreteSolidModel) ->
       offset = if node.attr.offset? then node.attr.offset else 0
       offsetVec = [0.0,0.0,0.0]
       offsetVec[node.attr.offsetAxis] = offset
+      console.log "OFFSET VEC", offsetVec
       direction = if node.attr.direction? then node.attr.direction else 1
       if not node.attr.radius? or node.attr.radius == 0
         asm.union (
           asm.intersect (compileASMNode n for n in node.nodes)...,
             if direction == 1
-              (asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, (asm.halfspace { val: node.attr.offset, axis: node.attr.offsetAxis }))
+              asm.translate { offset: offsetVec },
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
             else
-              (asm.invert (asm.rotate { axis: node.attr.axis, angle: node.attr.angle }, asm.halfspace { val: node.attr.offset, axis: node.attr.axis }))
+              asm.invert asm.translate { offset: offsetVec },
+                asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+                  asm.halfspace { val: 0.0, axis: node.attr.axis }
         ),(
-          asm.translate { offset: offsetVec },
-            asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
-              asm.intersect (compileASMNode n for n in node.nodes)...,
-                (asm.invert asm.halfspace { val: node.attr.offset, axis: node.attr.offsetAxis })
+          asm.intersect (
+            asm.translate { offset: offsetVec },
+              asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+                (compileASMNode n for n in node.nodes)...
+          ),(
+            asm.invert asm.translate { offset: offsetVec },
+              asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
+                asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+          )
         )
       else
         # Generate a smooth bend
