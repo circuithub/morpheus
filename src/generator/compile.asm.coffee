@@ -108,9 +108,31 @@ compileASM = (concreteSolidModel) ->
       halfSpaceAxis = if node.attr.axis + 1 > 2 then 0 else node.attr.axis + 1
       asm.intersect (asm.rotate { axis: node.attr.axis, angle: node.attr.from },
           (asm.halfspace { val: 0.0, axis: halfSpaceAxis })), 
-        (asm.rotate { axis: node.attr.axis, angle: node.attr.to},
+        (asm.rotate { axis: node.attr.axis, angle: node.attr.to },
           (asm.invert asm.halfspace { val: 0.0, axis: halfSpaceAxis })),
         (compileASMNode n for n in node.nodes)...
+    bend: (node) ->
+      offset = if node.attr.offset? then node.attr.offset else 0
+      offsetVec = [0.0,0.0,0.0]
+      offsetVec[node.attr.offsetAxis] = offset
+      direction = if node.attr.direction? then node.attr.direction else 1
+      if not node.attr.radius? or node.attr.radius == 0
+        asm.union (
+          asm.intersect (compileASMNode n for n in node.nodes)...,
+            if direction == 1
+              (asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, (asm.halfspace { val: node.attr.offset, axis: node.attr.offsetAxis }))
+            else
+              (asm.invert (asm.rotate { axis: node.attr.axis, angle: node.attr.angle }, asm.halfspace { val: node.attr.offset, axis: node.attr.axis }))
+        ),(
+          asm.translate { offset: offsetVec },
+            asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+              asm.intersect (compileASMNode n for n in node.nodes)...,
+                (asm.invert asm.halfspace { val: node.attr.offset, axis: node.attr.offsetAxis })
+        )
+      else
+        # Generate a smooth bend
+        # TODO: ....
+        compileASMNode n for n in node.nodes
 
   compileASMNode = (node) ->
     switch typeof node

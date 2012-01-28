@@ -703,6 +703,62 @@ mecha.generator =
           }
           return _results;
         })())));
+      },
+      bend: function(node) {
+        var direction, n, offset, offsetVec, _i, _len, _ref, _results;
+        offset = node.attr.offset != null ? node.attr.offset : 0;
+        offsetVec = [0.0, 0.0, 0.0];
+        offsetVec[node.attr.offsetAxis] = offset;
+        direction = node.attr.direction != null ? node.attr.direction : 1;
+        if (!(node.attr.radius != null) || node.attr.radius === 0) {
+          return asm.union(asm.intersect.apply(asm, __slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })()).concat([direction === 1 ? asm.rotate({
+            axis: node.attr.axis,
+            angle: glsl.mul(0.5, node.attr.angle)
+          }, asm.halfspace({
+            val: node.attr.offset,
+            axis: node.attr.offsetAxis
+          })) : asm.invert(asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }, asm.halfspace({
+            val: node.attr.offset,
+            axis: node.attr.axis
+          })))])), asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }, asm.intersect.apply(asm, __slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })()).concat([asm.invert(asm.halfspace({
+            val: node.attr.offset,
+            axis: node.attr.offsetAxis
+          }))])))));
+        } else {
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        }
       }
     };
     compileASMNode = function(node) {
@@ -1541,15 +1597,14 @@ mecha.generator =
         return
     */
     compileCompositeNode = function(name, cmpCallback, stack, node, flags) {
-      var bevelRadius, c, chamferRadius, codes, collectCode, cornersState, h, ro, s, _i, _j, _k, _len, _len2, _len3, _ref, _results;
+      var bevelRadius, c, chamferRadius, codes, collectCode, cornersState, h, ro, s, _i, _j, _k, _len, _len2, _len3, _ref;
       if (node.nodes.length === 0) {
         mecha.logInternalError("GLSL Compiler: Union node is empty.");
         return;
       }
       codes = [];
       collectCode = function(codes, nodes) {
-        var node, _i, _len, _results;
-        _results = [];
+        var node, _i, _len;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
           node = nodes[_i];
           if (node.code != null) codes.push(node.code);
@@ -1562,13 +1617,9 @@ mecha.generator =
             case 'material':
             case 'chamfer':
             case 'bevel':
-              _results.push(collectCode(codes, node.nodes));
-              break;
-            default:
-              _results.push(void 0);
+              collectCode(codes, node.nodes);
           }
         }
-        return _results;
       };
       collectCode(codes, node.nodes);
       ro = glslCompiler.preludeTop(flags.glslPrelude);
@@ -1611,12 +1662,10 @@ mecha.generator =
         break;
       }
       node.code = codes.shift();
-      _results = [];
       for (_k = 0, _len3 = codes.length; _k < _len3; _k++) {
         c = codes[_k];
-        _results.push(node.code = cmpCallback(c, node.code, flags));
+        node.code = cmpCallback(c, node.code, flags);
       }
-      return _results;
     };
     postDispatch = {
       invert: function(stack, node, flags) {

@@ -185,6 +185,15 @@ mecha.api =
           attr: attr,
           nodes: nodes
         };
+      }),
+      bend: Api(function() {
+        var attr, nodes;
+        attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return {
+          type: 'bend',
+          attr: attr,
+          nodes: nodes
+        };
       })
     });
     window.scene = function() {

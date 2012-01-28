@@ -101,6 +101,10 @@ do () ->
       type: 'wedge'
       attr: attr
       nodes: nodes
+    bend: Api (attr, nodes...) ->
+      type: 'bend'
+      attr: attr
+      nodes: nodes
 
   # Put API functions into the global namespace
   window.scene = (attr, nodes...) ->

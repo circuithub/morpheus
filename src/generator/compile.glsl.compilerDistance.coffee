@@ -216,6 +216,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         switch node.type
           when 'translate','rotate','mirror','repeat','invert','material','chamfer','bevel'
             collectCode codes, node.nodes
+      return
     collectCode codes, node.nodes
 
     # Corner compilation
@@ -254,6 +255,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       node.code = cmpCallback c, node.code, flags
     #if node.type == 'chamfer'
     #  node.code += " - #{node.attr.radius}"
+    return
     
   postDispatch =
     invert: (stack, node, flags) ->
