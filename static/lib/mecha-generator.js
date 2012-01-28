@@ -856,6 +856,20 @@ mecha.generator =
           return "abs(" + (glsl.literal(a)) + ")";
         }
       },
+      cos: function(a) {
+        if (typeof a === 'number') {
+          return Math.cos(a);
+        } else {
+          return "cos(" + a + ")";
+        }
+      },
+      sin: function(a) {
+        if (typeof a === 'number') {
+          return Math.sin(a);
+        } else {
+          return "sin(" + a + ")";
+        }
+      },
       dot: function(a, b) {
         var i, _ref, _results;
         if (typeof a === 'string' || typeof b === 'string') {
@@ -1416,8 +1430,8 @@ mecha.generator =
           mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
           glslCompiler.preludePush(flags.glslPrelude, "mat3(" + mat + ") * " + ro);
         } else {
-          cosAngle = Math.cos(-math_degToRad * node.attr.angle);
-          sinAngle = Math.sin(-math_degToRad * node.attr.angle);
+          cosAngle = glsl.cos(glsl.mul(-math_degToRad, node.attr.angle));
+          sinAngle = glsl.sin(glsl.mul(-math_degToRad, node.attr.angle));
           components = [
             (function() {
               switch (node.attr.axis) {

@@ -38,8 +38,8 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         glslCompiler.preludePush flags.glslPrelude, "mat3(#{mat}) * #{ro}"
       else
         # Modify only the components that are needed (yz / xz / xy)
-        cosAngle = Math.cos -math_degToRad * node.attr.angle
-        sinAngle = Math.sin -math_degToRad * node.attr.angle
+        cosAngle = glsl.cos (glsl.mul -math_degToRad, node.attr.angle)
+        sinAngle = glsl.sin (glsl.mul -math_degToRad, node.attr.angle)
         components = [
           switch node.attr.axis
             when 0 then "#{ro}.x"
