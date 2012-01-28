@@ -38,6 +38,18 @@ glsl = do ->
       else
         "abs(#{glsl.literal a})"
 
+    cos: (a) ->
+      if typeof a == 'number'
+        Math.cos a
+      else
+        "cos(#{a})"
+    
+    sin: (a) ->
+      if typeof a == 'number'
+        Math.sin a
+      else
+        "sin(#{a})"
+    
     dot: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
         "dot(#{a}, #{b})"
