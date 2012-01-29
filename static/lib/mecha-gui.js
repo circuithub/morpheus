@@ -101,7 +101,13 @@ mecha.gui =
     return coords;
   };
 
-  windowResize = function() {};
+  windowResize = function() {
+    try {
+
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.windowResize`:\n", error);
+    }
+  };
 
   mouseDown = function(event) {
     state.viewport.mouse.last = [event.clientX, event.clientY];
@@ -121,74 +127,101 @@ mecha.gui =
   };
 
   mouseUp = function(event) {
-    switch (event.which) {
-      case 1:
-        state.viewport.mouse.leftDown = false;
-        return state.viewport.mouse.leftDragDistance = 0;
-      case 2:
-        state.viewport.mouse.middleDown = false;
-        return state.viewport.mouse.middleDragDistance = 0;
+    try {
+      switch (event.which) {
+        case 1:
+          state.viewport.mouse.leftDown = false;
+          state.viewport.mouse.leftDragDistance = 0;
+          break;
+        case 2:
+          state.viewport.mouse.middleDown = false;
+          state.viewport.mouse.middleDragDistance = 0;
+      }
+    } catch (error) {
+
     }
   };
 
   mouseMove = function(event) {
     var delta, deltaLength, orbitAngles;
-    delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
-    deltaLength = gl.vec2.length(delta);
-    if (state.viewport.mouse.leftDown) {
-      state.viewport.mouse.leftDragDistance += deltaLength;
-    }
-    if (state.viewport.mouse.middleDown) {
-      state.viewport.mouse.middleDragDistance += deltaLength;
-    }
-    if (state.viewport.mouse.leftDown && event.which === 1) {
-      orbitAngles = [0.0, 0.0];
-      gl.vec2.mul(orbitAngles, delta, constants.camera.orbitSpeedFactor / deltaLength);
-      orbitAngles = [Math.clamp(orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed), Math.clamp(orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed)];
-      if ((isNaN(orbitAngles[0])) || (Math.abs(orbitAngles[0])) === Infinity) {
-        orbitAngles[0] = 0.0;
+    try {
+      delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
+      deltaLength = gl.vec2.length(delta);
+      if (state.viewport.mouse.leftDown) {
+        state.viewport.mouse.leftDragDistance += deltaLength;
       }
-      if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
-        orbitAngles[1] = 0.0;
+      if (state.viewport.mouse.middleDown) {
+        state.viewport.mouse.middleDragDistance += deltaLength;
       }
-      mecha.renderer.modelRotate('scene', orbitAngles);
+      if (state.viewport.mouse.leftDown && event.which === 1) {
+        orbitAngles = [0.0, 0.0];
+        gl.vec2.mul(orbitAngles, delta, constants.camera.orbitSpeedFactor / deltaLength);
+        orbitAngles = [Math.clamp(orbitAngles[0], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed), Math.clamp(orbitAngles[1], -constants.camera.maxOrbitSpeed, constants.camera.maxOrbitSpeed)];
+        if ((isNaN(orbitAngles[0])) || (Math.abs(orbitAngles[0])) === Infinity) {
+          orbitAngles[0] = 0.0;
+        }
+        if ((isNaN(orbitAngles[1])) || (Math.abs(orbitAngles[1])) === Infinity) {
+          orbitAngles[1] = 0.0;
+        }
+        mecha.renderer.modelRotate('scene', orbitAngles);
+      }
+      state.viewport.mouse.last = [event.clientX, event.clientY];
+    } catch (error) {
+
     }
-    return state.viewport.mouse.last = [event.clientX, event.clientY];
   };
 
   mouseWheel = function(event) {
     var delta, zoomDistance;
-    delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
-    return zoomDistance = delta * constants.camera.zoomSpeedFactor;
+    try {
+      delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
+      zoomDistance = delta * constants.camera.zoomSpeedFactor;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.mouseWheel`:\n", error);
+    }
   };
 
-  keyDown = function(event) {};
+  keyDown = function(event) {
+    try {
+
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.keyDown`:\n", error);
+    }
+  };
 
   controlsSourceCompile = function() {
-    return sceneInit();
+    try {
+      sceneInit();
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.controlsSourceCompile`:\n", error);
+    }
   };
 
   controlsParamChange = function(event) {
     var model, paramIndex, paramName, splitElName;
-    splitElName = event.target.name.split('[', 2);
-    paramName = splitElName[0];
-    paramIndex = splitElName.length > 1 ? Number((splitElName[1].split(']', 2))[0]) : 0;
-    model = state.models['scene'];
-    if (model.params[paramName] != null) {
-      switch (model.params[paramName].type) {
-        case 'float':
-          model.args[paramName] = Number(($(event.target)).val());
-          break;
-        case 'vec2':
-        case 'vec3':
-        case 'vec4':
-          model.args[paramName][paramIndex] = Number(($(event.target)).val());
-          break;
-        default:
-          mecha.logInternalError("Unknown type `" + model.params[paramName].type + "` for parameter `" + paramName + "` during change event.");
+    try {
+      splitElName = event.target.name.split('[', 2);
+      paramName = splitElName[0];
+      paramIndex = splitElName.length > 1 ? Number((splitElName[1].split(']', 2))[0]) : 0;
+      model = state.models['scene'];
+      if (model.params[paramName] != null) {
+        switch (model.params[paramName].type) {
+          case 'float':
+            model.args[paramName] = Number(($(event.target)).val());
+            break;
+          case 'vec2':
+          case 'vec3':
+          case 'vec4':
+            model.args[paramName][paramIndex] = Number(($(event.target)).val());
+            break;
+          default:
+            mecha.logInternalError("Unknown type `" + model.params[paramName].type + "` for parameter `" + paramName + "` during change event.");
+        }
       }
+      mecha.renderer.modelArguments('scene', model.args);
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.controlsParamChange`:\n", error);
     }
-    return mecha.renderer.modelArguments('scene', model.args);
   };
 
   registerDOMEvents = function() {
@@ -210,7 +243,13 @@ mecha.gui =
     return ($('#mecha-param-inputs')).delegate('.mecha-param-number', 'change', controlsParamChange);
   };
 
-  sceneIdle = function() {};
+  sceneIdle = function() {
+    try {
+
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.sceneIdle`:\n", error);
+    }
+  };
 
   canvasInit = function() {
     return windowResize();
@@ -218,108 +257,116 @@ mecha.gui =
 
   sceneInit = function() {
     var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
-    return requestId = JSandbox.eval({
-      data: csmSourceCode,
-      callback: function(result) {
-        var attr, model, name, _ref;
-        console.log(result);
-        model = state.models['scene'];
-        if (!(model != null)) {
-          model = state.models['scene'] = {
-            shaders: [],
-            params: {},
-            args: {}
-          };
+    try {
+      csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
+      requestId = JSandbox.eval({
+        data: csmSourceCode,
+        callback: function(result) {
+          var attr, model, name, _ref;
+          console.log(result);
+          model = state.models['scene'];
+          if (!(model != null)) {
+            model = state.models['scene'] = {
+              shaders: [],
+              params: {},
+              args: {}
+            };
+          }
+          model.params = result.attr.params;
+          _ref = model.params;
+          for (name in _ref) {
+            attr = _ref[name];
+            if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
+          }
+          model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+          console.log(model.shaders[1]);
+          mecha.renderer.modelShaders('scene', model.shaders);
+          mecha.renderer.modelArguments('scene', model.args);
+          return controlsInit();
+        },
+        onerror: function(data, request) {
+          return mecha.logInternalError("Error compiling the solid model.");
         }
-        model.params = result.attr.params;
-        _ref = model.params;
-        for (name in _ref) {
-          attr = _ref[name];
-          if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
-        }
-        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-        console.log(model.shaders[1]);
-        mecha.renderer.modelShaders('scene', model.shaders);
-        mecha.renderer.modelArguments('scene', model.args);
-        return controlsInit();
-      },
-      onerror: function(data, request) {
-        return mecha.logInternalError("Error compiling the solid model.");
-      }
-    });
+      });
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.sceneInit`:\n", error);
+    }
   };
 
   controlsInit = function() {
     var el, html, model, name, param, stepAttr, val, _ref, _ref2;
-    el = state.parameters.domElement;
-    if (el != null) {
-      html = '<table>';
-      _ref = state.models;
-      for (name in _ref) {
-        model = _ref[name];
-        _ref2 = model.params;
-        for (param in _ref2) {
-          val = _ref2[param];
-          html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
-          switch (val.param) {
-            case 'range':
-              switch (val.type) {
-                case 'float':
-                  stepAttr = val.step ? " step='" + val.step + "'" : '';
-                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-range' type='range' value='" + val.defaultArg + "' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
-                  break;
-                case 'vec2':
-                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  break;
-                case 'vec3':
-                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                  break;
-                case 'vec4':
-                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-range' type='range' value='" + val.defaultArg[3] + "' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
-                  break;
-                default:
-                  mecha.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
-              }
-              break;
-            case 'number':
-              switch (val.type) {
-                case 'float':
-                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'></input>";
-                  break;
-                case 'vec2':
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                  break;
-                case 'vec3':
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
-                  break;
-                case 'vec4':
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
-                  html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-number' type='number' value='" + val.defaultArg[3] + "'></input></div>";
-                  break;
-                default:
-                  mecha.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
-              }
+    try {
+      el = state.parameters.domElement;
+      if (el != null) {
+        html = '<table>';
+        _ref = state.models;
+        for (name in _ref) {
+          model = _ref[name];
+          _ref2 = model.params;
+          for (param in _ref2) {
+            val = _ref2[param];
+            html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
+            switch (val.param) {
+              case 'range':
+                switch (val.type) {
+                  case 'float':
+                    stepAttr = val.step ? " step='" + val.step + "'" : '';
+                    html += "<input name='" + param + "' id='" + param + "' class='mecha-param-range' type='range' value='" + val.defaultArg + "' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
+                    break;
+                  case 'vec2':
+                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                    break;
+                  case 'vec3':
+                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                    break;
+                  case 'vec4':
+                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                    html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-range' type='range' value='" + val.defaultArg[3] + "' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
+                    break;
+                  default:
+                    mecha.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
+                }
+                break;
+              case 'number':
+                switch (val.type) {
+                  case 'float':
+                    html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'></input>";
+                    break;
+                  case 'vec2':
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                    break;
+                  case 'vec3':
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                    html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                    html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
+                    break;
+                  case 'vec4':
+                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                    html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                    html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
+                    html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-number' type='number' value='" + val.defaultArg[3] + "'></input></div>";
+                    break;
+                  default:
+                    mecha.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
+                }
+            }
+            html += "</td></tr>";
           }
-          html += "</td></tr>";
         }
+        html += '</table>';
+        el.innerHTML = html;
       }
-      html += '</table>';
-      el.innerHTML = html;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.controlsInit`:\n", error);
     }
   };
 

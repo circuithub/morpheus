@@ -2,6 +2,10 @@
 # Program state should not be manipulated outside events files
 
 keyDown = (event) ->
-  #switch event.which
-  #  when 0
+  try
+    #switch event.which
+    #  when 0
+  catch error
+    mecha.logInternalError "Exception occurred in `mecha.gui.keyDown`:\n", error
+  return
       

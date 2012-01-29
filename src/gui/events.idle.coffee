@@ -2,4 +2,8 @@
 # Program state should not be manipulated outside events files
 
 sceneIdle = () ->
-  #SceneJS.FX.idle()
+  try
+    #SceneJS.FX.idle()
+  catch error
+    mecha.logInternalError "Exception occurred in `mecha.gui.sceneIdle`:\n", error
+  return
