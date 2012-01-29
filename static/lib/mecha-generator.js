@@ -711,11 +711,9 @@ mecha.generator =
           })())));
         },
         bend: function(node) {
-          var direction, n, offset, offsetVec, _i, _len, _ref, _results;
+          var direction, n, offset, offsetVec, radiusVec, upAxis;
           offset = node.attr.offset != null ? node.attr.offset : 0;
-          offsetVec = [0.0, 0.0, 0.0];
-          offsetVec[node.attr.offsetAxis] = offset;
-          console.log("OFFSET VEC", offsetVec);
+          (offsetVec = [0.0, 0.0, 0.0])[node.attr.offsetAxis] = offset;
           direction = node.attr.direction != null ? node.attr.direction : 1;
           if (!(node.attr.radius != null) || node.attr.radius === 0) {
             return asm.union(asm.intersect.apply(asm, __slice.call((function() {
@@ -767,13 +765,79 @@ mecha.generator =
               axis: node.attr.offsetAxis
             }))))));
           } else {
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
+            upAxis = (function() {
+              switch (node.attr.offsetAxis) {
+                case 0:
+                  if (node.attr.axis === 2) {
+                    return 1;
+                  } else {
+                    return 2;
+                  }
+                case 1:
+                  if (node.attr.axis === 2) {
+                    return 0;
+                  } else {
+                    return 2;
+                  }
+                case 2:
+                  if (node.attr.axis === 1) {
+                    return 0;
+                  } else {
+                    return 1;
+                  }
+              }
+            })();
+            (radiusVec = [0.0, 0.0, 0.0])[upAxis] = node.attr.radius;
+            return asm.union(asm.intersect.apply(asm, __slice.call((function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })()).concat([direction === 1 ? asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: glsl.mul(0.5, node.attr.angle)
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.offsetAxis
+            }))) : asm.invert(asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: node.attr.angle
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.axis
+            }))))])), asm.intersect(asm.translate({
+              offset: glsl.sub(offsetVec, radiusVec)
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: node.attr.angle
+            }, asm.translate.apply(asm, [{
+              offset: radiusVec
+            }].concat(__slice.call((function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })()))))), asm.invert(asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: glsl.mul(0.5, node.attr.angle)
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.offsetAxis
+            }))))));
           }
         }
       };

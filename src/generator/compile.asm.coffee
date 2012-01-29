@@ -114,9 +114,7 @@ compileASM = (concreteSolidModel) ->
           (compileASMNode n for n in node.nodes)...
       bend: (node) ->
         offset = if node.attr.offset? then node.attr.offset else 0
-        offsetVec = [0.0,0.0,0.0]
-        offsetVec[node.attr.offsetAxis] = offset
-        console.log "OFFSET VEC", offsetVec
+        (offsetVec = [0.0,0.0,0.0])[node.attr.offsetAxis] = offset
         direction = if node.attr.direction? then node.attr.direction else 1
         if not node.attr.radius? or node.attr.radius == 0
           asm.union (
@@ -142,8 +140,35 @@ compileASM = (concreteSolidModel) ->
           )
         else
           # Generate a smooth bend
-          # TODO: ....
-          compileASMNode n for n in node.nodes
+          # TODO: For glsl shader generation it is better to use bitwise operators
+          # upAxis = (7 & (~((1 << node.attr.offsetAxis) | (1 << node.attr.axis)))) >> 1
+          upAxis = switch node.attr.offsetAxis
+            when 0 then (if node.attr.axis == 2 then 1 else 2)
+            when 1 then (if node.attr.axis == 2 then 0 else 2)
+            when 2 then (if node.attr.axis == 1 then 0 else 1)
+          (radiusVec = [0.0,0.0,0.0])[upAxis] = node.attr.radius
+          asm.union (
+            asm.intersect (compileASMNode n for n in node.nodes)...,
+              if direction == 1
+                asm.translate { offset: offsetVec },
+                  asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) },
+                    asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+              else
+                asm.invert asm.translate { offset: offsetVec },
+                  asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+                    asm.halfspace { val: 0.0, axis: node.attr.axis }
+          ),(
+            asm.intersect (
+              asm.translate { offset: glsl.sub offsetVec, radiusVec },
+                asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+                  asm.translate { offset: radiusVec },
+                    (compileASMNode n for n in node.nodes)...
+            ),(
+              asm.invert asm.translate { offset: offsetVec },
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+            )
+          )
 
     compileASMNode = (node) ->
       switch typeof node
