@@ -151,8 +151,7 @@ compileASM = (concreteSolidModel) ->
             asm.intersect (compileASMNode n for n in node.nodes)...,
               if direction == 1
                 asm.translate { offset: offsetVec },
-                  asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) },
-                    asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
               else
                 asm.invert asm.translate { offset: offsetVec },
                   asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
@@ -165,7 +164,7 @@ compileASM = (concreteSolidModel) ->
                     (compileASMNode n for n in node.nodes)...
             ),(
               asm.invert asm.translate { offset: offsetVec },
-                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
+                asm.rotate { axis: node.attr.axis, angle: node.attr.angle }, 
                   asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
             )
           )

@@ -799,13 +799,10 @@ mecha.generator =
               return _results;
             })()).concat([direction === 1 ? asm.translate({
               offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: glsl.mul(0.5, node.attr.angle)
             }, asm.halfspace({
               val: 0.0,
               axis: node.attr.offsetAxis
-            }))) : asm.invert(asm.translate({
+            })) : asm.invert(asm.translate({
               offset: offsetVec
             }, asm.rotate({
               axis: node.attr.axis,
@@ -833,7 +830,7 @@ mecha.generator =
               offset: offsetVec
             }, asm.rotate({
               axis: node.attr.axis,
-              angle: glsl.mul(0.5, node.attr.angle)
+              angle: node.attr.angle
             }, asm.halfspace({
               val: 0.0,
               axis: node.attr.offsetAxis
