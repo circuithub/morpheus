@@ -797,12 +797,10 @@ mecha.generator =
                 _results.push(compileASMNode(n));
               }
               return _results;
-            })()).concat([direction === 1 ? asm.translate({
-              offset: offsetVec
-            }, asm.halfspace({
-              val: 0.0,
+            })()).concat([direction === 1 ? asm.halfspace({
+              val: offset,
               axis: node.attr.offsetAxis
-            })) : asm.invert(asm.translate({
+            }) : asm.invert(asm.translate({
               offset: offsetVec
             }, asm.rotate({
               axis: node.attr.axis,

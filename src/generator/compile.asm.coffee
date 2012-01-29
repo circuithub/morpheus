@@ -150,8 +150,7 @@ compileASM = (concreteSolidModel) ->
           asm.union (
             asm.intersect (compileASMNode n for n in node.nodes)...,
               if direction == 1
-                asm.translate { offset: offsetVec },
-                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+                asm.halfspace { val: offset, axis: node.attr.offsetAxis }
               else
                 asm.invert asm.translate { offset: offsetVec },
                   asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
