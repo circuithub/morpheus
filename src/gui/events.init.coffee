@@ -86,6 +86,7 @@ controlsInit = () ->
         html += "</td></tr>"
     html += '</table>'
     el.innerHTML = html
+  return
 
 # Initialize the CSM API (by loading the code from the given url)
 apiInit = (callback) ->

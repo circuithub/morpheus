@@ -54,76 +54,97 @@ mecha.renderer =
 
   modelShaders = function(modelName, shaders) {
     var success;
-    success = true;
-    if (!(state.shader.program != null)) {
-      state.shader.program = state.context.createProgram();
-      state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
-      state.context.attachShader(state.shader.program, state.shader.vs);
-      state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
-      state.context.attachShader(state.shader.program, state.shader.fs);
+    try {
+      success = true;
+      if (!(state.shader.program != null)) {
+        state.shader.program = state.context.createProgram();
+        state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
+        state.context.attachShader(state.shader.program, state.shader.vs);
+        state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
+        state.context.attachShader(state.shader.program, state.shader.fs);
+      }
+      state.context.shaderSource(state.shader.vs, shaders[0]);
+      state.context.shaderSource(state.shader.fs, shaders[1]);
+      state.context.compileShader(state.shader.vs);
+      if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
+        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
+      }
+      state.context.compileShader(state.shader.fs);
+      if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
+        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
+      }
+      state.context.linkProgram(state.shader.program);
+      if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
+        mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
+      }
+      (gl('scene')).shaderProgram(state.shader.program);
+      gl.refresh(state.shader.program);
+      return success;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.modelShaders`:\n", error);
+      return false;
     }
-    state.context.shaderSource(state.shader.vs, shaders[0]);
-    state.context.shaderSource(state.shader.fs, shaders[1]);
-    state.context.compileShader(state.shader.vs);
-    if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
-      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
-    }
-    state.context.compileShader(state.shader.fs);
-    if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
-      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
-    }
-    state.context.linkProgram(state.shader.program);
-    if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
-      mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
-    }
-    (gl('scene')).shaderProgram(state.shader.program);
-    gl.refresh(state.shader.program);
-    return success;
   };
 
   modelArguments = function(modelName, args) {
     var name, val;
-    for (name in args) {
-      val = args[name];
-      (gl(modelName)).uniform(name, val);
+    try {
+      for (name in args) {
+        val = args[name];
+        (gl(modelName)).uniform(name, val);
+      }
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.modelArguments`:\n", error);
     }
   };
 
   modelRotate = function(modelName, angles) {
-    gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
-    return (gl(modelName)).uniform('model', state.rotation);
+    try {
+      gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
+      (gl(modelName)).uniform('model', state.rotation);
+    } catch (error) {
+      mecha.logInternalError("Exception occured in `mecha.renderer.modelRotate`:\n", error);
+    }
   };
 
   createScene = function(context) {
     var ibo, indices, positions, vbo;
-    state.context = context;
-    positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
-    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-    vbo = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, vbo);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
-    ibo = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
-    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
-    gl.scene({
-      'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+    try {
+      state.context = context;
+      positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
+      indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+      vbo = context.createBuffer();
+      context.bindBuffer(context.ARRAY_BUFFER, vbo);
+      context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
+      ibo = context.createBuffer();
+      context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+      context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
+      gl.scene({
+        'scene': ''
+      }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.createScene`:\n", error);
+    }
   };
 
   runScene = function(canvas, idleCallback) {
     var callback;
-    state.context.viewport(0, 0, canvas.width, canvas.height);
-    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
-    callback = function() {
-      if (gl.update()) {
-        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
-        (gl('scene')).render(state.context);
-      } else {
-        idleCallback();
-      }
-      return self.nextFrame = window.requestAnimationFrame(callback, canvas);
-    };
-    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    try {
+      state.context.viewport(0, 0, canvas.width, canvas.height);
+      state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+      callback = function() {
+        if (gl.update()) {
+          state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
+          (gl('scene')).render(state.context);
+        } else {
+          idleCallback();
+        }
+        return self.nextFrame = window.requestAnimationFrame(callback, canvas);
+      };
+      state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.runScene`:\n", error);
+    }
   };
 
   exports = exports != null ? exports : {};

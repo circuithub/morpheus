@@ -74,10 +74,15 @@ mecha.generator =
 
   translateCSM = function(apiSourceCode, csmSourceCode) {
     var jsSourceCode, variablesSource;
-    variablesSource = csmSourceCode.match(/var[^;]*;/g);
-    csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS */\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE */\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );\n  } catch(err) {\n    return String(err);\n  }\n})();";
-    return jsSourceCode;
+    try {
+      variablesSource = csmSourceCode.match(/var[^;]*;/g);
+      csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
+      jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS */\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE */\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );\n  } catch(err) {\n    return String(err);\n  }\n})();";
+      return jsSourceCode;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.generator.translateCSM`:\n", error);
+      return '';
+    }
   };
 
   asm = {
@@ -469,10 +474,84 @@ mecha.generator =
 
   compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
-    dispatch = {
-      scene: function(node) {
-        var n;
-        if (node.nodes.length > 1) {
+    try {
+      dispatch = {
+        scene: function(node) {
+          var n;
+          if (node.nodes.length > 1) {
+            return asm.union.apply(asm, (function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })());
+          } else if (node.nodes.length === 1) {
+            return compileASMNode(node.nodes[0]);
+          } else {
+            return {};
+          }
+        },
+        box: function(node) {
+          /*
+                  if Array.isArray node.attr.dimensions
+                    halfspaces = for i in [0..2]
+                      asm.halfspace 
+                        val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
+                        axis: i
+                    asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
+          */          return asm.mirror({
+            axes: [0, 1, 2]
+          }, asm.corner({
+            val: glsl.mul(node.attr.dimensions, 0.5)
+          }));
+        },
+        sphere: function(node) {
+          return asm.sphere({
+            radius: node.attr.radius
+          });
+        },
+        cylinder: function(node) {
+          var halfspaces;
+          if (node.attr.length != null) {
+            halfspaces = [
+              asm.halfspace({
+                val: node.attr.length * 0.5,
+                axis: node.attr.axis
+              }), asm.invert(asm.halfspace({
+                val: node.attr.length * -0.5,
+                axis: node.attr.axis
+              }))
+            ];
+            return asm.intersect(asm.cylinder({
+              radius: node.attr.radius,
+              axis: node.attr.axis
+            }), halfspaces[0], halfspaces[1]);
+          } else {
+            return asm.cylinder({
+              radius: node.attr.radius,
+              axis: node.attr.axis
+            });
+          }
+        },
+        intersect: function(node) {
+          var n;
+          return asm.intersect.apply(asm, (function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })());
+        },
+        union: function(node) {
+          var n;
           return asm.union.apply(asm, (function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
@@ -483,314 +562,245 @@ mecha.generator =
             }
             return _results;
           })());
-        } else if (node.nodes.length === 1) {
-          return compileASMNode(node.nodes[0]);
-        } else {
-          return {};
-        }
-      },
-      box: function(node) {
-        /*
-              if Array.isArray node.attr.dimensions
-                halfspaces = for i in [0..2]
-                  asm.halfspace 
-                    val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
-                    axis: i
-                asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
-        */        return asm.mirror({
-          axes: [0, 1, 2]
-        }, asm.corner({
-          val: glsl.mul(node.attr.dimensions, 0.5)
-        }));
-      },
-      sphere: function(node) {
-        return asm.sphere({
-          radius: node.attr.radius
-        });
-      },
-      cylinder: function(node) {
-        var halfspaces;
-        if (node.attr.length != null) {
-          halfspaces = [
-            asm.halfspace({
-              val: node.attr.length * 0.5,
-              axis: node.attr.axis
-            }), asm.invert(asm.halfspace({
-              val: node.attr.length * -0.5,
-              axis: node.attr.axis
-            }))
-          ];
-          return asm.intersect(asm.cylinder({
-            radius: node.attr.radius,
-            axis: node.attr.axis
-          }), halfspaces[0], halfspaces[1]);
-        } else {
-          return asm.cylinder({
-            radius: node.attr.radius,
-            axis: node.attr.axis
-          });
-        }
-      },
-      intersect: function(node) {
-        var n;
-        return asm.intersect.apply(asm, (function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })());
-      },
-      union: function(node) {
-        var n;
-        return asm.union.apply(asm, (function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })());
-      },
-      difference: function(node) {
-        var n;
-        if (node.nodes.length > 0) {
-          return asm.intersect(compileASMNode(node.nodes[0]), asm.invert.apply(asm, (function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes.slice(1, node.nodes.length);
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })()));
-        } else {
-          return node;
-        }
-      },
-      mirror: function(node) {
-        var n;
-        return asm.mirror.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      repeat: function(node) {
-        var n;
-        return asm.repeat.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      translate: function(node) {
-        var n;
-        return asm.translate.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      rotate: function(node) {
-        var n;
-        return asm.rotate.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      scale: function(node) {
-        var n;
-        return asm.scale.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      material: function(node) {
-        var n;
-        return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      chamfer: function(node) {
-        var n;
-        return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      bevel: function(node) {
-        var n;
-        return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      wedge: function(node) {
-        var halfSpaceAxis, n;
-        halfSpaceAxis = node.attr.axis + 1 > 2 ? 0 : node.attr.axis + 1;
-        return asm.intersect.apply(asm, [asm.rotate({
-          axis: node.attr.axis,
-          angle: node.attr.from
-        }, asm.halfspace({
-          val: 0.0,
-          axis: halfSpaceAxis
-        })), asm.rotate({
-          axis: node.attr.axis,
-          angle: node.attr.to
-        }, asm.invert(asm.halfspace({
-          val: 0.0,
-          axis: halfSpaceAxis
-        })))].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        })())));
-      },
-      bend: function(node) {
-        var direction, n, offset, offsetVec, _i, _len, _ref, _results;
-        offset = node.attr.offset != null ? node.attr.offset : 0;
-        offsetVec = [0.0, 0.0, 0.0];
-        offsetVec[node.attr.offsetAxis] = offset;
-        console.log("OFFSET VEC", offsetVec);
-        direction = node.attr.direction != null ? node.attr.direction : 1;
-        if (!(node.attr.radius != null) || node.attr.radius === 0) {
-          return asm.union(asm.intersect.apply(asm, __slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })()).concat([direction === 1 ? asm.translate({
-            offset: offsetVec
-          }, asm.rotate({
-            axis: node.attr.axis,
-            angle: glsl.mul(0.5, node.attr.angle)
-          }, asm.halfspace({
-            val: 0.0,
-            axis: node.attr.offsetAxis
-          }))) : asm.invert(asm.translate({
-            offset: offsetVec
-          }, asm.rotate({
-            axis: node.attr.axis,
-            angle: node.attr.angle
-          }, asm.halfspace({
-            val: 0.0,
-            axis: node.attr.axis
-          }))))])), asm.intersect(asm.translate({
-            offset: offsetVec
-          }, asm.rotate.apply(asm, [{
-            axis: node.attr.axis,
-            angle: node.attr.angle
-          }].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())))), asm.invert(asm.translate({
-            offset: offsetVec
-          }, asm.rotate({
-            axis: node.attr.axis,
-            angle: glsl.mul(0.5, node.attr.angle)
-          }, asm.halfspace({
-            val: 0.0,
-            axis: node.attr.offsetAxis
-          }))))));
-        } else {
-          _ref = node.nodes;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            n = _ref[_i];
-            _results.push(compileASMNode(n));
-          }
-          return _results;
-        }
-      }
-    };
-    compileASMNode = function(node) {
-      switch (typeof node) {
-        case 'object':
-          if (dispatch[node.type] != null) {
-            return dispatch[node.type](node);
+        },
+        difference: function(node) {
+          var n;
+          if (node.nodes.length > 0) {
+            return asm.intersect(compileASMNode(node.nodes[0]), asm.invert.apply(asm, (function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes.slice(1, node.nodes.length);
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })()));
           } else {
-            mecha.log("Unexpected node type '" + node.type + "'.");
-            return {};
+            return node;
           }
-          break;
-        default:
-          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
-          return {};
+        },
+        mirror: function(node) {
+          var n;
+          return asm.mirror.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        repeat: function(node) {
+          var n;
+          return asm.repeat.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        translate: function(node) {
+          var n;
+          return asm.translate.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        rotate: function(node) {
+          var n;
+          return asm.rotate.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        scale: function(node) {
+          var n;
+          return asm.scale.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        material: function(node) {
+          var n;
+          return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        chamfer: function(node) {
+          var n;
+          return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        bevel: function(node) {
+          var n;
+          return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        wedge: function(node) {
+          var halfSpaceAxis, n;
+          halfSpaceAxis = node.attr.axis + 1 > 2 ? 0 : node.attr.axis + 1;
+          return asm.intersect.apply(asm, [asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.from
+          }, asm.halfspace({
+            val: 0.0,
+            axis: halfSpaceAxis
+          })), asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.to
+          }, asm.invert(asm.halfspace({
+            val: 0.0,
+            axis: halfSpaceAxis
+          })))].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })())));
+        },
+        bend: function(node) {
+          var direction, n, offset, offsetVec, _i, _len, _ref, _results;
+          offset = node.attr.offset != null ? node.attr.offset : 0;
+          offsetVec = [0.0, 0.0, 0.0];
+          offsetVec[node.attr.offsetAxis] = offset;
+          console.log("OFFSET VEC", offsetVec);
+          direction = node.attr.direction != null ? node.attr.direction : 1;
+          if (!(node.attr.radius != null) || node.attr.radius === 0) {
+            return asm.union(asm.intersect.apply(asm, __slice.call((function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })()).concat([direction === 1 ? asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: glsl.mul(0.5, node.attr.angle)
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.offsetAxis
+            }))) : asm.invert(asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: node.attr.angle
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.axis
+            }))))])), asm.intersect(asm.translate({
+              offset: offsetVec
+            }, asm.rotate.apply(asm, [{
+              axis: node.attr.axis,
+              angle: node.attr.angle
+            }].concat(__slice.call((function() {
+              var _i, _len, _ref, _results;
+              _ref = node.nodes;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                n = _ref[_i];
+                _results.push(compileASMNode(n));
+              }
+              return _results;
+            })())))), asm.invert(asm.translate({
+              offset: offsetVec
+            }, asm.rotate({
+              axis: node.attr.axis,
+              angle: glsl.mul(0.5, node.attr.angle)
+            }, asm.halfspace({
+              val: 0.0,
+              axis: node.attr.offsetAxis
+            }))))));
+          } else {
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          }
+        }
+      };
+      compileASMNode = function(node) {
+        switch (typeof node) {
+          case 'object':
+            if (dispatch[node.type] != null) {
+              return dispatch[node.type](node);
+            } else {
+              mecha.log("Unexpected node type '" + node.type + "'.");
+              return {};
+            }
+            break;
+          default:
+            mecha.log("Unexpected node of type '" + (typeof node) + "'.");
+            return {};
+        }
+      };
+      if (concreteSolidModel.type !== 'scene') {
+        mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
+        return;
       }
-    };
-    if (concreteSolidModel.type !== 'scene') {
-      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
-      return;
+      return optimizeASM(compileASMNode(concreteSolidModel));
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.generator.compileASM`:\n", error);
+      return asm.union();
     }
-    return optimizeASM(compileASMNode(concreteSolidModel));
   };
 
   glsl = (function() {
@@ -1933,86 +1943,91 @@ mecha.generator =
 
   compileGLSL = function(abstractSolidModel, params) {
     var fragmentShader, rayDirection, rayOrigin, shaders, usePerspectiveProjection, vertexShader;
-    rayOrigin = 'ro';
-    rayDirection = 'rd';
-    usePerspectiveProjection = false;
-    console.log("ASM:");
-    console.log(abstractSolidModel);
-    vertexShader = function() {
-      var bounds, boundsResult, sceneTranslation;
-      boundsResult = compileASMBounds(abstractSolidModel);
-      if (boundsResult.nodes.length !== 1) {
-        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
-      }
-      bounds = boundsResult.nodes[0].bounds;
-      /* TEMPORARY
-      console.log "Bounds Result:"
-      console.log boundsResult
-      */
-      sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
-      return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nuniform mat3 model;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(model * position, 1.0);\n}\n";
-    };
-    fragmentShader = function() {
-      var distanceCode, distancePreludeCode, distanceResult, generateUniforms, idCode, idPreludeCode, idResult, sceneMaterial;
-      distanceResult = glslSceneDistance(abstractSolidModel);
-      if (distanceResult.nodes.length !== 1) {
-        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
-      }
-      console.log("Distance Result:");
-      console.log(distanceResult);
-      idResult = glslSceneId(abstractSolidModel);
-      if (idResult.nodes.length !== 1) {
-        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
-      }
-      /* TEMPORARY
-      console.log "Id Result:"
-      console.log idResult
-      */
-      sceneMaterial = function(materials) {
-        var binarySearch, i, m, result, _ref;
-        binarySearch = function(start, end) {
-          var diff, mid;
-          diff = end - start;
-          if (diff === 1) {
-            return "m" + start;
-          } else {
-            mid = start + Math.floor(diff * 0.5);
-            return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
-          }
-        };
-        result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
-        if (materials.length > 0) {
-          for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-            m = materials[i];
-            result += "  vec3 m" + i + " = " + m + ";\n";
-          }
-          result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
-        } else {
-          result += "  return vec3(0.5);\n";
+    try {
+      rayOrigin = 'ro';
+      rayDirection = 'rd';
+      usePerspectiveProjection = false;
+      console.log("ASM:");
+      console.log(abstractSolidModel);
+      vertexShader = function() {
+        var bounds, boundsResult, sceneTranslation;
+        boundsResult = compileASMBounds(abstractSolidModel);
+        if (boundsResult.nodes.length !== 1) {
+          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
         }
-        result += "}\n\n";
-        return result;
+        bounds = boundsResult.nodes[0].bounds;
+        /* TEMPORARY
+        console.log "Bounds Result:"
+        console.log boundsResult
+        */
+        sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
+        return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nuniform mat3 model;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(model * position, 1.0);\n}\n";
       };
-      generateUniforms = function(params) {
-        var attr, name;
-        return ((function() {
-          var _results;
-          _results = [];
-          for (name in params) {
-            attr = params[name];
-            _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
+      fragmentShader = function() {
+        var distanceCode, distancePreludeCode, distanceResult, generateUniforms, idCode, idPreludeCode, idResult, sceneMaterial;
+        distanceResult = glslSceneDistance(abstractSolidModel);
+        if (distanceResult.nodes.length !== 1) {
+          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
+        }
+        console.log("Distance Result:");
+        console.log(distanceResult);
+        idResult = glslSceneId(abstractSolidModel);
+        if (idResult.nodes.length !== 1) {
+          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
+        }
+        /* TEMPORARY
+        console.log "Id Result:"
+        console.log idResult
+        */
+        sceneMaterial = function(materials) {
+          var binarySearch, i, m, result, _ref;
+          binarySearch = function(start, end) {
+            var diff, mid;
+            diff = end - start;
+            if (diff === 1) {
+              return "m" + start;
+            } else {
+              mid = start + Math.floor(diff * 0.5);
+              return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
+            }
+          };
+          result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
+          if (materials.length > 0) {
+            for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+              m = materials[i];
+              result += "  vec3 m" + i + " = " + m + ";\n";
+            }
+            result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+          } else {
+            result += "  return vec3(0.5);\n";
           }
-          return _results;
-        })()).join('\n');
+          result += "}\n\n";
+          return result;
+        };
+        generateUniforms = function(params) {
+          var attr, name;
+          return ((function() {
+            var _results;
+            _results = [];
+            for (name in params) {
+              attr = params[name];
+              _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
+            }
+            return _results;
+          })()).join('\n');
+        };
+        distanceCode = distanceResult.nodes[0].code;
+        distancePreludeCode = distanceResult.flags.glslPrelude.code;
+        idCode = idResult.nodes[0].code;
+        idPreludeCode = idResult.flags.glslPrelude.code;
+        return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
       };
-      distanceCode = distanceResult.nodes[0].code;
-      distancePreludeCode = distanceResult.flags.glslPrelude.code;
-      idCode = idResult.nodes[0].code;
-      idPreludeCode = idResult.flags.glslPrelude.code;
-      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
-    };
-    shaders = [vertexShader(), fragmentShader()];
-    return shaders;
+      shaders = [vertexShader(), fragmentShader()];
+      return shaders;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.generator.compileGLSL`:\n", error);
+      return [null, null];
+    }
   };
 
   exports = exports != null ? exports : {};
@@ -2061,12 +2076,21 @@ mecha.editor =
   };
 
   create = function(domElement, sourceCode) {
-    if (!(sourceCode != null)) sourceCode = "";
-    domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
+    try {
+      if (!(sourceCode != null)) sourceCode = "";
+      domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.editor.create`:\n", error);
+    }
   };
 
   getSourceCode = function() {
-    return ($('#mecha-source-code')).val();
+    try {
+      return ($('#mecha-source-code')).val();
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.createControls`:\n", error);
+      return '';
+    }
   };
 
   exports = exports != null ? exports : {};
@@ -2136,76 +2160,97 @@ mecha.renderer =
 
   modelShaders = function(modelName, shaders) {
     var success;
-    success = true;
-    if (!(state.shader.program != null)) {
-      state.shader.program = state.context.createProgram();
-      state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
-      state.context.attachShader(state.shader.program, state.shader.vs);
-      state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
-      state.context.attachShader(state.shader.program, state.shader.fs);
+    try {
+      success = true;
+      if (!(state.shader.program != null)) {
+        state.shader.program = state.context.createProgram();
+        state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
+        state.context.attachShader(state.shader.program, state.shader.vs);
+        state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
+        state.context.attachShader(state.shader.program, state.shader.fs);
+      }
+      state.context.shaderSource(state.shader.vs, shaders[0]);
+      state.context.shaderSource(state.shader.fs, shaders[1]);
+      state.context.compileShader(state.shader.vs);
+      if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
+        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
+      }
+      state.context.compileShader(state.shader.fs);
+      if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
+        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
+      }
+      state.context.linkProgram(state.shader.program);
+      if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
+        mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
+      }
+      (gl('scene')).shaderProgram(state.shader.program);
+      gl.refresh(state.shader.program);
+      return success;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.modelShaders`:\n", error);
+      return false;
     }
-    state.context.shaderSource(state.shader.vs, shaders[0]);
-    state.context.shaderSource(state.shader.fs, shaders[1]);
-    state.context.compileShader(state.shader.vs);
-    if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
-      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
-    }
-    state.context.compileShader(state.shader.fs);
-    if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
-      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
-    }
-    state.context.linkProgram(state.shader.program);
-    if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
-      mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
-    }
-    (gl('scene')).shaderProgram(state.shader.program);
-    gl.refresh(state.shader.program);
-    return success;
   };
 
   modelArguments = function(modelName, args) {
     var name, val;
-    for (name in args) {
-      val = args[name];
-      (gl(modelName)).uniform(name, val);
+    try {
+      for (name in args) {
+        val = args[name];
+        (gl(modelName)).uniform(name, val);
+      }
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.modelArguments`:\n", error);
     }
   };
 
   modelRotate = function(modelName, angles) {
-    gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
-    return (gl(modelName)).uniform('model', state.rotation);
+    try {
+      gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
+      (gl(modelName)).uniform('model', state.rotation);
+    } catch (error) {
+      mecha.logInternalError("Exception occured in `mecha.renderer.modelRotate`:\n", error);
+    }
   };
 
   createScene = function(context) {
     var ibo, indices, positions, vbo;
-    state.context = context;
-    positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
-    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-    vbo = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, vbo);
-    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
-    ibo = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
-    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
-    gl.scene({
-      'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+    try {
+      state.context = context;
+      positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
+      indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+      vbo = context.createBuffer();
+      context.bindBuffer(context.ARRAY_BUFFER, vbo);
+      context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
+      ibo = context.createBuffer();
+      context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+      context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
+      gl.scene({
+        'scene': ''
+      }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.createScene`:\n", error);
+    }
   };
 
   runScene = function(canvas, idleCallback) {
     var callback;
-    state.context.viewport(0, 0, canvas.width, canvas.height);
-    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
-    callback = function() {
-      if (gl.update()) {
-        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
-        (gl('scene')).render(state.context);
-      } else {
-        idleCallback();
-      }
-      return self.nextFrame = window.requestAnimationFrame(callback, canvas);
-    };
-    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    try {
+      state.context.viewport(0, 0, canvas.width, canvas.height);
+      state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+      callback = function() {
+        if (gl.update()) {
+          state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
+          (gl('scene')).render(state.context);
+        } else {
+          idleCallback();
+        }
+        return self.nextFrame = window.requestAnimationFrame(callback, canvas);
+      };
+      state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.renderer.runScene`:\n", error);
+    }
   };
 
   exports = exports != null ? exports : {};
@@ -2546,7 +2591,7 @@ mecha.gui =
         }
       }
       html += '</table>';
-      return el.innerHTML = html;
+      el.innerHTML = html;
     }
   };
 
@@ -2585,49 +2630,62 @@ mecha.gui =
 
   create = function(container, jsandboxUrl, mechaUrlRoot) {
     var containerEl, errorHtml;
-    errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
-    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-      containerEl.innerHTML = errorHtml;
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+    try {
+      errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
+      if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+        containerEl.innerHTML = errorHtml;
+        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+        return false;
+      } else if (container === null) {
+        mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+      } else {
+        containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+      }
+      if (containerEl === null) {
+        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
+        return false;
+      }
+      containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
+      if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
+      if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
+      if (state.paths.jsandboxUrl != null) {
+        JSandbox.create(state.paths.jsandboxUrl);
+      }
+      init(containerEl, document.getElementById('mecha-canvas'));
+      return true;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.create`:\n", error);
       return false;
-    } else if (container === null) {
-      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
-    } else {
-      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
     }
-    if (containerEl === null) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
-      return false;
-    }
-    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
-    if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
-    if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
-    if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
-    init(containerEl, document.getElementById('mecha-canvas'));
-    return true;
   };
 
   createControls = function(container) {
     var containerEl;
-    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+    try {
+      if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+        return false;
+      } else if (container === null) {
+        mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+      } else {
+        containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+      }
+      if (containerEl === null) {
+        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
+        return false;
+      }
+      if (!(state.parameters.domElement != null)) {
+        state.parameters.domElement = document.createElement('form');
+        state.parameters.domElement.id = 'mecha-param-inputs';
+        containerEl.appendChild(state.parameters.domElement);
+      }
+      controlsInit();
+      registerControlEvents();
+      return true;
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.createControls`:\n", error);
       return false;
-    } else if (container === null) {
-      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
-    } else {
-      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
     }
-    if (containerEl === null) {
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
-      return false;
-    }
-    if (!(state.parameters.domElement != null)) {
-      state.parameters.domElement = document.createElement('form');
-      state.parameters.domElement.id = 'mecha-param-inputs';
-      containerEl.appendChild(state.parameters.domElement);
-    }
-    controlsInit();
-    return registerControlEvents();
   };
 
   exports = exports != null ? exports : {};

@@ -31,12 +31,21 @@ mecha.editor =
   };
 
   create = function(domElement, sourceCode) {
-    if (!(sourceCode != null)) sourceCode = "";
-    domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
+    try {
+      if (!(sourceCode != null)) sourceCode = "";
+      domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.editor.create`:\n", error);
+    }
   };
 
   getSourceCode = function() {
-    return ($('#mecha-source-code')).val();
+    try {
+      return ($('#mecha-source-code')).val();
+    } catch (error) {
+      mecha.logInternalError("Exception occurred in `mecha.gui.createControls`:\n", error);
+      return '';
+    }
   };
 
   exports = exports != null ? exports : {};
