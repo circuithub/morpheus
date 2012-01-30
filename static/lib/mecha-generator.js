@@ -940,10 +940,10 @@ mecha.generator =
         }
       },
       dot: function(a, b) {
-        var i, _ref, _results;
+        var i, result, _ref;
         if (typeof a === 'string' || typeof b === 'string') {
           return "dot(" + a + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform dot product operation with array operands of different lengths.";
           }
@@ -951,11 +951,11 @@ mecha.generator =
             throw "Cannot perform dot product operation on vectors of " + a.length + " dimensions.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
-            _results = [];
+            result = 0.0;
             for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-              _results.push(a[i] * b[i]);
+              result += a[i] * b[i];
             }
-            return _results;
+            return result;
           } else {
             return "dot(" + (glsl.vecLit(a)) + ", " + (glsl.vecLit(b)) + ")";
           }
@@ -966,7 +966,7 @@ mecha.generator =
       cross: function(a, b) {
         if (typeof a === 'string' || typeof b === 'string') {
           return "cross(" + a + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform cross product operation with array operands of different lengths.";
           }
@@ -980,6 +980,13 @@ mecha.generator =
           }
         } else {
           throw "Cannot perform cross operation on operands with types '" + (typeof a) + "' and '" + (typeof b) + "'.";
+        }
+      },
+      length: function(a) {
+        if (isArrayType(a, 'number')) {
+          return Math.sqrt(glsl.dot(a, a));
+        } else {
+          return "length(" + (glsl.vecLit(axis)) + ")";
         }
       },
       mul: function(a, b) {
@@ -1029,7 +1036,7 @@ mecha.generator =
         var i, _ref, _results;
         if (typeof a === 'number' && typeof b === 'number') {
           return a % b;
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform modulo operation with array operands of different lengths.";
           }
@@ -1185,7 +1192,7 @@ mecha.generator =
           return "min(" + a + ", " + (glsl.literal(b)) + ")";
         } else if (typeof b === 'string') {
           return "min(" + (glsl.literal(a)) + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform min operation with array operands of different lengths.";
           }
@@ -1212,7 +1219,7 @@ mecha.generator =
           return "max(" + a + ", " + (glsl.literal(b)) + ")";
         } else if (typeof b === 'string') {
           return "max(" + (glsl.literal(a)) + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform operation with arrays of different lengths.";
           }
@@ -1235,7 +1242,7 @@ mecha.generator =
           return Math.clamp(a, min, max);
         } else if (((typeof a === (_ref4 = typeof min) && _ref4 === (_ref3 = typeof max)) && _ref3 === 'string')) {
           return "clamp(" + a + ", " + min + ", " + max + ")";
-        } else if (Array.isArray(a && Array.isArray(min && Array.isArray(max)))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(min)) && (Array.isArray(max))) {
           if (a.length !== b.length) {
             throw "Cannot perform clamp operation with array operands of different lengths.";
           }
@@ -1260,7 +1267,7 @@ mecha.generator =
           return "min(" + a + ", " + b + ")";
         } else if (typeof a === 'string' || typeof b === 'string') {
           return "max(" + a + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform operation with arrays of different lengths.";
           }
@@ -1285,7 +1292,7 @@ mecha.generator =
           return "max(" + a + ", " + b + ")";
         } else if (typeof a === 'string' || typeof b === 'string') {
           return "max(" + a + ", " + b + ")";
-        } else if (Array.isArray(a && Array.isArray(b))) {
+        } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform operation with arrays of different lengths.";
           }
@@ -1351,6 +1358,39 @@ mecha.generator =
         } else {
           return "(" + a + ")";
         }
+      },
+      axisRotation: function(axis, angle) {
+        if ((isArrayType(axis, 'number')) && (typeof angle === 'number')) {
+          return gl.matrix3.newAxisRotation(axis, angle);
+        }
+        return mecha.logInternalError("axisRotation is not yet implemented in the GLSL API.");
+        /*
+              # TODO: This can (should) probably be optimized a lot...
+              # Convert rotation to quaternion representation
+              length = glsl.length axis
+              halfAngle = glsl.mul angle, 0.5
+              sinHalfOverLength = glsl.div (glsl.sin halfAngle), length
+              xyz = glsl.mul axis, sinHalfOverLength
+              x = glsl.index xyz, 0
+              y = glsl.index xyz, 1
+              z = glsl.index xyz, 2
+              w = glsl.cos halfAngle
+              # Convert quaternion to matrix representation       
+              xx = glsl.mul x, x
+              xy = glsl.mul x, y
+              xz = glsl.mul x, z
+              xw = glsl.mul x, w
+              yy = glsl.mul y, y
+              yz = glsl.mul y, z
+              yw = glsl.mul y, w
+              zz = glsl.mul z, z
+              zw = glsl.mul z, w
+              return [
+                (glsl.sub 1, (glsl.mul 2, (glsl.add yy, zz))), (glsl.mul 2, (glsl.add xy, zw)),               (glsl.mul 2, (glsl.sub xz, yw)),
+                (glsl.mul 2, (glsl.sub xy, zw)),               (glsl.sub 1, (glsl.mul 2, (glsl.add xx, zz))), (glsl.mul 2, (glsl.add yz, xw)),
+                (glsl.mul 2, (glsl.add xz, yw)),               (glsl.mul 2, (glsl.sub yz, xw)),               (glsl.sub 1, (glsl.mul 2, (glsl.mul xx, yy)))
+              ]
+        */
       }
     };
   })();
@@ -1496,7 +1536,7 @@ mecha.generator =
         var components, cosAngle, mat, ro, sinAngle;
         ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (Array.isArray(node.attr.axis)) {
-          mat = gl.matrix3.newAxisRotation(node.attr.axis, -math_degToRad * node.attr.angle);
+          mat = glsl.axisRotation(node.attr.axis, glsl.mul(glsl.neg(math_degToRad), node.attr.angle));
           glslCompiler.preludePush(flags.glslPrelude, "mat3(" + mat + ") * " + ro);
         } else {
           cosAngle = glsl.cos(glsl.mul(-math_degToRad, node.attr.angle));

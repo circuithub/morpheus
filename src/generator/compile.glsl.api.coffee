@@ -9,7 +9,7 @@ glsl = do ->
 
   api =
     index: (a, index) ->
-      if Array.isArray a
+      if (Array.isArray a)
         return a[index]
       else
         "#{a}[#{index}]"
@@ -53,13 +53,16 @@ glsl = do ->
     dot: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
         "dot(#{a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform dot product operation with array operands of different lengths."
         if a.length < 2 or a.length > 4
           throw "Cannot perform dot product operation on vectors of #{a.length} dimensions."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
-          (a[i] * b[i]) for i in [0...a.length]
+          result = 0.0
+          for i in [0...a.length]
+            result += a[i] * b[i]
+          return result
         else
           "dot(#{glsl.vecLit a}, #{glsl.vecLit b})"
       else 
@@ -68,7 +71,7 @@ glsl = do ->
     cross: (a, b) ->
       if typeof a == 'string' or typeof b == 'string'
         "cross(#{a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform cross product operation with array operands of different lengths."
         if a.length != 3
@@ -79,6 +82,12 @@ glsl = do ->
           "cross(#{glsl.vec3Lit a}, #{glsl.vec3Lit b})"
       else 
         throw "Cannot perform cross operation on operands with types '#{typeof a}' and '#{typeof b}'."
+
+    length: (a) ->
+      if (isArrayType a, 'number')
+        Math.sqrt (glsl.dot a,a)
+      else
+        "length(#{glsl.vecLit axis})"
     
     mul: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
@@ -112,7 +121,7 @@ glsl = do ->
     mod: (a, b) ->
       if typeof a == 'number' and typeof b == 'number'
         a % b
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform modulo operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
@@ -222,7 +231,7 @@ glsl = do ->
         "min(#{a}, #{glsl.literal b})"
       else if typeof b == 'string'
         "min(#{glsl.literal a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform min operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
@@ -241,7 +250,7 @@ glsl = do ->
         "max(#{a}, #{glsl.literal b})"
       else if typeof b == 'string'
         "max(#{glsl.literal a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
@@ -258,7 +267,7 @@ glsl = do ->
         Math.clamp a, min, max
       else if typeof a == typeof min == typeof max == 'string'
         "clamp(#{a}, #{min}, #{max})"
-      else if Array.isArray a and Array.isArray min and Array.isArray max
+      else if (Array.isArray a) and (Array.isArray min) and (Array.isArray max)
         if a.length != b.length
           throw "Cannot perform clamp operation with array operands of different lengths."
         if (isArrayType a, 'number') and (isArrayType min, 'number') and (isArrayType max, 'number')
@@ -275,7 +284,7 @@ glsl = do ->
         "min(#{a}, #{b})"
       else if typeof a == 'string' or typeof b == 'string'
         "max(#{a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
@@ -292,7 +301,7 @@ glsl = do ->
         "max(#{a}, #{b})"
       else if typeof a == 'string' or typeof b == 'string'
         "max(#{a}, #{b})"
-      else if Array.isArray a and Array.isArray b
+      else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform operation with arrays of different lengths."
         if (isArrayType a, 'number') and (isArrayType b, 'number')
@@ -305,7 +314,7 @@ glsl = do ->
     literal: (a) ->
       if typeof a == 'number'
         glsl.floatLit a
-      else if Array.isArray a
+      else if (Array.isArray a)
         glsl.vecLit a
       else
         "(#{a})"
@@ -325,7 +334,7 @@ glsl = do ->
     vec2Lit: (a) ->
       if typeof a == 'number'
         "vec2(#{glsl.floatLit a})"
-      else if Array.isArray a
+      else if (Array.isArray a)
         "vec2(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]})"
       else
         "(#{a})"
@@ -333,7 +342,7 @@ glsl = do ->
     vec3Lit: (a) ->
       if typeof a == 'number'
         "vec3(#{glsl.floatLit a})"
-      else if Array.isArray a
+      else if (Array.isArray a)
         "vec3(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]})"
       else
         "(#{a})"
@@ -341,8 +350,42 @@ glsl = do ->
     vec4Lit: (a) ->
       if typeof a == 'number'
         "vec4(#{glsl.floatLit a})"
-      else if Array.isArray a
+      else if (Array.isArray a)
         "vec4(#{glsl.floatLit a[0]},#{glsl.floatLit a[1]},#{glsl.floatLit a[2]},#{glsl.floatLit a[3]})"
       else
         "(#{a})"
+
+    axisRotation: (axis, angle) ->
+      if (isArrayType axis, 'number') and (typeof angle == 'number')
+        return gl.matrix3.newAxisRotation axis, angle
+
+      mecha.logInternalError "axisRotation is not yet implemented in the GLSL API."
+      ###
+      # TODO: This can (should) probably be optimized a lot...
+      # Convert rotation to quaternion representation
+      length = glsl.length axis
+      halfAngle = glsl.mul angle, 0.5
+      sinHalfOverLength = glsl.div (glsl.sin halfAngle), length
+      xyz = glsl.mul axis, sinHalfOverLength
+      x = glsl.index xyz, 0
+      y = glsl.index xyz, 1
+      z = glsl.index xyz, 2
+      w = glsl.cos halfAngle
+      # Convert quaternion to matrix representation       
+      xx = glsl.mul x, x
+      xy = glsl.mul x, y
+      xz = glsl.mul x, z
+      xw = glsl.mul x, w
+      yy = glsl.mul y, y
+      yz = glsl.mul y, z
+      yw = glsl.mul y, w
+      zz = glsl.mul z, z
+      zw = glsl.mul z, w
+      return [
+        (glsl.sub 1, (glsl.mul 2, (glsl.add yy, zz))), (glsl.mul 2, (glsl.add xy, zw)),               (glsl.mul 2, (glsl.sub xz, yw)),
+        (glsl.mul 2, (glsl.sub xy, zw)),               (glsl.sub 1, (glsl.mul 2, (glsl.add xx, zz))), (glsl.mul 2, (glsl.add yz, xw)),
+        (glsl.mul 2, (glsl.add xz, yw)),               (glsl.mul 2, (glsl.sub yz, xw)),               (glsl.sub 1, (glsl.mul 2, (glsl.mul xx, yy)))
+      ]
+      ###
+      
 
