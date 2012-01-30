@@ -43,7 +43,7 @@
 
       var apiUrl = $("link[rel='api']").attr('href');
       var apiSourceCode;
-      $.get(encodeURIComponent(apiUrl), void 0, void 0, 'text')
+      $.get(apiUrl, void 0, void 0, 'text')
         .success(function(data, textStatus, jqXHR) {
           apiSourceCode = data;
           console.log("Loaded " + apiUrl);
