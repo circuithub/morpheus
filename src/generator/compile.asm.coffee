@@ -146,7 +146,7 @@ compileASM = (concreteSolidModel) ->
             when 0 then (if node.attr.axis == 2 then 1 else 2)
             when 1 then (if node.attr.axis == 2 then 0 else 2)
             when 2 then (if node.attr.axis == 1 then 0 else 1)
-          (radiusVec = [0.0,0.0,0.0])[upAxis] = node.attr.radius
+          (radiusVec = [0.0,0.0,0.0])[upAxis] = -node.attr.radius
           asm.union (
             asm.intersect (compileASMNode n for n in node.nodes)...,
               if direction == 1

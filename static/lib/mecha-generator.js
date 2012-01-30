@@ -787,7 +787,7 @@ mecha.generator =
                   }
               }
             })();
-            (radiusVec = [0.0, 0.0, 0.0])[upAxis] = node.attr.radius;
+            (radiusVec = [0.0, 0.0, 0.0])[upAxis] = -node.attr.radius;
             return asm.union(asm.intersect.apply(asm, __slice.call((function() {
               var _i, _len, _ref, _results;
               _ref = node.nodes;
