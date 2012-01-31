@@ -2,7 +2,7 @@ var express = require("express"),
     app     = express.createServer();
     
 app.get("/", function(req, res) {
-  res.redirect("/index.html");
+  res.redirect("/test/index.html");
 });
 
 app.configure(function(){
@@ -16,4 +16,4 @@ app.configure(function(){
   app.use(app.router);
 });
 
-app.listen(4567);
+app.listen(8080);
