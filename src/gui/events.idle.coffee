@@ -2,8 +2,9 @@
 # Program state should not be manipulated outside events files
 
 sceneIdle = () ->
-  try
-    #SceneJS.FX.idle()
-  catch error
-    mecha.logInternalError "Exception occurred in `mecha.gui.sceneIdle`:\n", error
-  return
+  # TODO: Should we really log error messages in the idle loop?
+  return do safeTry "mecha.gui: sceneIdle", (->
+      #SceneJS.FX.idle()
+    ), ((error) -> 
+      # We probably don't want to log error messages for the idle
+    )

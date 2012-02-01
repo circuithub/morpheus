@@ -3,6 +3,9 @@
 # Bounding boxes are axis aligned for now for simiplicity's sake
 
 compileASMBounds = (abstractSolidModel) ->
+  if not abstractSolidModel?
+    return null
+
   # Constants (enum)
   COMPOSITION_UNION = 0
   COMPOSITION_INTERSECT = 1

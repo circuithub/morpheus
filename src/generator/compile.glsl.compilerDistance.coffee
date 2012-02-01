@@ -203,7 +203,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
   compileCompositeNode = (name, cmpCallback, stack, node, flags) ->
     # Check that composite node is not empty
     if node.nodes.length == 0
-      mecha.logInternalError "GLSL Compiler: Union node is empty."
+      #mecha.logInternalError "GLSL Compiler: Union node is empty."
       return
     codes = []
 

@@ -6,93 +6,93 @@ canvasInit = () ->
   windowResize()
 
 # Initialize nodes in the scene graph
-sceneInit = () ->
-  try
-    csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
+sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
+  #try
+  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
 
-    # Run the script inside a webworker sandbox
-    requestId = JSandbox.eval 
-      data: csmSourceCode
-      callback: (result) ->
-        console.log result ## TEMPORARY
-        
-        # Update the model parameters
-        model = state.models['scene']
-        if not model?
-          model = state.models['scene'] = { shaders: [], params: {}, args: {} }
-        model.params = result.attr.params
-        # Initialize any model arguments to their default values when they are unassigned
-        for name,attr of model.params
-          if not model.args[name]?
-            model.args[name] = attr.defaultArg
-        # Generate shaders for the model
-        model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
-        console.log model.shaders[1] ## TEMPORARY
-        # Update the model in the renderer
-        mecha.renderer.modelShaders 'scene', model.shaders
-        mecha.renderer.modelArguments 'scene', model.args
-        controlsInit()
-      onerror: (data,request) ->
-        mecha.logInternalError "Error compiling the solid model."
-  catch error
-    mecha.logInternalError "Exception occurred in `mecha.gui.sceneInit`:\n", error
+  # Run the script inside a webworker sandbox
+  requestId = JSandbox.eval 
+    data: csmSourceCode
+    callback: (result) ->
+      console.log result ## TEMPORARY
+      
+      # Update the model parameters
+      model = state.models['scene']
+      if not model?
+        model = state.models['scene'] = { shaders: [], params: {}, args: {} }
+      model.params = result?.attr?.params ? {}
+      # Initialize any model arguments to their default values when they are unassigned
+      for name,attr of model.params
+        if not model.args[name]?
+          model.args[name] = attr.defaultArg
+      # Generate shaders for the model
+      model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
+      console.log model.shaders[1] ## TEMPORARY
+      # Update the model in the renderer
+      mecha.renderer.modelShaders 'scene', model.shaders
+      mecha.renderer.modelArguments 'scene', model.args
+      controlsInit()
+    onerror: (data,request) ->
+      mecha.logInternalError "Error compiling the solid model."
+  #catch error
+  #  mecha.logInternalError "Exception occurred in `mecha.gui.sceneInit`:\n", error
   return
 
 # Initialize html controls for interacting with mecha
-controlsInit = () ->
-  try
-    el = state.parameters.domElement
-    if el?
-      html = '<table>'
-      for name, model of state.models
-        for param, val of model.params
-          html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
-          switch val.param
-            when 'range'
-              switch val.type
-                when 'float'
-                  stepAttr = if val.step then " step='#{val.step}'" else ''
-                  html += "<input name='#{param}' id='#{param}' class='mecha-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
-                when 'vec2'
-                  stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                when 'vec3'
-                  stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                when 'vec4'
-                  stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-range' type='range' value='#{val.defaultArg[3]}' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
-                else
-                  mecha.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
-            when 'number'
-              switch val.type
-                when 'float'
-                  html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'></input>"
-                when 'vec2'
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
-                when 'vec3'
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
-                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
-                when 'vec4'
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
-                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
-                  html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-number' type='number' value='#{val.defaultArg[3]}'></input></div>"
-                else
-                  mecha.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
-          html += "</td></tr>"
-      html += '</table>'
-      el.innerHTML = html
-  catch error
-    mecha.logInternalError "Exception occurred in `mecha.gui.controlsInit`:\n", error
+controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
+  #try
+  el = state.parameters.domElement
+  if el?
+    html = '<table>'
+    for name, model of state.models
+      for param, val of model.params
+        html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
+        switch val.param
+          when 'range'
+            switch val.type
+              when 'float'
+                stepAttr = if val.step then " step='#{val.step}'" else ''
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
+              when 'vec2'
+                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+              when 'vec3'
+                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+              when 'vec4'
+                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+                html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-range' type='range' value='#{val.defaultArg[3]}' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
+              else
+                mecha.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
+          when 'number'
+            switch val.type
+              when 'float'
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'></input>"
+              when 'vec2'
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
+                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
+              when 'vec3'
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
+              when 'vec4'
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
+                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-number' type='number' value='#{val.defaultArg[3]}'></input></div>"
+              else
+                mecha.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
+        html += "</td></tr>"
+    html += '</table>'
+    el.innerHTML = html
+  #catch error
+  #  mecha.logInternalError "Exception occurred in `mecha.gui.controlsInit`:\n", error
   return
 
 # Initialize the CSM API (by loading the code from the given url)

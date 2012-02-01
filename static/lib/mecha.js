@@ -8,7 +8,7 @@ mecha.generator =
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, shallowClone, toStringPrototype, translateCSM;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -40,7 +40,13 @@ mecha.generator =
     return Math.min(Math.max(s, min), max);
   };
 
+  mechaDebug = true;
+
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -55,6 +61,36 @@ mecha.generator =
   mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
     return console.warn.apply(console, arguments);
   } : function() {});
+
+  mecha.logException = function(locationName, error) {
+    var logArgs;
+    logArgs = ["Uncaught exception in `" + locationName + "`:\n"];
+    logArgs.push((error.message != null ? "" + error.message + "\n" : error));
+    if (error.stack != null) logArgs.push(error.stack);
+    mecha.logInternalError.apply(mecha, logArgs);
+    throw error;
+  };
+
+  safeExport = function(name, errorValue, callback) {
+    return safeTry(name, callback, function(error) {
+      mecha.logException(name, error);
+      return errorValue;
+    });
+  };
+
+  safeTry = function(name, callback, errorCallback) {
+    if ((mechaDebug != null) && mechaDebug) {
+      return callback;
+    } else {
+      return function() {
+        try {
+          return callback.apply(null, arguments);
+        } catch (error) {
+          return errorCallback(error);
+        }
+      };
+    }
+  };
 
   gl = glQueryMath;
 
@@ -72,18 +108,13 @@ mecha.generator =
 
   })();
 
-  translateCSM = function(apiSourceCode, csmSourceCode) {
+  translateCSM = safeExport('mecha.generator.translateCSM', '', function(apiSourceCode, csmSourceCode) {
     var jsSourceCode, variablesSource;
-    try {
-      variablesSource = csmSourceCode.match(/var[^;]*;/g);
-      csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-      jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS */\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE */\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );\n  } catch(err) {\n    return String(err);\n  }\n})();";
-      return jsSourceCode;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.generator.translateCSM`:\n", error);
-      return '';
-    }
-  };
+    variablesSource = csmSourceCode.match(/var[^;]*;/g);
+    csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
+    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API */\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS */\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE */ //HERE\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*/\n  } catch(err) {\n    return String(err);\n  }\n})();";
+    return jsSourceCode;
+  });
 
   asm = {
     union: function() {
@@ -339,6 +370,7 @@ mecha.generator =
 
   compileASMBounds = function(abstractSolidModel) {
     var COMPOSITION_INTERSECT, COMPOSITION_UNION, collectChildren, flags, intersectChildren, postDispatch, preDispatch, result, unionChildren;
+    if (!(abstractSolidModel != null)) return null;
     COMPOSITION_UNION = 0;
     COMPOSITION_INTERSECT = 1;
     preDispatch = {
@@ -472,86 +504,13 @@ mecha.generator =
     return result;
   };
 
-  compileASM = function(concreteSolidModel) {
+  compileASM = safeExport('mecha.generator.compileASM', null, function(concreteSolidModel) {
     var compileASMNode, dispatch;
-    try {
-      dispatch = {
-        scene: function(node) {
-          var n;
-          if (node.nodes.length > 1) {
-            return asm.union.apply(asm, (function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes;
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })());
-          } else if (node.nodes.length === 1) {
-            return compileASMNode(node.nodes[0]);
-          } else {
-            return {};
-          }
-        },
-        box: function(node) {
-          /*
-                  if Array.isArray node.attr.dimensions
-                    halfspaces = for i in [0..2]
-                      asm.halfspace 
-                        val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
-                        axis: i
-                    asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
-          */          return asm.mirror({
-            axes: [0, 1, 2]
-          }, asm.corner({
-            val: glsl.mul(node.attr.dimensions, 0.5)
-          }));
-        },
-        sphere: function(node) {
-          return asm.sphere({
-            radius: node.attr.radius
-          });
-        },
-        cylinder: function(node) {
-          var halfspaces;
-          if (node.attr.length != null) {
-            halfspaces = [
-              asm.halfspace({
-                val: node.attr.length * 0.5,
-                axis: node.attr.axis
-              }), asm.invert(asm.halfspace({
-                val: node.attr.length * -0.5,
-                axis: node.attr.axis
-              }))
-            ];
-            return asm.intersect(asm.cylinder({
-              radius: node.attr.radius,
-              axis: node.attr.axis
-            }), halfspaces[0], halfspaces[1]);
-          } else {
-            return asm.cylinder({
-              radius: node.attr.radius,
-              axis: node.attr.axis
-            });
-          }
-        },
-        intersect: function(node) {
-          var n;
-          return asm.intersect.apply(asm, (function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })());
-        },
-        union: function(node) {
-          var n;
+    if (!(concreteSolidModel != null)) return null;
+    dispatch = {
+      scene: function(node) {
+        var n;
+        if (node.nodes.length > 1) {
           return asm.union.apply(asm, (function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
@@ -562,27 +521,234 @@ mecha.generator =
             }
             return _results;
           })());
-        },
-        difference: function(node) {
-          var n;
-          if (node.nodes.length > 0) {
-            return asm.intersect(compileASMNode(node.nodes[0]), asm.invert.apply(asm, (function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes.slice(1, node.nodes.length);
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })()));
-          } else {
-            return node;
+        } else if (node.nodes.length === 1) {
+          return compileASMNode(node.nodes[0]);
+        } else {
+          return {};
+        }
+      },
+      box: function(node) {
+        /*
+              if Array.isArray node.attr.dimensions
+                halfspaces = for i in [0..2]
+                  asm.halfspace 
+                    val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
+                    axis: i
+                asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
+        */        return asm.mirror({
+          axes: [0, 1, 2]
+        }, asm.corner({
+          val: glsl.mul(node.attr.dimensions, 0.5)
+        }));
+      },
+      sphere: function(node) {
+        return asm.sphere({
+          radius: node.attr.radius
+        });
+      },
+      cylinder: function(node) {
+        var halfspaces;
+        if (node.attr.length != null) {
+          halfspaces = [
+            asm.halfspace({
+              val: node.attr.length * 0.5,
+              axis: node.attr.axis
+            }), asm.invert(asm.halfspace({
+              val: node.attr.length * -0.5,
+              axis: node.attr.axis
+            }))
+          ];
+          return asm.intersect(asm.cylinder({
+            radius: node.attr.radius,
+            axis: node.attr.axis
+          }), halfspaces[0], halfspaces[1]);
+        } else {
+          return asm.cylinder({
+            radius: node.attr.radius,
+            axis: node.attr.axis
+          });
+        }
+      },
+      intersect: function(node) {
+        var n;
+        return asm.intersect.apply(asm, (function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
           }
-        },
-        mirror: function(node) {
-          var n;
-          return asm.mirror.apply(asm, [node.attr].concat(__slice.call((function() {
+          return _results;
+        })());
+      },
+      union: function(node) {
+        var n;
+        return asm.union.apply(asm, (function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })());
+      },
+      difference: function(node) {
+        var n;
+        if (node.nodes.length > 0) {
+          return asm.intersect(compileASMNode(node.nodes[0]), asm.invert.apply(asm, (function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes.slice(1, node.nodes.length);
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })()));
+        } else {
+          return node;
+        }
+      },
+      mirror: function(node) {
+        var n;
+        return asm.mirror.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      repeat: function(node) {
+        var n;
+        return asm.repeat.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      translate: function(node) {
+        var n;
+        return asm.translate.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      rotate: function(node) {
+        var n;
+        return asm.rotate.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      scale: function(node) {
+        var n;
+        return asm.scale.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      material: function(node) {
+        var n;
+        return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      chamfer: function(node) {
+        var n;
+        return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      bevel: function(node) {
+        var n;
+        return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      wedge: function(node) {
+        var halfSpaceAxis, n;
+        halfSpaceAxis = node.attr.axis + 1 > 2 ? 0 : node.attr.axis + 1;
+        return asm.intersect.apply(asm, [asm.rotate({
+          axis: node.attr.axis,
+          angle: node.attr.from
+        }, asm.halfspace({
+          val: 0.0,
+          axis: halfSpaceAxis
+        })), asm.rotate({
+          axis: node.attr.axis,
+          angle: node.attr.to
+        }, asm.invert(asm.halfspace({
+          val: 0.0,
+          axis: halfSpaceAxis
+        })))].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = node.nodes;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            n = _ref[_i];
+            _results.push(compileASMNode(n));
+          }
+          return _results;
+        })())));
+      },
+      bend: function(node) {
+        var direction, n, offset, offsetVec, radiusVec, upAxis;
+        offset = node.attr.offset != null ? node.attr.offset : 0;
+        (offsetVec = [0.0, 0.0, 0.0])[node.attr.offsetAxis] = offset;
+        direction = node.attr.direction != null ? node.attr.direction : 1;
+        if (!(node.attr.radius != null) || node.attr.radius === 0) {
+          return asm.union(asm.intersect.apply(asm, __slice.call((function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
             _results = [];
@@ -591,115 +757,28 @@ mecha.generator =
               _results.push(compileASMNode(n));
             }
             return _results;
-          })())));
-        },
-        repeat: function(node) {
-          var n;
-          return asm.repeat.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        translate: function(node) {
-          var n;
-          return asm.translate.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        rotate: function(node) {
-          var n;
-          return asm.rotate.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        scale: function(node) {
-          var n;
-          return asm.scale.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        material: function(node) {
-          var n;
-          return asm.material.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        chamfer: function(node) {
-          var n;
-          return asm.chamfer.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        bevel: function(node) {
-          var n;
-          return asm.bevel.apply(asm, [node.attr].concat(__slice.call((function() {
-            var _i, _len, _ref, _results;
-            _ref = node.nodes;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              n = _ref[_i];
-              _results.push(compileASMNode(n));
-            }
-            return _results;
-          })())));
-        },
-        wedge: function(node) {
-          var halfSpaceAxis, n;
-          halfSpaceAxis = node.attr.axis + 1 > 2 ? 0 : node.attr.axis + 1;
-          return asm.intersect.apply(asm, [asm.rotate({
+          })()).concat([direction === 1 ? asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
             axis: node.attr.axis,
-            angle: node.attr.from
+            angle: glsl.mul(0.5, node.attr.angle)
           }, asm.halfspace({
             val: 0.0,
-            axis: halfSpaceAxis
-          })), asm.rotate({
+            axis: node.attr.offsetAxis
+          }))) : asm.invert(asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
             axis: node.attr.axis,
-            angle: node.attr.to
-          }, asm.invert(asm.halfspace({
+            angle: node.attr.angle
+          }, asm.halfspace({
             val: 0.0,
-            axis: halfSpaceAxis
-          })))].concat(__slice.call((function() {
+            axis: node.attr.axis
+          }))))])), asm.intersect(asm.translate({
+            offset: offsetVec
+          }, asm.rotate.apply(asm, [{
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }].concat(__slice.call((function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
             _results = [];
@@ -708,159 +787,108 @@ mecha.generator =
               _results.push(compileASMNode(n));
             }
             return _results;
-          })())));
-        },
-        bend: function(node) {
-          var direction, n, offset, offsetVec, radiusVec, upAxis;
-          offset = node.attr.offset != null ? node.attr.offset : 0;
-          (offsetVec = [0.0, 0.0, 0.0])[node.attr.offsetAxis] = offset;
-          direction = node.attr.direction != null ? node.attr.direction : 1;
-          if (!(node.attr.radius != null) || node.attr.radius === 0) {
-            return asm.union(asm.intersect.apply(asm, __slice.call((function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes;
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })()).concat([direction === 1 ? asm.translate({
-              offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: glsl.mul(0.5, node.attr.angle)
-            }, asm.halfspace({
-              val: 0.0,
-              axis: node.attr.offsetAxis
-            }))) : asm.invert(asm.translate({
-              offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: node.attr.angle
-            }, asm.halfspace({
-              val: 0.0,
-              axis: node.attr.axis
-            }))))])), asm.intersect(asm.translate({
-              offset: offsetVec
-            }, asm.rotate.apply(asm, [{
-              axis: node.attr.axis,
-              angle: node.attr.angle
-            }].concat(__slice.call((function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes;
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })())))), asm.invert(asm.translate({
-              offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: glsl.mul(0.5, node.attr.angle)
-            }, asm.halfspace({
-              val: 0.0,
-              axis: node.attr.offsetAxis
-            }))))));
-          } else {
-            upAxis = (function() {
-              switch (node.attr.offsetAxis) {
-                case 0:
-                  if (node.attr.axis === 2) {
-                    return 1;
-                  } else {
-                    return 2;
-                  }
-                case 1:
-                  if (node.attr.axis === 2) {
-                    return 0;
-                  } else {
-                    return 2;
-                  }
-                case 2:
-                  if (node.attr.axis === 1) {
-                    return 0;
-                  } else {
-                    return 1;
-                  }
-              }
-            })();
-            (radiusVec = [0.0, 0.0, 0.0])[upAxis] = -node.attr.radius;
-            return asm.union(asm.intersect.apply(asm, __slice.call((function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes;
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })()).concat([direction === 1 ? asm.halfspace({
-              val: offset,
-              axis: node.attr.offsetAxis
-            }) : asm.invert(asm.translate({
-              offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: node.attr.angle
-            }, asm.halfspace({
-              val: 0.0,
-              axis: node.attr.axis
-            }))))])), asm.intersect(asm.translate({
-              offset: glsl.sub(offsetVec, radiusVec)
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: node.attr.angle
-            }, asm.translate.apply(asm, [{
-              offset: radiusVec
-            }].concat(__slice.call((function() {
-              var _i, _len, _ref, _results;
-              _ref = node.nodes;
-              _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                n = _ref[_i];
-                _results.push(compileASMNode(n));
-              }
-              return _results;
-            })()))))), asm.invert(asm.translate({
-              offset: offsetVec
-            }, asm.rotate({
-              axis: node.attr.axis,
-              angle: node.attr.angle
-            }, asm.halfspace({
-              val: 0.0,
-              axis: node.attr.offsetAxis
-            }))))));
-          }
-        }
-      };
-      compileASMNode = function(node) {
-        switch (typeof node) {
-          case 'object':
-            if (dispatch[node.type] != null) {
-              return dispatch[node.type](node);
-            } else {
-              mecha.log("Unexpected node type '" + node.type + "'.");
-              return {};
+          })())))), asm.invert(asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: glsl.mul(0.5, node.attr.angle)
+          }, asm.halfspace({
+            val: 0.0,
+            axis: node.attr.offsetAxis
+          }))))));
+        } else {
+          upAxis = (function() {
+            switch (node.attr.offsetAxis) {
+              case 0:
+                if (node.attr.axis === 2) {
+                  return 1;
+                } else {
+                  return 2;
+                }
+              case 1:
+                if (node.attr.axis === 2) {
+                  return 0;
+                } else {
+                  return 2;
+                }
+              case 2:
+                if (node.attr.axis === 1) {
+                  return 0;
+                } else {
+                  return 1;
+                }
             }
-            break;
-          default:
-            mecha.log("Unexpected node of type '" + (typeof node) + "'.");
-            return {};
+          })();
+          (radiusVec = [0.0, 0.0, 0.0])[upAxis] = -node.attr.radius;
+          return asm.union(asm.intersect.apply(asm, __slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })()).concat([direction === 1 ? asm.halfspace({
+            val: offset,
+            axis: node.attr.offsetAxis
+          }) : asm.invert(asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }, asm.halfspace({
+            val: 0.0,
+            axis: node.attr.axis
+          }))))])), asm.intersect(asm.translate({
+            offset: glsl.sub(offsetVec, radiusVec)
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }, asm.translate.apply(asm, [{
+            offset: radiusVec
+          }].concat(__slice.call((function() {
+            var _i, _len, _ref, _results;
+            _ref = node.nodes;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              n = _ref[_i];
+              _results.push(compileASMNode(n));
+            }
+            return _results;
+          })()))))), asm.invert(asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: node.attr.angle
+          }, asm.halfspace({
+            val: 0.0,
+            axis: node.attr.offsetAxis
+          }))))));
         }
-      };
-      if (concreteSolidModel.type !== 'scene') {
-        mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
-        return;
       }
-      return optimizeASM(compileASMNode(concreteSolidModel));
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.generator.compileASM`:\n", error);
-      return asm.union();
+    };
+    compileASMNode = function(node) {
+      switch (typeof node) {
+        case 'object':
+          if (dispatch[node.type] != null) {
+            return dispatch[node.type](node);
+          } else {
+            mecha.log("Unexpected node type '" + node.type + "'.");
+            return {};
+          }
+          break;
+        default:
+          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
+          return {};
+      }
+    };
+    if (concreteSolidModel.type !== 'scene') {
+      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
+      return;
     }
-  };
+    return optimizeASM(compileASMNode(concreteSolidModel));
+  });
 
   glsl = (function() {
     var api, isArrayType;
@@ -1450,6 +1478,7 @@ mecha.generator =
 
   glslCompiler = function(abstractSolidModel, preDispatch, postDispatch) {
     var flags, rayOrigin, result;
+    if (!(abstractSolidModel != null)) return;
     rayOrigin = 'ro';
     flags = {
       invert: false,
@@ -1731,10 +1760,7 @@ mecha.generator =
     */
     compileCompositeNode = function(name, cmpCallback, stack, node, flags) {
       var bevelRadius, c, chamferRadius, codes, collectCode, cornersState, h, ro, s, _i, _j, _k, _len, _len2, _len3, _ref;
-      if (node.nodes.length === 0) {
-        mecha.logInternalError("GLSL Compiler: Union node is empty.");
-        return;
-      }
+      if (node.nodes.length === 0) return;
       codes = [];
       collectCode = function(codes, nodes) {
         var node, _i, _len;
@@ -2040,94 +2066,92 @@ mecha.generator =
     return result;
   }));
 
-  compileGLSL = function(abstractSolidModel, params) {
+  compileGLSL = safeExport('mecha.editor.compileGLSL', ['', ''], function(abstractSolidModel, params) {
     var fragmentShader, rayDirection, rayOrigin, shaders, usePerspectiveProjection, vertexShader;
-    try {
-      rayOrigin = 'ro';
-      rayDirection = 'rd';
-      usePerspectiveProjection = false;
-      console.log("ASM:");
-      console.log(abstractSolidModel);
-      vertexShader = function() {
-        var bounds, boundsResult, sceneTranslation;
-        boundsResult = compileASMBounds(abstractSolidModel);
-        if (boundsResult.nodes.length !== 1) {
-          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
-        }
-        bounds = boundsResult.nodes[0].bounds;
-        /* TEMPORARY
-        console.log "Bounds Result:"
-        console.log boundsResult
-        */
-        sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
-        return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nuniform mat3 model;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(model * position, 1.0);\n}\n";
-      };
-      fragmentShader = function() {
-        var distanceCode, distancePreludeCode, distanceResult, generateUniforms, idCode, idPreludeCode, idResult, sceneMaterial;
-        distanceResult = glslSceneDistance(abstractSolidModel);
-        if (distanceResult.nodes.length !== 1) {
-          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
-        }
-        console.log("Distance Result:");
-        console.log(distanceResult);
-        idResult = glslSceneId(abstractSolidModel);
-        if (idResult.nodes.length !== 1) {
-          mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
-        }
-        /* TEMPORARY
-        console.log "Id Result:"
-        console.log idResult
-        */
-        sceneMaterial = function(materials) {
-          var binarySearch, i, m, result, _ref;
-          binarySearch = function(start, end) {
-            var diff, mid;
-            diff = end - start;
-            if (diff === 1) {
-              return "m" + start;
-            } else {
-              mid = start + Math.floor(diff * 0.5);
-              return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
-            }
-          };
-          result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
-          if (materials.length > 0) {
-            for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-              m = materials[i];
-              result += "  vec3 m" + i + " = " + m + ";\n";
-            }
-            result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+    rayOrigin = 'ro';
+    rayDirection = 'rd';
+    usePerspectiveProjection = false;
+    console.log("ASM:");
+    console.log(abstractSolidModel);
+    vertexShader = function() {
+      var bounds, boundsResult, sceneTranslation;
+      boundsResult = compileASMBounds(abstractSolidModel);
+      if (!(boundsResult != null)) return '';
+      if (boundsResult.nodes.length !== 1) {
+        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
+        return '';
+      }
+      bounds = boundsResult.nodes[0].bounds;
+      /* TEMPORARY
+      console.log "Bounds Result:"
+      console.log boundsResult
+      */
+      sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
+      return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nuniform mat3 model;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(model * position, 1.0);\n}\n";
+    };
+    fragmentShader = function() {
+      var distanceCode, distancePreludeCode, distanceResult, generateUniforms, idCode, idPreludeCode, idResult, sceneMaterial;
+      distanceResult = glslSceneDistance(abstractSolidModel);
+      if (!(distanceResult != null)) return '';
+      if (distanceResult.nodes.length !== 1) {
+        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
+      }
+      console.log("Distance Result:");
+      console.log(distanceResult);
+      idResult = glslSceneId(abstractSolidModel);
+      if (idResult.nodes.length !== 1) {
+        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
+      }
+      /* TEMPORARY
+      console.log "Id Result:"
+      console.log idResult
+      */
+      sceneMaterial = function(materials) {
+        var binarySearch, i, m, result, _ref;
+        binarySearch = function(start, end) {
+          var diff, mid;
+          diff = end - start;
+          if (diff === 1) {
+            return "m" + start;
           } else {
-            result += "  return vec3(0.5);\n";
+            mid = start + Math.floor(diff * 0.5);
+            return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
           }
-          result += "}\n\n";
-          return result;
         };
-        generateUniforms = function(params) {
-          var attr, name;
-          return ((function() {
-            var _results;
-            _results = [];
-            for (name in params) {
-              attr = params[name];
-              _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
-            }
-            return _results;
-          })()).join('\n');
-        };
-        distanceCode = distanceResult.nodes[0].code;
-        distancePreludeCode = distanceResult.flags.glslPrelude.code;
-        idCode = idResult.nodes[0].code;
-        idPreludeCode = idResult.flags.glslPrelude.code;
-        return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
+        result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
+        if (materials.length > 0) {
+          for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            m = materials[i];
+            result += "  vec3 m" + i + " = " + m + ";\n";
+          }
+          result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+        } else {
+          result += "  return vec3(0.5);\n";
+        }
+        result += "}\n\n";
+        return result;
       };
-      shaders = [vertexShader(), fragmentShader()];
-      return shaders;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.generator.compileGLSL`:\n", error);
-      return [null, null];
-    }
-  };
+      generateUniforms = function(params) {
+        var attr, name;
+        return ((function() {
+          var _results;
+          _results = [];
+          for (name in params) {
+            attr = params[name];
+            _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
+          }
+          return _results;
+        })()).join('\n');
+      };
+      distanceCode = distanceResult.nodes[0].code;
+      distancePreludeCode = distanceResult.flags.glslPrelude.code;
+      idCode = idResult.nodes[0].code;
+      idPreludeCode = idResult.flags.glslPrelude.code;
+      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
+    };
+    shaders = [vertexShader(), fragmentShader()];
+    return shaders;
+  });
 
   exports = exports != null ? exports : {};
 
@@ -2152,9 +2176,15 @@ mecha.editor =
 
   "use strict";
 
-  var create, exports, getSourceCode, translateSugaredJS;
+  var create, exports, getSourceCode, mechaDebug, safeExport, safeTry, translateSugaredJS;
+
+  mechaDebug = true;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2170,27 +2200,48 @@ mecha.editor =
     return console.warn.apply(console, arguments);
   } : function() {});
 
+  mecha.logException = function(locationName, error) {
+    var logArgs;
+    logArgs = ["Uncaught exception in `" + locationName + "`:\n"];
+    logArgs.push((error.message != null ? "" + error.message + "\n" : error));
+    if (error.stack != null) logArgs.push(error.stack);
+    mecha.logInternalError.apply(mecha, logArgs);
+    throw error;
+  };
+
+  safeExport = function(name, errorValue, callback) {
+    return safeTry(name, callback, function(error) {
+      mecha.logException(name, error);
+      return errorValue;
+    });
+  };
+
+  safeTry = function(name, callback, errorCallback) {
+    if ((mechaDebug != null) && mechaDebug) {
+      return callback;
+    } else {
+      return function() {
+        try {
+          return callback.apply(null, arguments);
+        } catch (error) {
+          return errorCallback(error);
+        }
+      };
+    }
+  };
+
   translateSugaredJS = function(csmSourceCode) {
     return csmSourceCode;
   };
 
-  create = function(domElement, sourceCode) {
-    try {
-      if (!(sourceCode != null)) sourceCode = "";
-      domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.editor.create`:\n", error);
-    }
-  };
+  create = safeExport('mecha.editor.create', void 0, function(domElement, sourceCode) {
+    if (!(sourceCode != null)) sourceCode = "";
+    domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
+  });
 
-  getSourceCode = function() {
-    try {
-      return ($('#mecha-source-code')).val();
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.createControls`:\n", error);
-      return '';
-    }
-  };
+  getSourceCode = safeExport('mecha.editor.getSourceCode', '', function() {
+    return ($('#mecha-source-code')).val();
+  });
 
   exports = exports != null ? exports : {};
 
@@ -2213,7 +2264,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, state;
+  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2227,7 +2278,13 @@ mecha.renderer =
     return Math.min(Math.max(s, min), max);
   };
 
+  mechaDebug = true;
+
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2243,6 +2300,36 @@ mecha.renderer =
     return console.warn.apply(console, arguments);
   } : function() {});
 
+  mecha.logException = function(locationName, error) {
+    var logArgs;
+    logArgs = ["Uncaught exception in `" + locationName + "`:\n"];
+    logArgs.push((error.message != null ? "" + error.message + "\n" : error));
+    if (error.stack != null) logArgs.push(error.stack);
+    mecha.logInternalError.apply(mecha, logArgs);
+    throw error;
+  };
+
+  safeExport = function(name, errorValue, callback) {
+    return safeTry(name, callback, function(error) {
+      mecha.logException(name, error);
+      return errorValue;
+    });
+  };
+
+  safeTry = function(name, callback, errorCallback) {
+    if ((mechaDebug != null) && mechaDebug) {
+      return callback;
+    } else {
+      return function() {
+        try {
+          return callback.apply(null, arguments);
+        } catch (error) {
+          return errorCallback(error);
+        }
+      };
+    }
+  };
+
   gl = glQuery;
 
   state = {
@@ -2257,100 +2344,83 @@ mecha.renderer =
     rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
   };
 
-  modelShaders = function(modelName, shaders) {
+  modelShaders = safeExport('mecha.renderer.modelShaders', false, function(modelName, shaders) {
     var success;
-    try {
-      success = true;
-      if (!(state.shader.program != null)) {
-        state.shader.program = state.context.createProgram();
-        state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
-        state.context.attachShader(state.shader.program, state.shader.vs);
-        state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
-        state.context.attachShader(state.shader.program, state.shader.fs);
-      }
-      state.context.shaderSource(state.shader.vs, shaders[0]);
-      state.context.shaderSource(state.shader.fs, shaders[1]);
-      state.context.compileShader(state.shader.vs);
-      if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
-        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
-      }
-      state.context.compileShader(state.shader.fs);
-      if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
-        mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
-      }
-      state.context.linkProgram(state.shader.program);
-      if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
-        mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
-      }
-      (gl('scene')).shaderProgram(state.shader.program);
-      gl.refresh(state.shader.program);
-      return success;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.renderer.modelShaders`:\n", error);
-      return false;
+    success = true;
+    if (!(state.context != null)) throw "WebGL context is not available.";
+    if (!(shaders != null) || shaders.length < 2 || shaders[0].length === 0 || shaders[1].length === 0) {
+      return;
     }
-  };
+    if (!(state.shader.program != null)) {
+      state.shader.program = state.context.createProgram();
+      state.shader.vs = state.context.createShader(state.context.VERTEX_SHADER);
+      state.context.attachShader(state.shader.program, state.shader.vs);
+      state.shader.fs = state.context.createShader(state.context.FRAGMENT_SHADER);
+      state.context.attachShader(state.shader.program, state.shader.fs);
+    }
+    state.context.shaderSource(state.shader.vs, shaders[0]);
+    state.context.shaderSource(state.shader.fs, shaders[1]);
+    state.context.compileShader(state.shader.vs);
+    if (!state.context.getShaderParameter(state.shader.vs, state.context.COMPILE_STATUS)) {
+      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.vs)) + "\n" + shaders[0]);
+    }
+    state.context.compileShader(state.shader.fs);
+    if (!state.context.getShaderParameter(state.shader.fs, state.context.COMPILE_STATUS)) {
+      mecha.logApiError("Shader compile failed:\n" + (state.context.getShaderInfoLog(state.shader.fs)) + "\n" + shaders[1]);
+    }
+    state.context.linkProgram(state.shader.program);
+    if (!state.context.getProgramParameter(state.shader.program, state.context.LINK_STATUS)) {
+      mecha.logApiError("Shader link failed:\n" + (state.context.getProgramInfoLog(state.shader.progam)));
+    }
+    (gl('scene')).shaderProgram(state.shader.program);
+    gl.refresh(state.shader.program);
+    return success;
+  });
 
-  modelArguments = function(modelName, args) {
+  modelArguments = safeExport('mecha.renderer.modelArguments', void 0, function(modelName, args) {
     var name, val;
-    try {
-      for (name in args) {
-        val = args[name];
-        (gl(modelName)).uniform(name, val);
-      }
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.renderer.modelArguments`:\n", error);
+    for (name in args) {
+      val = args[name];
+      (gl(modelName)).uniform(name, val);
     }
-  };
+  });
 
-  modelRotate = function(modelName, angles) {
-    try {
-      gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
-      (gl(modelName)).uniform('model', state.rotation);
-    } catch (error) {
-      mecha.logInternalError("Exception occured in `mecha.renderer.modelRotate`:\n", error);
-    }
-  };
+  modelRotate = safeExport('mecha.renderer.modelRotate', void 0, function(modelName, angles) {
+    gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
+    (gl(modelName)).uniform('model', state.rotation);
+  });
 
-  createScene = function(context) {
+  createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
     var ibo, indices, positions, vbo;
-    try {
-      state.context = context;
-      positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
-      indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-      vbo = context.createBuffer();
-      context.bindBuffer(context.ARRAY_BUFFER, vbo);
-      context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
-      ibo = context.createBuffer();
-      context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
-      context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
-      gl.scene({
-        'scene': ''
-      }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.renderer.createScene`:\n", error);
-    }
-  };
+    state.context = context;
+    positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
+    indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
+    vbo = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, vbo);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
+    ibo = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
+    gl.scene({
+      'scene': ''
+    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+  });
 
-  runScene = function(canvas, idleCallback) {
+  runScene = safeExport('mecha.renderer.runScene', void 0, function(canvas, idleCallback) {
     var callback;
-    try {
-      state.context.viewport(0, 0, canvas.width, canvas.height);
-      state.context.clearColor(0.0, 0.0, 0.0, 0.0);
-      callback = function() {
-        if (gl.update()) {
-          state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
-          (gl('scene')).render(state.context);
-        } else {
-          idleCallback();
-        }
-        return self.nextFrame = window.requestAnimationFrame(callback, canvas);
-      };
-      state.nextFrame = window.requestAnimationFrame(callback, canvas);
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.renderer.runScene`:\n", error);
-    }
-  };
+    state.context.viewport(0, 0, canvas.width, canvas.height);
+    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+    callback = safeExport('mecha.renderer: render', void 0, function() {
+      if (gl.update()) {
+        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
+        (gl('scene')).render(state.context);
+      } else {
+        idleCallback();
+      }
+      return self.nextFrame = window.requestAnimationFrame(callback, canvas);
+    });
+    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+  });
 
   exports = exports != null ? exports : {};
 
@@ -2379,7 +2449,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2393,7 +2463,13 @@ mecha.gui =
     return Math.min(Math.max(s, min), max);
   };
 
+  mechaDebug = true;
+
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2408,6 +2484,36 @@ mecha.gui =
   mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
     return console.warn.apply(console, arguments);
   } : function() {});
+
+  mecha.logException = function(locationName, error) {
+    var logArgs;
+    logArgs = ["Uncaught exception in `" + locationName + "`:\n"];
+    logArgs.push((error.message != null ? "" + error.message + "\n" : error));
+    if (error.stack != null) logArgs.push(error.stack);
+    mecha.logInternalError.apply(mecha, logArgs);
+    throw error;
+  };
+
+  safeExport = function(name, errorValue, callback) {
+    return safeTry(name, callback, function(error) {
+      mecha.logException(name, error);
+      return errorValue;
+    });
+  };
+
+  safeTry = function(name, callback, errorCallback) {
+    if ((mechaDebug != null) && mechaDebug) {
+      return callback;
+    } else {
+      return function() {
+        try {
+          return callback.apply(null, arguments);
+        } catch (error) {
+          return errorCallback(error);
+        }
+      };
+    }
+  };
 
   gl = glQuery;
 
@@ -2472,15 +2578,9 @@ mecha.gui =
     return coords;
   };
 
-  windowResize = function() {
-    try {
+  windowResize = safeExport('mecha.gui: windowResize', void 0, function() {});
 
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.windowResize`:\n", error);
-    }
-  };
-
-  mouseDown = function(event) {
+  mouseDown = safeExport('mecha.gui: mouseDown', void 0, function(event) {
     state.viewport.mouse.last = [event.clientX, event.clientY];
     switch (event.which) {
       case 1:
@@ -2495,27 +2595,23 @@ mecha.gui =
       coords = mouseCoordsWithinElement event
       state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]
     */
-  };
+  });
 
-  mouseUp = function(event) {
-    try {
-      switch (event.which) {
-        case 1:
-          state.viewport.mouse.leftDown = false;
-          state.viewport.mouse.leftDragDistance = 0;
-          break;
-        case 2:
-          state.viewport.mouse.middleDown = false;
-          state.viewport.mouse.middleDragDistance = 0;
-      }
-    } catch (error) {
-
+  mouseUp = safeExport('mecha.gui: mouseUp', void 0, function(event) {
+    switch (event.which) {
+      case 1:
+        state.viewport.mouse.leftDown = false;
+        state.viewport.mouse.leftDragDistance = 0;
+        break;
+      case 2:
+        state.viewport.mouse.middleDown = false;
+        state.viewport.mouse.middleDragDistance = 0;
     }
-  };
+  });
 
   mouseMove = function(event) {
-    var delta, deltaLength, orbitAngles;
-    try {
+    return safeTry("mecha.gui: mouseMove", (function() {
+      var delta, deltaLength, orbitAngles;
       delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]];
       deltaLength = gl.vec2.length(delta);
       if (state.viewport.mouse.leftDown) {
@@ -2536,64 +2632,44 @@ mecha.gui =
         }
         mecha.renderer.modelRotate('scene', orbitAngles);
       }
-      state.viewport.mouse.last = [event.clientX, event.clientY];
-    } catch (error) {
-
-    }
+      return state.viewport.mouse.last = [event.clientX, event.clientY];
+    }), (function(error) {}))();
   };
 
-  mouseWheel = function(event) {
+  mouseWheel = safeExport('mecha.gui: mouseWheel', void 0, function(event) {
     var delta, zoomDistance;
-    try {
-      delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
-      zoomDistance = delta * constants.camera.zoomSpeedFactor;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.mouseWheel`:\n", error);
-    }
-  };
+    delta = event.wheelDelta != null ? event.wheelDelta / -120.0 : Math.clamp(event.detail, -1.0, 1.0);
+    zoomDistance = delta * constants.camera.zoomSpeedFactor;
+  });
 
-  keyDown = function(event) {
-    try {
+  keyDown = safeExport('mecha.gui: keyDown', void 0, function(event) {});
 
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.keyDown`:\n", error);
-    }
-  };
+  controlsSourceCompile = safeExport('mecha.gui.controlsSourceCompile', void 0, function() {
+    sceneInit();
+  });
 
-  controlsSourceCompile = function() {
-    try {
-      sceneInit();
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.controlsSourceCompile`:\n", error);
-    }
-  };
-
-  controlsParamChange = function(event) {
+  controlsParamChange = safeExport('mecha.gui.controlsParamChange', void 0, function(event) {
     var model, paramIndex, paramName, splitElName;
-    try {
-      splitElName = event.target.name.split('[', 2);
-      paramName = splitElName[0];
-      paramIndex = splitElName.length > 1 ? Number((splitElName[1].split(']', 2))[0]) : 0;
-      model = state.models['scene'];
-      if (model.params[paramName] != null) {
-        switch (model.params[paramName].type) {
-          case 'float':
-            model.args[paramName] = Number(($(event.target)).val());
-            break;
-          case 'vec2':
-          case 'vec3':
-          case 'vec4':
-            model.args[paramName][paramIndex] = Number(($(event.target)).val());
-            break;
-          default:
-            mecha.logInternalError("Unknown type `" + model.params[paramName].type + "` for parameter `" + paramName + "` during change event.");
-        }
+    splitElName = event.target.name.split('[', 2);
+    paramName = splitElName[0];
+    paramIndex = splitElName.length > 1 ? Number((splitElName[1].split(']', 2))[0]) : 0;
+    model = state.models['scene'];
+    if (model.params[paramName] != null) {
+      switch (model.params[paramName].type) {
+        case 'float':
+          model.args[paramName] = Number(($(event.target)).val());
+          break;
+        case 'vec2':
+        case 'vec3':
+        case 'vec4':
+          model.args[paramName][paramIndex] = Number(($(event.target)).val());
+          break;
+        default:
+          mecha.logInternalError("Unknown type `" + model.params[paramName].type + "` for parameter `" + paramName + "` during change event.");
       }
-      mecha.renderer.modelArguments('scene', model.args);
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.controlsParamChange`:\n", error);
     }
-  };
+    mecha.renderer.modelArguments('scene', model.args);
+  });
 
   registerDOMEvents = function() {
     state.viewport.domElement.addEventListener('mousedown', mouseDown, true);
@@ -2615,131 +2691,119 @@ mecha.gui =
   };
 
   sceneIdle = function() {
-    try {
-
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.sceneIdle`:\n", error);
-    }
+    return safeTry("mecha.gui: sceneIdle", (function() {}), (function(error) {}))();
   };
 
   canvasInit = function() {
     return windowResize();
   };
 
-  sceneInit = function() {
+  sceneInit = safeExport('mecha.gui: sceneInit', void 0, function() {
     var csmSourceCode, requestId;
-    try {
-      csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
-      requestId = JSandbox.eval({
-        data: csmSourceCode,
-        callback: function(result) {
-          var attr, model, name, _ref;
-          console.log(result);
-          model = state.models['scene'];
-          if (!(model != null)) {
-            model = state.models['scene'] = {
-              shaders: [],
-              params: {},
-              args: {}
-            };
-          }
-          model.params = result.attr.params;
-          _ref = model.params;
-          for (name in _ref) {
-            attr = _ref[name];
-            if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
-          }
-          model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-          console.log(model.shaders[1]);
-          mecha.renderer.modelShaders('scene', model.shaders);
-          mecha.renderer.modelArguments('scene', model.args);
-          return controlsInit();
-        },
-        onerror: function(data, request) {
-          return mecha.logInternalError("Error compiling the solid model.");
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
+    requestId = JSandbox.eval({
+      data: csmSourceCode,
+      callback: function(result) {
+        var attr, model, name, _ref, _ref2, _ref3;
+        console.log(result);
+        model = state.models['scene'];
+        if (!(model != null)) {
+          model = state.models['scene'] = {
+            shaders: [],
+            params: {},
+            args: {}
+          };
         }
-      });
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.sceneInit`:\n", error);
-    }
-  };
-
-  controlsInit = function() {
-    var el, html, model, name, param, stepAttr, val, _ref, _ref2;
-    try {
-      el = state.parameters.domElement;
-      if (el != null) {
-        html = '<table>';
-        _ref = state.models;
-        for (name in _ref) {
-          model = _ref[name];
-          _ref2 = model.params;
-          for (param in _ref2) {
-            val = _ref2[param];
-            html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
-            switch (val.param) {
-              case 'range':
-                switch (val.type) {
-                  case 'float':
-                    stepAttr = val.step ? " step='" + val.step + "'" : '';
-                    html += "<input name='" + param + "' id='" + param + "' class='mecha-param-range' type='range' value='" + val.defaultArg + "' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
-                    break;
-                  case 'vec2':
-                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                    break;
-                  case 'vec3':
-                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                    break;
-                  case 'vec4':
-                    stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                    html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-range' type='range' value='" + val.defaultArg[3] + "' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
-                    break;
-                  default:
-                    mecha.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
-                }
-                break;
-              case 'number':
-                switch (val.type) {
-                  case 'float':
-                    html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'></input>";
-                    break;
-                  case 'vec2':
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                    html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                    break;
-                  case 'vec3':
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                    html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                    html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
-                    break;
-                  case 'vec4':
-                    html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
-                    html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
-                    html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
-                    html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-number' type='number' value='" + val.defaultArg[3] + "'></input></div>";
-                    break;
-                  default:
-                    mecha.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
-                }
-            }
-            html += "</td></tr>";
-          }
+        model.params = (_ref = result != null ? (_ref2 = result.attr) != null ? _ref2.params : void 0 : void 0) != null ? _ref : {};
+        _ref3 = model.params;
+        for (name in _ref3) {
+          attr = _ref3[name];
+          if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
-        html += '</table>';
-        el.innerHTML = html;
+        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        console.log(model.shaders[1]);
+        mecha.renderer.modelShaders('scene', model.shaders);
+        mecha.renderer.modelArguments('scene', model.args);
+        return controlsInit();
+      },
+      onerror: function(data, request) {
+        return mecha.logInternalError("Error compiling the solid model.");
       }
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.controlsInit`:\n", error);
+    });
+  });
+
+  controlsInit = safeExport('mecha.gui: controlsInit', void 0, function() {
+    var el, html, model, name, param, stepAttr, val, _ref, _ref2;
+    el = state.parameters.domElement;
+    if (el != null) {
+      html = '<table>';
+      _ref = state.models;
+      for (name in _ref) {
+        model = _ref[name];
+        _ref2 = model.params;
+        for (param in _ref2) {
+          val = _ref2[param];
+          html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
+          switch (val.param) {
+            case 'range':
+              switch (val.type) {
+                case 'float':
+                  stepAttr = val.step ? " step='" + val.step + "'" : '';
+                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-range' type='range' value='" + val.defaultArg + "' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
+                  break;
+                case 'vec2':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  break;
+                case 'vec3':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                  break;
+                case 'vec4':
+                  stepAttr = val.step ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
+                  html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-range' type='range' value='" + val.defaultArg[3] + "' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
+                  break;
+                default:
+                  mecha.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
+              }
+              break;
+            case 'number':
+              switch (val.type) {
+                case 'float':
+                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'></input>";
+                  break;
+                case 'vec2':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                  break;
+                case 'vec3':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
+                  break;
+                case 'vec4':
+                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'></input></div>";
+                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'></input></div>";
+                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'></input></div>";
+                  html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='mecha-param-number' type='number' value='" + val.defaultArg[3] + "'></input></div>";
+                  break;
+                default:
+                  mecha.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
+              }
+          }
+          html += "</td></tr>";
+        }
+      }
+      html += '</table>';
+      el.innerHTML = html;
     }
-  };
+  });
 
   apiInit = function(callback) {
     var $apiLink;
@@ -2774,65 +2838,53 @@ mecha.gui =
     return state.application.initialized = true;
   };
 
-  create = function(container, jsandboxUrl, mechaUrlRoot) {
+  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot) {
     var containerEl, errorHtml;
-    try {
-      errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
-      if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-        containerEl.innerHTML = errorHtml;
-        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
-        return false;
-      } else if (container === null) {
-        mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
-      } else {
-        containerEl = typeof container === 'string' ? document.getElementById(container) : container;
-      }
-      if (containerEl === null) {
-        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
-        return false;
-      }
-      containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
-      if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
-      if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
-      if (state.paths.jsandboxUrl != null) {
-        JSandbox.create(state.paths.jsandboxUrl);
-      }
-      init(containerEl, document.getElementById('mecha-canvas'));
-      return true;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.create`:\n", error);
+    errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
+    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+      containerEl.innerHTML = errorHtml;
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+      return false;
+    } else if (container === null) {
+      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+    } else {
+      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+    }
+    if (containerEl === null) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-  };
+    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
+    if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
+    if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
+    if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
+    init(containerEl, document.getElementById('mecha-canvas'));
+    return true;
+  });
 
-  createControls = function(container) {
+  createControls = safeExport('mecha.gui.createControls', false, function(container) {
     var containerEl;
-    try {
-      if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
-        return false;
-      } else if (container === null) {
-        mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
-      } else {
-        containerEl = typeof container === 'string' ? document.getElementById(container) : container;
-      }
-      if (containerEl === null) {
-        mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
-        return false;
-      }
-      if (!(state.parameters.domElement != null)) {
-        state.parameters.domElement = document.createElement('form');
-        state.parameters.domElement.id = 'mecha-param-inputs';
-        containerEl.appendChild(state.parameters.domElement);
-      }
-      controlsInit();
-      registerControlEvents();
-      return true;
-    } catch (error) {
-      mecha.logInternalError("Exception occurred in `mecha.gui.createControls`:\n", error);
+    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+      return false;
+    } else if (container === null) {
+      mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
+    } else {
+      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+    }
+    if (containerEl === null) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-  };
+    if (!(state.parameters.domElement != null)) {
+      state.parameters.domElement = document.createElement('form');
+      state.parameters.domElement.id = 'mecha-param-inputs';
+      containerEl.appendChild(state.parameters.domElement);
+    }
+    controlsInit();
+    registerControlEvents();
+    return true;
+  });
 
   exports = exports != null ? exports : {};
 
