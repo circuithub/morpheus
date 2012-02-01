@@ -2,7 +2,6 @@
 # Program state should not be manipulated outside events files
 
 sceneIdle = () ->
-  # TODO: Should we really log error messages in the idle loop?
   return do safeTry "mecha.gui: sceneIdle", (->
       #SceneJS.FX.idle()
     ), ((error) -> 

@@ -1,6 +1,5 @@
 # Create the DOM elements for the GUI (canvas etc)
 create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrlRoot) ->
-  #try
   errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>"
 
   # Check pre-conditions
@@ -38,12 +37,8 @@ create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrl
   # Initialize the application
   init containerEl, document.getElementById 'mecha-canvas'
   return true
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.gui.create`:\n", error
-  #  return false
 
 createControls = safeExport 'mecha.gui.createControls', false, (container) ->
-  #try
   # Check pre-conditions
   if container != null and typeof container != 'string' and (typeof container != 'object' or container.nodeName != 'DIV')
     mecha.logApiError "Mecha GUI: (ERROR) Invalid container id '#{container}' supplied, expected type 'string' or dom element of type 'DIV'."
@@ -66,7 +61,4 @@ createControls = safeExport 'mecha.gui.createControls', false, (container) ->
   controlsInit() 
   registerControlEvents()
   return true
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.gui.createControls`:\n", error
-  #  return false
-  
+

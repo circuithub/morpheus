@@ -2071,8 +2071,11 @@ mecha.generator =
     rayOrigin = 'ro';
     rayDirection = 'rd';
     usePerspectiveProjection = false;
-    console.log("ASM:");
-    console.log(abstractSolidModel);
+    /* TEMPORARY
+    console.log "ASM:"
+    console.log abstractSolidModel
+    #
+    */
     vertexShader = function() {
       var bounds, boundsResult, sceneTranslation;
       boundsResult = compileASMBounds(abstractSolidModel);
@@ -2085,6 +2088,7 @@ mecha.generator =
       /* TEMPORARY
       console.log "Bounds Result:"
       console.log boundsResult
+      #
       */
       sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
       return "const float Infinity = (1.0/0.0);\nconst vec3 sceneScale = vec3(" + (bounds[1][0] - bounds[0][0]) + ", " + (bounds[1][1] - bounds[0][1]) + ", " + (bounds[1][2] - bounds[0][2]) + ");\nconst vec3 sceneTranslation = vec3(" + sceneTranslation + ");\nuniform mat4 projection;\nuniform mat4 view;\nuniform mat3 model;\nattribute vec3 position;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\nvoid main(void) {\n  modelPosition = position;\n  " + (usePerspectiveProjection ? "viewPosition = (view * vec4(position, 1.0)).xyz;" : "") + "\n  gl_Position = projection * view * vec4(model * position, 1.0);\n}\n";
@@ -2096,8 +2100,11 @@ mecha.generator =
       if (distanceResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the distance compiler.');
       }
-      console.log("Distance Result:");
-      console.log(distanceResult);
+      /* TEMPORARY
+      console.log "Distance Result:"
+      console.log distanceResult
+      #
+      */
       idResult = glslSceneId(abstractSolidModel);
       if (idResult.nodes.length !== 1) {
         mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the material id compiler.');
@@ -2105,6 +2112,7 @@ mecha.generator =
       /* TEMPORARY
       console.log "Id Result:"
       console.log idResult
+      #
       */
       sceneMaterial = function(materials) {
         var binarySearch, i, m, result, _ref;

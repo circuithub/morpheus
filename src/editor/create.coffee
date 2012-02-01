@@ -1,6 +1,5 @@
 # Create the DOM elements for the editor
 create = safeExport 'mecha.editor.create', undefined, (domElement, sourceCode) ->
-  #try
   if not sourceCode?
     sourceCode = ""
   domElement.innerHTML =
@@ -11,7 +10,5 @@ create = safeExport 'mecha.editor.create', undefined, (domElement, sourceCode) -
     #{sourceCode}
     </textarea>
     """
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.editor.create`:\n", error
   return
 

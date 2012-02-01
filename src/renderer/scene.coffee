@@ -1,6 +1,5 @@
 # Create the scene
 createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
-  #try
   # Store the context in the state
   # TODO: support multiple contexts in future?
   state.context = context  
@@ -43,12 +42,9 @@ createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
   .uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0))
   .uniform('model', state.rotation)
   .triangles()
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.renderer.createScene`:\n", error
   return
 
 runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallback) ->
-  #try
   # Setup rendering parameters
   state.context.viewport 0, 0, canvas.width, canvas.height
   state.context.clearColor 0.0, 0.0, 0.0, 0.0
@@ -62,7 +58,5 @@ runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallbac
       idleCallback()
     self.nextFrame = window.requestAnimationFrame callback, canvas
   state.nextFrame = window.requestAnimationFrame callback, canvas
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.renderer.runScene`:\n", error
   return
 

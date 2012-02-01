@@ -1,5 +1,4 @@
 modelShaders = safeExport 'mecha.renderer.modelShaders', false, (modelName, shaders) ->
-  #try
   success = true
 
   # Check whether the webgl context is available    
@@ -32,22 +31,13 @@ modelShaders = safeExport 'mecha.renderer.modelShaders', false, (modelName, shad
   (gl 'scene').shaderProgram state.shader.program
   gl.refresh state.shader.program
   return success
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.renderer.modelShaders`:\n", error
-  #  return false
 
 modelArguments = safeExport 'mecha.renderer.modelArguments', undefined, (modelName, args) ->
-  #try
   for name,val of args
     (gl modelName).uniform name, val
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.renderer.modelArguments`:\n", error
   return
 
 modelRotate = safeExport 'mecha.renderer.modelRotate', undefined, (modelName, angles) ->
-  #try
   gl.matrix3.rotateZY state.rotation, state.rotation, angles
   (gl modelName).uniform 'model', state.rotation
-  #catch error
-  #  mecha.logInternalError "Exception occured in `mecha.renderer.modelRotate`:\n", error
   return

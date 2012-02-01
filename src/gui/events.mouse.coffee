@@ -19,7 +19,6 @@ mouseDown = safeExport 'mecha.gui: mouseDown', undefined, (event) ->
   ###
 
 mouseUp = safeExport 'mecha.gui: mouseUp', undefined, (event) ->
-  #try
   # De-activate the appropriate mouse button and dragging modes
   switch event.which
     when 1 
@@ -28,14 +27,11 @@ mouseUp = safeExport 'mecha.gui: mouseUp', undefined, (event) ->
     when 2
       state.viewport.mouse.middleDown = false
       state.viewport.mouse.middleDragDistance = 0
-  #catch error
-  #  # We probably don't want to log any messages for mouse movement
   return
 
 mouseMove = (event) ->
   return do safeTry "mecha.gui: mouseMove", (->
       #SceneJS.FX.idle()
-      #try
       # TODO: Get an accurate time measurement since the last mouseMove event
       # Get the delta position of the mouse over this frame
       delta = [event.clientX - state.viewport.mouse.last[0], event.clientY - state.viewport.mouse.last[1]]
@@ -64,14 +60,11 @@ mouseMove = (event) ->
         mecha.renderer.modelRotate 'scene', orbitAngles
 
       state.viewport.mouse.last = [event.clientX, event.clientY]
-      #catch error
-      # We probably don't want to log any messages for mouse movement
     ), ((error) -> 
       # We probably don't want to log error messages for mouse movement (in production)
     )
 
 mouseWheel = safeExport 'mecha.gui: mouseWheel', undefined, (event) ->
-  #try
   # TODO: When the camera projection mode is ortho then this will need to scale the view
   # See http://www.javascriptkit.com/javatutors/onmousewheel.shtml
   # But also note, unfortunately firefox actually appears to give different values of event.detail some times.
@@ -80,8 +73,6 @@ mouseWheel = safeExport 'mecha.gui: mouseWheel', undefined, (event) ->
 
   zoomDistance = delta * constants.camera.zoomSpeedFactor #* zoomLimits[1] 
 
-  # TODO: Repalce this...
+  # TODO: Replace this...
   #zoomLookAtNode (state.scene.findNode 'main-lookAt'), zoomDistance #, zoomLimits
-  #catch error
-  #  # We probably don't want to log any messages for mouse movement
   return

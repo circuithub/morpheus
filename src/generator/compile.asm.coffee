@@ -11,7 +11,6 @@ compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel)
   if not concreteSolidModel?
     return null
   
-  #try
   dispatch = 
     scene: (node) ->
       if node.nodes.length > 1
@@ -187,7 +186,4 @@ compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel)
     return
   
   return optimizeASM compileASMNode concreteSolidModel
-  #catch error
-  #  mecha.logException "mecha.generator.compileASM", error
-  #  return asm.union()
 

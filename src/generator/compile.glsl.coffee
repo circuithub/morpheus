@@ -4,15 +4,14 @@
 # TODO: Split
 
 compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidModel, params) ->
-  #try
   rayOrigin = 'ro'
   rayDirection = 'rd'
   usePerspectiveProjection = false
   
-  ## TEMPORARY
+  ### TEMPORARY
   console.log "ASM:"
   console.log abstractSolidModel
-  ##
+  # ###
 
   # Generate the vertex shader
   vertexShader = ->
@@ -28,7 +27,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     ### TEMPORARY
     console.log "Bounds Result:"
     console.log boundsResult
-    ###
+    # ###
 
     # TODO: Possibly change some of these to constants to uniforms later to avoid recompilation
     sceneTranslation = [
@@ -62,10 +61,10 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     if distanceResult.nodes.length != 1
       mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the distance compiler.'
 
-    ## TEMPORARY
+    ### TEMPORARY
     console.log "Distance Result:"
     console.log distanceResult
-    ##
+    # ###
 
     idResult = glslSceneId abstractSolidModel
     if idResult.nodes.length != 1
@@ -74,7 +73,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     ### TEMPORARY
     console.log "Id Result:"
     console.log idResult
-    ###
+    # ###
 
     # Helpers
     sceneMaterial = (materials) ->
@@ -231,6 +230,4 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
 
   shaders = [vertexShader(), fragmentShader()]
   return shaders
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.generator.compileGLSL`:\n", error
-  #  return [null,null]
+

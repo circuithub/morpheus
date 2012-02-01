@@ -1,8 +1,5 @@
 # Translate the CSM source code into a valid javascript program
 translateCSM = safeExport 'mecha.generator.translateCSM', '', (apiSourceCode, csmSourceCode) ->
-  #try
-  #TODO: Do we need to supply our own try-catch block? For now we're just relying on JSandbox's error catching code...
-  
   # Extract all parameters from the source
   # (Note: if desired this could be optimized quite a bit)
   variablesSource = csmSourceCode.match /var[^;]*;/g
@@ -47,7 +44,4 @@ translateCSM = safeExport 'mecha.generator.translateCSM', '', (apiSourceCode, cs
     """
 
   return jsSourceCode
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.generator.translateCSM`:\n", error
-  #  return ''
 

@@ -7,7 +7,6 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
-  #try
   csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
 
   # Run the script inside a webworker sandbox
@@ -34,13 +33,10 @@ sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
       controlsInit()
     onerror: (data,request) ->
       mecha.logInternalError "Error compiling the solid model."
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.gui.sceneInit`:\n", error
   return
 
 # Initialize html controls for interacting with mecha
 controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
-  #try
   el = state.parameters.domElement
   if el?
     html = '<table>'
@@ -91,8 +87,6 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
         html += "</td></tr>"
     html += '</table>'
     el.innerHTML = html
-  #catch error
-  #  mecha.logInternalError "Exception occurred in `mecha.gui.controlsInit`:\n", error
   return
 
 # Initialize the CSM API (by loading the code from the given url)
