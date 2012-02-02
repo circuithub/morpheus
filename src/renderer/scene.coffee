@@ -25,19 +25,24 @@ createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
     20,21,22,  20,22,23 
   ]
 
-  vbo = context.createBuffer()
-  context.bindBuffer context.ARRAY_BUFFER, vbo
+  if (state.vbo?)
+    context.deleteBuffer state.vbo
+  if (state.ibo?)
+    context.deleteBuffer state.ibo
+
+  state.vbo = context.createBuffer()
+  context.bindBuffer context.ARRAY_BUFFER, state.vbo
   context.bufferData context.ARRAY_BUFFER, (new Float32Array positions), context.STATIC_DRAW
 
-  ibo = context.createBuffer()
-  context.bindBuffer context.ELEMENT_ARRAY_BUFFER, ibo
+  state.ibo = context.createBuffer()
+  context.bindBuffer context.ELEMENT_ARRAY_BUFFER, state.ibo
   context.bufferData context.ELEMENT_ARRAY_BUFFER, (new Uint16Array indices), context.STATIC_DRAW
   
   # Create the scene
   # TODO: Use the model boundaries to set up the projection parameters and the camera distance
   gl.scene({ 'scene': '' })
-  .vertexAttrib('position', vbo, 9*8, gl.FLOAT, 3, false, 0, 0)
-  .vertexElem(ibo, 6*6, gl.UNSIGNED_SHORT, 0)
+  .vertexAttrib('position', state.vbo, 9*8, gl.FLOAT, 3, false, 0, 0)
+  .vertexElem(state.ibo, 6*6, gl.UNSIGNED_SHORT, 0)
   .uniform('view', gl.matrix4.newLookAt([10.0,10.0,10.0], [0.0,0.0,0.0], [0.0,0.0,1.0]))
   .uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0))
   .uniform('model', state.rotation)
