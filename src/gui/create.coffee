@@ -1,6 +1,10 @@
 # Create the DOM elements for the GUI (canvas etc)
-create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrlRoot) ->
+create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight) ->
   errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>"
+
+  # Default paramters
+  fixedWidth = 512 if not fixedWidth?
+  fixedHeight = 512 if not fixedHeight?
 
   # Check pre-conditions
   if container != null and typeof container != 'string' and (typeof container != 'object' or container.nodeName != 'DIV')
@@ -19,7 +23,7 @@ create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrl
 
   containerEl.innerHTML = 
     """
-    <canvas id='mecha-canvas' width='512' height='512'>
+    <canvas id='mecha-canvas' width='#{fixedWidth}' height='#{fixedHeight}'>
       <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
     </canvas>
     """ + containerEl.innerHTML

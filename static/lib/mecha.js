@@ -2846,9 +2846,11 @@ mecha.gui =
     return state.application.initialized = true;
   };
 
-  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot) {
+  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight) {
     var containerEl, errorHtml;
     errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
+    if (!(fixedWidth != null)) fixedWidth = 512;
+    if (!(fixedHeight != null)) fixedHeight = 512;
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
       containerEl.innerHTML = errorHtml;
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
@@ -2862,7 +2864,7 @@ mecha.gui =
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-    containerEl.innerHTML = "<canvas id='mecha-canvas' width='512' height='512'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>" + containerEl.innerHTML;
+    containerEl.innerHTML = ("<canvas id='mecha-canvas' width='" + fixedWidth + "' height='" + fixedHeight + "'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>") + containerEl.innerHTML;
     if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
     if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
     if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
