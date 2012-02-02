@@ -9,7 +9,7 @@
 
 # Register document events
 registerDOMEvents = () ->
-  state.viewport.domElement.addEventListener 'mousedown', mouseDown, true
+  ($ '#mecha-gui').delegate '#mecha-canvas', 'mousedown', mouseDown
   state.viewport.domElement.addEventListener 'mouseup', mouseUp, true
   state.viewport.domElement.addEventListener 'mousemove', mouseMove, true
   state.viewport.domElement.addEventListener 'mousewheel', mouseWheel, true
