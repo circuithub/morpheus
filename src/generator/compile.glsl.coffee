@@ -171,7 +171,16 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
       vec3 absRayOrigin = abs(rayOrigin);
       //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
       //if(!hit && prevDist >= dist) { discard; }
-      if(!hit) { discard; }
+      /*if(!hit) { 
+        if (rayOrigin.y < 0.0) {
+          gl_FragColor = vec4(vec3(0.0), 1.0);
+          return;
+        }
+        else {
+          discard; 
+        }
+      }*/
+      if (!hit) { discard; }
       //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
       //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
       vec3 diffuseColor = sceneMaterial(prevRayOrigin);

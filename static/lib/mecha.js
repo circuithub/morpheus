@@ -5,11 +5,9 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.generator = 
 (function() {
-
   "use strict";
-
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
-  var __slice = Array.prototype.slice;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM,
+    __slice = Array.prototype.slice;
 
   flatten = function(array) {
     var a, _ref;
@@ -2153,7 +2151,7 @@ mecha.generator =
       distancePreludeCode = distanceResult.flags.glslPrelude.code;
       idCode = idResult.nodes[0].code;
       idPreludeCode = idResult.flags.glslPrelude.code;
-      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  if(!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
+      return "#ifdef GL_ES\n  precision highp float;\n#endif\nconst float Infinity = (1.0/0.0);\nuniform mat4 view;\nuniform mat3 model;\nvarying vec3 modelPosition;\n" + (usePerspectiveProjection ? "varying vec3 viewPosition;" : "") + "\n\n" + (generateUniforms(params)) + "\n\n" + (glslLibrary.compile(distanceResult.flags.glslFunctions)) + "\n\nfloat sceneDist(in vec3 " + rayOrigin + ") {\n  " + (distancePreludeCode != null ? distancePreludeCode : '') + "\n  return max(0.0," + (distanceCode != null ? distanceCode : 'Infinity') + ");\n}\n\nvec3 sceneNormal(in vec3 p) {\n  const float eps = 0.00001;\n  vec3 n;\n  n.x = sceneDist( vec3(p.x+eps, p.yz) ) - sceneDist( vec3(p.x-eps, p.yz) );\n  n.y = sceneDist( vec3(p.x, p.y+eps, p.z) ) - sceneDist( vec3(p.x, p.y-eps, p.z) );\n  n.z = sceneDist( vec3(p.xy, p.z+eps) ) - sceneDist( vec3(p.xy, p.z-eps) );\n  return normalize(n);\n}\n\nint sceneId(in vec3 " + rayOrigin + ") {\n  " + (idPreludeCode != null ? idPreludeCode : '') + "\n  " + (idCode != null ? idCode + ';' : '') + "\n  return " + (idCode != null ? idCode.materialId : '-1') + ";\n}\n\n" + (sceneMaterial(idResult.flags.materials)) + "\n\nvoid main(void) {\n  // Constants\n  const int steps = 84;\n  const float threshold = 0.005;\n  \n  vec3 rayOrigin = modelPosition;\n  vec3 rayDir = vec3(0.0,0.0,-1.0) * mat3(view) * model;\n  vec3 prevRayOrigin = rayOrigin;\n  bool hit = false;\n  float dist = Infinity;\n  //float prevDist = (1.0/0.0);\n  //float bias = 0.0; // corrective bias for the step size\n  //float minDist = (1.0/0.0);\n  for(int i = 0; i < steps; i++) {\n    //dist = sceneRayDist(rayOrigin, rayDir);\n    //prevDist = dist;\n    dist = sceneDist(rayOrigin);\n    //minDist = min(minDist, dist);\n    if (dist <= 0.0) {\n      hit = true;\n      break;\n    }\n    prevRayOrigin = rayOrigin;\n    //rayOrigin += (max(dist, threshold) + bias) * rayDir;\n    rayOrigin += max(dist, threshold) * rayDir;\n    if (all(notEqual(clamp(rayOrigin, vec3(-1.0), vec3(1.0)), rayOrigin))) { break; }\n  }\n  vec3 absRayOrigin = abs(rayOrigin);\n  //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }\n  //if(!hit && prevDist >= dist) { discard; }\n  /*if(!hit) { \n    if (rayOrigin.y < 0.0) {\n      gl_FragColor = vec4(vec3(0.0), 1.0);\n      return;\n    }\n    else {\n      discard; \n    }\n  }*/\n  if (!hit) { discard; }\n  //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }\n  //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);\n  vec3 diffuseColor = sceneMaterial(prevRayOrigin);\n  //const vec3 specularColor = vec3(1.0, 1.0, 1.0);\n        \n  // Lighting parameters\n  const float specularFactor = 0.3;\n  const float specularPhongShininess = 10.0;\n  const vec3 lightPos = vec3(1.5,2.5, 4.0);\n  vec3 lightDir = normalize(lightPos - prevRayOrigin);\n  vec3 normal = sceneNormal(prevRayOrigin);\n\n  //* Diffuse shading\n  float diffuse = dot(normal, lightDir);\n  //*/\n  //* Phong reflection model\n  vec3 reflectDir = reflect(-rayDir, normal);\n  vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));\n  //*/\n\n  //* Regular shading\n  const float ambientFactor = 0.7;\n  const float diffuseFactor = 1.0 - ambientFactor;\n  diffuse = ambientFactor + diffuse * diffuseFactor;      \n  //*/\n\n  /* Cel shading\n  const float cellA = 0.3;\n  const float cellB = 0.4;\n  const float cellC = 0.5;\n  const float cellD = 1.0 - cellA;\n  diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));\n  //*/\n\n  //* Ambient occlusion\n  const float aoIterations = 5.0;\n  const float aoFactor = 2.0;\n  const float aoDistanceFactor = 1.6;\n  const float aoDistanceDelta = 0.1 / 5.0;\n  float ao = 1.0;\n  float invPow2 = 1.0;\n  vec3 aoDirDist = normal * aoDistanceDelta;\n  vec3 aoPos = prevRayOrigin;\n  for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {\n    invPow2 *= aoDistanceFactor * 0.5;\n    aoPos += aoDirDist;\n    ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));\n  }\n  diffuse *= max(ao, 0.0);\n  //*/\n  \n  gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);\n}\n";
     };
     shaders = [vertexShader(), fragmentShader()];
     return shaders;
@@ -2179,9 +2177,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.editor = 
 (function() {
-
   "use strict";
-
   var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
@@ -2265,9 +2261,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.renderer = 
 (function() {
-
   "use strict";
-
   var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
@@ -2393,19 +2387,21 @@ mecha.renderer =
   });
 
   createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
-    var ibo, indices, positions, vbo;
+    var indices, positions;
     state.context = context;
     positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
     indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
-    vbo = context.createBuffer();
-    context.bindBuffer(context.ARRAY_BUFFER, vbo);
+    if ((state.vbo != null)) context.deleteBuffer(state.vbo);
+    if ((state.ibo != null)) context.deleteBuffer(state.ibo);
+    state.vbo = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, state.vbo);
     context.bufferData(context.ARRAY_BUFFER, new Float32Array(positions), context.STATIC_DRAW);
-    ibo = context.createBuffer();
-    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, ibo);
+    state.ibo = context.createBuffer();
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, state.ibo);
     context.bufferData(context.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), context.STATIC_DRAW);
     gl.scene({
       'scene': ''
-    }).vertexAttrib('position', vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
+    }).vertexAttrib('position', state.vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(state.ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
   });
 
   runScene = safeExport('mecha.renderer.runScene', void 0, function(canvas, idleCallback) {
@@ -2448,9 +2444,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.gui = 
 (function() {
-
   "use strict";
-
   var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
