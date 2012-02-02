@@ -53,6 +53,8 @@ runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallbac
   # Setup rendering parameters
   state.context.viewport 0, 0, canvas.width, canvas.height
   state.context.clearColor 0.0, 0.0, 0.0, 0.0
+  state.context.cullFace state.context.BACK
+  state.context.enable state.context.CULL_FACE
 
   # Run the scene with an idle callback function
   callback = safeExport 'mecha.renderer: render', undefined, ->
