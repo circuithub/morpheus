@@ -171,68 +171,70 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
       vec3 absRayOrigin = abs(rayOrigin);
       //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
       //if(!hit && prevDist >= dist) { discard; }
-      /*if(!hit) { 
-        if (rayOrigin.y < 0.0) {
-          gl_FragColor = vec4(vec3(0.0), 1.0);
-          return;
-        }
-        else {
-          discard; 
-        }
-      }*/
-      if (!hit) { discard; }
-      //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
-      //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
-      vec3 diffuseColor = sceneMaterial(prevRayOrigin);
-      //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
-            
-      // Lighting parameters
-      const float specularFactor = 0.3;
-      const float specularPhongShininess = 10.0;
-      const vec3 lightPos = vec3(1.5,2.5, 4.0);
-      vec3 lightDir = normalize(lightPos - prevRayOrigin);
-      vec3 normal = sceneNormal(prevRayOrigin);
-
-      //* Diffuse shading
-      float diffuse = dot(normal, lightDir);
-      //*/
-      //* Phong reflection model
-      vec3 reflectDir = reflect(-rayDir, normal);
-      vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));
-      //*/
-
-      //* Regular shading
-      const float ambientFactor = 0.7;
-      const float diffuseFactor = 1.0 - ambientFactor;
-      diffuse = ambientFactor + diffuse * diffuseFactor;      
-      //*/
-
-      /* Cel shading
-      const float cellA = 0.3;
-      const float cellB = 0.4;
-      const float cellC = 0.5;
-      const float cellD = 1.0 - cellA;
-      diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));
-      //*/
-
-      //* Ambient occlusion
-      const float aoIterations = 5.0;
-      const float aoFactor = 2.0;
-      const float aoDistanceFactor = 1.6;
-      const float aoDistanceDelta = 0.1 / 5.0;
-      float ao = 1.0;
-      float invPow2 = 1.0;
-      vec3 aoDirDist = normal * aoDistanceDelta;
-      vec3 aoPos = prevRayOrigin;
-      for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {
-        invPow2 *= aoDistanceFactor * 0.5;
-        aoPos += aoDirDist;
-        ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));
+      /*if(!hit && rayOrigin.z <= -1.0) { 
+        // Get the z-plane intersection
+        float dz = (modelPosition.z + 1.0) / rayDir.z;
+        vec3 pz = modelPosition + rayDir * dz;
+        gl_FragColor = vec4(0.0,0.0,0.0,1.0 - sceneDist(pz));
       }
-      diffuse *= max(ao, 0.0);
-      //*/
-      
-      gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
+      else*/ if (!hit) {
+        discard;
+      }
+      else {
+        //if (!hit) { discard; }
+        //if(!hit) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+        //const vec3 diffuseColor = vec3(0.1, 0.2, 0.8);
+        vec3 diffuseColor = sceneMaterial(prevRayOrigin);
+        //const vec3 specularColor = vec3(1.0, 1.0, 1.0);
+              
+        // Lighting parameters
+        const float specularFactor = 0.3;
+        const float specularPhongShininess = 10.0;
+        const vec3 lightPos = vec3(1.5,2.5, 4.0);
+        vec3 lightDir = normalize(lightPos - prevRayOrigin);
+        vec3 normal = sceneNormal(prevRayOrigin);
+
+        //* Diffuse shading
+        float diffuse = dot(normal, lightDir);
+        //*/
+        //* Phong reflection model
+        vec3 reflectDir = reflect(-rayDir, normal);
+        vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));
+        //*/
+
+        //* Regular shading
+        const float ambientFactor = 0.7;
+        const float diffuseFactor = 1.0 - ambientFactor;
+        diffuse = ambientFactor + diffuse * diffuseFactor;      
+        //*/
+
+        /* Cel shading
+        const float cellA = 0.3;
+        const float cellB = 0.4;
+        const float cellC = 0.5;
+        const float cellD = 1.0 - cellA;
+        diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));
+        //*/
+
+        //* Ambient occlusion
+        const float aoIterations = 5.0;
+        const float aoFactor = 2.0;
+        const float aoDistanceFactor = 1.6;
+        const float aoDistanceDelta = 0.1 / 5.0;
+        float ao = 1.0;
+        float invPow2 = 1.0;
+        vec3 aoDirDist = normal * aoDistanceDelta;
+        vec3 aoPos = prevRayOrigin;
+        for (float i = 1.0; i < (aoIterations + 1.0);  i += 1.0) {
+          invPow2 *= aoDistanceFactor * 0.5;
+          aoPos += aoDirDist;
+          ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));
+        }
+        diffuse *= max(ao, 0.0);
+        //*/
+        
+        gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
+      }
     }
 
     """

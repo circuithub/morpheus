@@ -152,6 +152,8 @@ mecha.renderer =
     var callback;
     state.context.viewport(0, 0, canvas.width, canvas.height);
     state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+    state.context.cullFace(state.context.BACK);
+    state.context.enable(state.context.CULL_FACE);
     callback = safeExport('mecha.renderer: render', void 0, function() {
       if (gl.update()) {
         state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
