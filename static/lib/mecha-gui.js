@@ -82,7 +82,7 @@ mecha.gui =
     },
     camera: {
       maxOrbitSpeed: Math.PI * 0.1,
-      orbitSpeedFactor: 0.02,
+      orbitSpeedFactor: 0.05,
       zoomSpeedFactor: 0.5
     }
   };
