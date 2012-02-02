@@ -176,14 +176,14 @@ compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel)
         if dispatch[node.type]?
           return dispatch[node.type] node
         else
-          mecha.log "Unexpected node type '#{node.type}'."
+          mecha.logInternalError "Unexpected node type '#{node.type}'."
           return {}
       else
-        mecha.log "Unexpected node of type '#{typeof node}'."
+        mecha.logInternalError "Unexpected node of type '#{typeof node}'."
         return {}
   if concreteSolidModel.type != 'scene'
-    mecha.log "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
-    return
+    mecha.logInternalError "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
+    return null
   
   return optimizeASM compileASMNode concreteSolidModel
 

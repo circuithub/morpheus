@@ -8,7 +8,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -22,13 +22,11 @@ mecha.gui =
     return Math.min(Math.max(s, min), max);
   };
 
-  mechaDebug = true;
-
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -61,7 +59,7 @@ mecha.gui =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
@@ -264,7 +262,7 @@ mecha.gui =
       data: csmSourceCode,
       callback: function(result) {
         var attr, model, name, _ref, _ref2, _ref3;
-        console.log(result);
+        mecha.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
           model = state.models['scene'] = {
@@ -280,7 +278,7 @@ mecha.gui =
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-        console.log(model.shaders[1]);
+        mecha.logDebug(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         mecha.renderer.modelArguments('scene', model.args);
         return controlsInit();

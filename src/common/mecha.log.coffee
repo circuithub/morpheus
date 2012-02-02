@@ -1,7 +1,7 @@
 # Log messages to the console if it is available
 # See http://paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 
-mechaDebug = true
+#mechaDebug = true
 
 mecha.log = (if console? and console.log? then () -> console.log.apply console, arguments else () -> return)
 mecha.logDebug = (if mechaDebug? and mechaDebug and console? and console.log? then () -> console.log.apply console, arguments else () -> return)

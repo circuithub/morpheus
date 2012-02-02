@@ -390,7 +390,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           when 'translate','rotate','scale','invert','mirror','repeat'
             continue
         break
-      #console.log "NODE ATTR", node.attr
+      #mecha.logDebug "NODE ATTR", node.attr
       # TODO: Need to squareroot chamfer radius??? (so that 
       if bevelRadius != 0
         # TODO: BUSY HERE

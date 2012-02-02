@@ -8,15 +8,13 @@ mecha.editor =
 
   "use strict";
 
-  var create, exports, getSourceCode, mechaDebug, safeExport, safeTry, translateSugaredJS;
-
-  mechaDebug = true;
+  var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -49,7 +47,7 @@ mecha.editor =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {

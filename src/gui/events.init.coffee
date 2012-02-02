@@ -13,7 +13,7 @@ sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
   requestId = JSandbox.eval 
     data: csmSourceCode
     callback: (result) ->
-      console.log result ## TEMPORARY
+      mecha.logDebug result ## TEMPORARY
       
       # Update the model parameters
       model = state.models['scene']
@@ -26,7 +26,7 @@ sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
           model.args[name] = attr.defaultArg
       # Generate shaders for the model
       model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
-      console.log model.shaders[1] ## TEMPORARY
+      mecha.logDebug model.shaders[1] ## TEMPORARY
       # Update the model in the renderer
       mecha.renderer.modelShaders 'scene', model.shaders
       mecha.renderer.modelArguments 'scene', model.args

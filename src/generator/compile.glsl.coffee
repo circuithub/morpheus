@@ -9,8 +9,8 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
   usePerspectiveProjection = false
   
   ### TEMPORARY
-  console.log "ASM:"
-  console.log abstractSolidModel
+  mecha.logDebug "ASM:"
+  mecha.logDebug abstractSolidModel
   # ###
 
   # Generate the vertex shader
@@ -25,8 +25,8 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     bounds = boundsResult.nodes[0].bounds
     
     ### TEMPORARY
-    console.log "Bounds Result:"
-    console.log boundsResult
+    mecha.logDebug "Bounds Result:"
+    mecha.logDebug boundsResult
     # ###
 
     # TODO: Possibly change some of these to constants to uniforms later to avoid recompilation

@@ -8,7 +8,7 @@ mecha.generator =
 
   "use strict";
 
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
   var __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -40,13 +40,11 @@ mecha.generator =
     return Math.min(Math.max(s, min), max);
   };
 
-  mechaDebug = true;
-
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -79,7 +77,7 @@ mecha.generator =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
@@ -874,18 +872,18 @@ mecha.generator =
           if (dispatch[node.type] != null) {
             return dispatch[node.type](node);
           } else {
-            mecha.log("Unexpected node type '" + node.type + "'.");
+            mecha.logInternalError("Unexpected node type '" + node.type + "'.");
             return {};
           }
           break;
         default:
-          mecha.log("Unexpected node of type '" + (typeof node) + "'.");
+          mecha.logInternalError("Unexpected node of type '" + (typeof node) + "'.");
           return {};
       }
     };
     if (concreteSolidModel.type !== 'scene') {
-      mecha.log("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
-      return;
+      mecha.logInternalError("Expected node of type 'scene' at the root of the solid model, instead, got '" + concreteSolidModel.type + "'.");
+      return null;
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
   });
@@ -2072,8 +2070,8 @@ mecha.generator =
     rayDirection = 'rd';
     usePerspectiveProjection = false;
     /* TEMPORARY
-    console.log "ASM:"
-    console.log abstractSolidModel
+    mecha.logDebug "ASM:"
+    mecha.logDebug abstractSolidModel
     #
     */
     vertexShader = function() {
@@ -2086,8 +2084,8 @@ mecha.generator =
       }
       bounds = boundsResult.nodes[0].bounds;
       /* TEMPORARY
-      console.log "Bounds Result:"
-      console.log boundsResult
+      mecha.logDebug "Bounds Result:"
+      mecha.logDebug boundsResult
       #
       */
       sceneTranslation = [isFinite(bounds[0][0]) && isFinite(bounds[1][0]) ? bounds[0][0] + bounds[1][0] : '0.0', isFinite(bounds[0][1]) && isFinite(bounds[1][1]) ? bounds[0][1] + bounds[1][1] : '0.0', isFinite(bounds[0][2]) && isFinite(bounds[1][2]) ? bounds[0][2] + bounds[1][2] : '0.0'];
@@ -2184,15 +2182,13 @@ mecha.editor =
 
   "use strict";
 
-  var create, exports, getSourceCode, mechaDebug, safeExport, safeTry, translateSugaredJS;
-
-  mechaDebug = true;
+  var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2225,7 +2221,7 @@ mecha.editor =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
@@ -2272,7 +2268,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
+  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2286,13 +2282,11 @@ mecha.renderer =
     return Math.min(Math.max(s, min), max);
   };
 
-  mechaDebug = true;
-
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2325,7 +2319,7 @@ mecha.renderer =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
@@ -2457,7 +2451,7 @@ mecha.gui =
 
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2471,13 +2465,11 @@ mecha.gui =
     return Math.min(Math.max(s, min), max);
   };
 
-  mechaDebug = true;
-
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -2510,7 +2502,7 @@ mecha.gui =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
@@ -2713,7 +2705,7 @@ mecha.gui =
       data: csmSourceCode,
       callback: function(result) {
         var attr, model, name, _ref, _ref2, _ref3;
-        console.log(result);
+        mecha.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
           model = state.models['scene'] = {
@@ -2729,7 +2721,7 @@ mecha.gui =
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-        console.log(model.shaders[1]);
+        mecha.logDebug(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         mecha.renderer.modelArguments('scene', model.args);
         return controlsInit();

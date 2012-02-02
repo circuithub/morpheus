@@ -8,7 +8,7 @@ mecha.renderer =
 
   "use strict";
 
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mechaDebug, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
+  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -22,13 +22,11 @@ mecha.renderer =
     return Math.min(Math.max(s, min), max);
   };
 
-  mechaDebug = true;
-
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
-  mecha.logDebug = ((mechaDebug != null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
   } : function() {});
 
@@ -61,7 +59,7 @@ mecha.renderer =
   };
 
   safeTry = function(name, callback, errorCallback) {
-    if ((mechaDebug != null) && mechaDebug) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
       return callback;
     } else {
       return function() {
