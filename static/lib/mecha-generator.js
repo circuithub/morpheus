@@ -5,9 +5,11 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.generator = 
 (function() {
+
   "use strict";
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM,
-    __slice = Array.prototype.slice;
+
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
+  var __slice = Array.prototype.slice;
 
   flatten = function(array) {
     var a, _ref;

@@ -5,7 +5,9 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.gui = 
 (function() {
+
   "use strict";
+
   var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);

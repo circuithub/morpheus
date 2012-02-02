@@ -5,9 +5,11 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.generator = 
 (function() {
+
   "use strict";
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM,
-    __slice = Array.prototype.slice;
+
+  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM;
+  var __slice = Array.prototype.slice;
 
   flatten = function(array) {
     var a, _ref;
@@ -2177,7 +2179,9 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.editor = 
 (function() {
+
   "use strict";
+
   var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
@@ -2261,7 +2265,9 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.renderer = 
 (function() {
+
   "use strict";
+
   var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
@@ -2388,10 +2394,6 @@ mecha.renderer =
 
   createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
     var ibo, indices, positions, vbo;
-    if (state.context != null) {
-      mecha.logDebug("Not recreating the scene...");
-      return;
-    }
     state.context = context;
     positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
     indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];
@@ -2446,7 +2448,9 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.gui = 
 (function() {
+
   "use strict";
+
   var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
