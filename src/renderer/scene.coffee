@@ -1,5 +1,11 @@
 # Create the scene
 createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
+  ## TEMPORARY: For now don't recreate the scene (to avoid a certain bug)
+  if state.context?
+    mecha.logDebug "Not recreating the scene..."
+    return
+  ##
+
   # Store the context in the state
   # TODO: support multiple contexts in future?
   state.context = context  

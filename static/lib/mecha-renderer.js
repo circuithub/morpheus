@@ -5,9 +5,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.renderer = 
 (function() {
-
   "use strict";
-
   var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
@@ -134,6 +132,10 @@ mecha.renderer =
 
   createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
     var ibo, indices, positions, vbo;
+    if (state.context != null) {
+      mecha.logDebug("Not recreating the scene...");
+      return;
+    }
     state.context = context;
     positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
     indices = [0, 1, 2, 0, 2, 3, 4, 7, 6, 4, 6, 5, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23];

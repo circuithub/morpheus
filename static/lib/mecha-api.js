@@ -5,8 +5,8 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.api = 
 (function() {
-  var exports;
-  var __slice = Array.prototype.slice;
+  var exports,
+    __slice = Array.prototype.slice;
 
   (function() {
     var Api, Dispatcher, MechaExpression, MechaParameter, dispatch, extend, globalParamIndex, mechaPrimitiveTypeof, mechaTypeof;
