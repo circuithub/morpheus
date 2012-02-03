@@ -2111,31 +2111,35 @@ mecha.generator =
       #
       */
       sceneMaterial = function(materials) {
-        var result;
+        var binarySearch, i, m, result, _ref;
         result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
+        /* Render the raw scene id as a grayscale value
+        if materials.length > 0
+          result += "  return vec3(float(id) * #{glsl.floatLit (1.0 / (materials.length - 1))});\n"
+        else
+          result += "  return vec3(0.5);\n"
+        
+        #
+        */
+        binarySearch = function(start, end) {
+          var diff, mid;
+          diff = end - start;
+          if (diff === 1) {
+            return "m" + start;
+          } else {
+            mid = start + Math.floor(diff * 0.5);
+            return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
+          }
+        };
         if (materials.length > 0) {
-          result += "  return vec3(float(id) * " + (glsl.floatLit(1.0 / (materials.length - 1))) + ");\n";
+          for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+            m = materials[i];
+            result += "  vec3 m" + i + " = " + m + ";\n";
+          }
+          result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
         } else {
           result += "  return vec3(0.5);\n";
         }
-        /* Render the material associated with the scene id using a binary search
-        binarySearch = (start, end) ->
-          diff = end - start
-          if diff == 1
-            "m#{start}"
-          else
-            mid = start + Math.floor (diff * 0.5)
-            "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
-        
-        if materials.length > 0
-          for i in [0...materials.length]
-            m = materials[i]
-            result += "  vec3 m#{i} = #{m};\n"
-          result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
-        else
-          result += "  return vec3(0.5);\n"
-        #
-        */
         result += "}\n\n";
         return result;
       };
