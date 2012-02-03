@@ -171,13 +171,18 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
       vec3 absRayOrigin = abs(rayOrigin);
       //if(!hit && max(max(absRayOrigin.x, absRayOrigin.y), absRayOrigin.z) >= 1.0) { discard; }
       //if(!hit && prevDist >= dist) { discard; }
-      /*if(!hit && rayOrigin.z <= -1.0) { 
+      if(!hit && rayOrigin.z <= -1.0) { 
         // Get the z-plane intersection
-        float dz = (modelPosition.z + 1.0) / rayDir.z;
+        const float floorOffset = 1.0; // For the bottom of the bounding box this should be 0.0
+        const float boundaryOffset = -0.5; // For a larger boundary > 0.0, or for a smaller boundary < 0.0
+        const float shadeFactor = 0.45; // Shading factor (1.0 for full shader)
+        float dz = (modelPosition.z + 1.0) / -rayDir.z;
         vec3 pz = modelPosition + rayDir * dz;
-        gl_FragColor = vec4(0.0,0.0,0.0,1.0 - sceneDist(pz));
+        pz.z += floorOffset;
+        float shade = max(0.0, 1.0 + boundaryOffset - max(0.0,sceneDist(pz)));
+        gl_FragColor = vec4(0.0,0.0,0.0,max(0.0, shadeFactor*shade*shade*shade));
       }
-      else*/ if (!hit) {
+      else if (!hit) {
         discard;
       }
       else {
@@ -205,7 +210,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
         //* Regular shading
         const float ambientFactor = 0.7;
         const float diffuseFactor = 1.0 - ambientFactor;
-        diffuse = ambientFactor + diffuse * diffuseFactor;      
+        diffuse = ambientFactor + diffuse * diffuseFactor;
         //*/
 
         /* Cel shading
