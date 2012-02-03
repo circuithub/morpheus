@@ -2043,16 +2043,16 @@ mecha.generator =
     var id, memoA, memoB, result;
     memoA = glslCompiler.preludeAdd(flags.glslPrelude, String(a), 'float');
     memoB = glslCompiler.preludeAdd(flags.glslPrelude, String(b), 'float');
-    id = glslCompiler.preludeAdd(flags.glslPrelude, '-1', 'int');
-    result = new toStringPrototype("" + memoA + " < " + memoB + "? (" + id + " = " + a.materialId + ", " + memoA + ") : (" + id + " = " + b.materialId + ", " + memoB + ")");
+    id = glslCompiler.preludeAdd(flags.glslPrelude, "" + memoA + " < " + memoB + "? " + a.materialId + " : " + b.materialId, 'int');
+    result = new toStringPrototype("" + memoA + " < " + memoB + "? " + memoA + " : " + memoB);
     result.materialId = id;
     return result;
   }), (function(a, b, flags) {
     var id, memoA, memoB, result;
     memoA = glslCompiler.preludeAdd(flags.glslPrelude, String(a), 'float');
     memoB = glslCompiler.preludeAdd(flags.glslPrelude, String(b), 'float');
-    id = glslCompiler.preludeAdd(flags.glslPrelude, '-1', 'int');
-    result = new toStringPrototype("" + memoA + " > " + memoB + "? ((" + id + " = " + a.materialId + "), " + memoA + ") : ((" + id + " = " + b.materialId + "), " + memoB + ")");
+    id = glslCompiler.preludeAdd(flags.glslPrelude, "" + memoA + " > " + memoB + "? " + a.materialId + " : " + b.materialId, 'int');
+    result = new toStringPrototype("" + memoA + " > " + memoB + "? " + memoA + " : " + memoB);
     result.materialId = id;
     return result;
   }), (function(oldVal, newVal) {
@@ -2111,27 +2111,31 @@ mecha.generator =
       #
       */
       sceneMaterial = function(materials) {
-        var binarySearch, i, m, result, _ref;
-        binarySearch = function(start, end) {
-          var diff, mid;
-          diff = end - start;
-          if (diff === 1) {
-            return "m" + start;
-          } else {
-            mid = start + Math.floor(diff * 0.5);
-            return "(id < " + mid + "? " + (binarySearch(start, mid)) + " : " + (binarySearch(mid, end)) + ")";
-          }
-        };
+        var result;
         result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n";
         if (materials.length > 0) {
-          for (i = 0, _ref = materials.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-            m = materials[i];
-            result += "  vec3 m" + i + " = " + m + ";\n";
-          }
-          result += "  return id >= 0? " + (binarySearch(0, materials.length)) + " : vec3(0.5);\n";
+          result += "  return vec3(float(id) * " + (glsl.floatLit(1.0 / (materials.length - 1))) + ");\n";
         } else {
           result += "  return vec3(0.5);\n";
         }
+        /* Render the material associated with the scene id using a binary search
+        binarySearch = (start, end) ->
+          diff = end - start
+          if diff == 1
+            "m#{start}"
+          else
+            mid = start + Math.floor (diff * 0.5)
+            "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
+        
+        if materials.length > 0
+          for i in [0...materials.length]
+            m = materials[i]
+            result += "  vec3 m#{i} = #{m};\n"
+          result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
+        else
+          result += "  return vec3(0.5);\n"
+        #
+        */
         result += "}\n\n";
         return result;
       };
