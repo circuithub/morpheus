@@ -77,6 +77,15 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
 
     # Helpers
     sceneMaterial = (materials) ->
+
+      result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
+      # ### Render the raw scene id as a grayscale value
+      if materials.length > 0
+        result += "  return vec3(float(id) * #{glsl.floatLit (1.0 / (materials.length - 1))});\n"
+      else
+        result += "  return vec3(0.5);\n"
+
+      ### Render the material associated with the scene id using a binary search
       binarySearch = (start, end) ->
         diff = end - start
         if diff == 1
@@ -85,7 +94,6 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
           mid = start + Math.floor (diff * 0.5)
           "(id < #{mid}? #{binarySearch start, mid} : #{binarySearch mid, end})"
 
-      result = "\nvec3 sceneMaterial(in vec3 ro) {\n  int id = sceneId(ro);\n"
       if materials.length > 0
         for i in [0...materials.length]
           m = materials[i]
@@ -93,6 +101,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
         result += "  return id >= 0? #{binarySearch 0, materials.length} : vec3(0.5);\n"
       else
         result += "  return vec3(0.5);\n"
+      # ###
       result += "}\n\n"
       result
 
