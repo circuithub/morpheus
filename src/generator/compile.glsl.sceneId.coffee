@@ -22,7 +22,7 @@ glslSceneId =
         memoA = glslCompiler.preludeAdd flags.glslPrelude, (String a), 'float'
         memoB = glslCompiler.preludeAdd flags.glslPrelude, (String b), 'float'
         id = glslCompiler.preludeAdd flags.glslPrelude, '-1', 'int'
-        result = new toStringPrototype "#{memoA} > #{memoB}? (#{id} = #{a.materialId}, #{memoA}) : (#{id} = #{b.materialId}, #{memoB})"
+        result = new toStringPrototype "#{memoA} > #{memoB}? ((#{id} = #{a.materialId}), #{memoA}) : ((#{id} = #{b.materialId}), #{memoB})"
         result.materialId = id
         result
     ),
