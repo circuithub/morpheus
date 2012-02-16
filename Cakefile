@@ -124,6 +124,11 @@ buildText = (filename, module) -> (callback) -> (text) ->
             console.log "...Done (#{filename}.js)"
             callback() if callback?
 
+# String -> Maybe (String -> IO) -> String -> IO
+prependText = (preText) -> (callback) -> (text) ->
+  console.log "Concatinating debug flag..."
+  callback(preText + text) if callback?
+
 # [String] -> Maybe (String -> () -> IO) -> () -> IO
 concatFiles = (files) -> (callback) -> ->
   contents = new Array files.length
@@ -159,17 +164,35 @@ buildMecha = (callback) -> ->
   
   (concatJSFiles mechaFiles) (writeJSFile 'mecha') callback
 
+# Maybe (String -> IO) -> String -> IO
+prependDebug = prependText "mechaDebug = true\n"
+
 # Maybe (() -> IO) -> () -> IO
-buildApi = (callback) ->
-  (concatFiles apiFiles) (buildText 'mecha-api', 'api') callback
-buildGenerator = (callback) ->
-  (concatFiles generatorFiles) (buildText 'mecha-generator', 'generator') callback
-buildEditor = (callback) ->
-  (concatFiles editorFiles) (buildText 'mecha-editor', 'editor') callback
-buildRenderer = (callback) ->
-  (concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer') callback
-buildGui = (callback) ->
-  (concatFiles guiFiles) (buildText 'mecha-gui', 'gui') callback
+buildApi = (callback, debug) ->
+  if debug
+    (concatFiles apiFiles) prependDebug (buildText 'mecha-api', 'api') callback
+  else
+    (concatFiles apiFiles) (buildText 'mecha-api', 'api') callback
+buildGenerator = (callback, debug) ->
+  if debug
+    (concatFiles generatorFiles) prependDebug (buildText 'mecha-generator', 'generator') callback
+  else
+    (concatFiles generatorFiles) (buildText 'mecha-generator', 'generator') callback
+buildEditor = (callback, debug) ->
+  if debug
+    (concatFiles editorFiles) prependDebug (buildText 'mecha-editor', 'editor') callback
+  else
+    (concatFiles editorFiles) (buildText 'mecha-editor', 'editor') callback
+buildRenderer = (callback, debug) ->
+  if debug
+    (concatFiles rendererFiles) prependDebug (buildText 'mecha-renderer', 'renderer') callback
+  else
+    (concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer') callback
+buildGui = (callback, debug) ->
+  if debug
+    (concatFiles guiFiles) prependDebug (buildText 'mecha-gui', 'gui') callback
+  else
+    (concatFiles guiFiles) (buildText 'mecha-gui', 'gui') callback
 
 # () -> IO
 minify = ->
@@ -212,6 +235,10 @@ task 'build-gui', "Build the gui module", ->
   buildGui()()
 
 task 'all', "Build all distribution files", ->
+  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
+
+task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
