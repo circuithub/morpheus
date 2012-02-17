@@ -13,7 +13,7 @@ mecha.logException = (locationName, error) ->
   logArgs.push (if error.message? then "#{error.message}\n" else error)
   logArgs.push error.stack if error.stack?
   mecha.logInternalError logArgs...
-  throw error
+  return
 
 safeExport = (name, errorValue, callback) -> 
   safeTry name, callback, (error) ->

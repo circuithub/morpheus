@@ -64,7 +64,6 @@ mecha.generator =
     logArgs.push((error.message != null ? "" + error.message + "\n" : error));
     if (error.stack != null) logArgs.push(error.stack);
     mecha.logInternalError.apply(mecha, logArgs);
-    throw error;
   };
 
   safeExport = function(name, errorValue, callback) {
@@ -2214,7 +2213,6 @@ mecha.editor =
     logArgs.push((error.message != null ? "" + error.message + "\n" : error));
     if (error.stack != null) logArgs.push(error.stack);
     mecha.logInternalError.apply(mecha, logArgs);
-    throw error;
   };
 
   safeExport = function(name, errorValue, callback) {
@@ -2310,7 +2308,6 @@ mecha.renderer =
     logArgs.push((error.message != null ? "" + error.message + "\n" : error));
     if (error.stack != null) logArgs.push(error.stack);
     mecha.logInternalError.apply(mecha, logArgs);
-    throw error;
   };
 
   safeExport = function(name, errorValue, callback) {
@@ -2495,7 +2492,6 @@ mecha.gui =
     logArgs.push((error.message != null ? "" + error.message + "\n" : error));
     if (error.stack != null) logArgs.push(error.stack);
     mecha.logInternalError.apply(mecha, logArgs);
-    throw error;
   };
 
   safeExport = function(name, errorValue, callback) {
