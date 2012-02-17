@@ -3,11 +3,11 @@
 
 #mechaDebug = true
 
-mecha.log = (if console? and console.log? then () -> console.log.apply console, arguments else () -> return)
-mecha.logDebug = (if mechaDebug? and mechaDebug and console? and console.log? then () -> console.log.apply console, arguments else () -> return)
-mecha.logInternalError = (if console? and console.error? then () -> console.error.apply console, arguments else () -> return)
-mecha.logApiError = (if console? and console.error? then () -> console.error.apply console, arguments else () -> return)
-mecha.logApiWarning = (if console? and console.warn? then () -> console.warn.apply console, arguments else () -> return)
+mecha.log = (if console? and console.log? then -> console.log arguments... else -> return)
+mecha.logDebug = (if mechaDebug? and mechaDebug and console? and console.log? then -> console.log arguments... else -> return)
+mecha.logInternalError = (if console? and console.error? then -> console.error arguments... else -> return)
+mecha.logApiError = (if console? and console.error? then -> console.error arguments... else -> return)
+mecha.logApiWarning = (if console? and console.warn? then -> console.warn arguments... else -> return)
 mecha.logException = (locationName, error) ->
   logArgs = ["Uncaught exception in `#{locationName}`:\n"]
   logArgs.push (if error.message? then "#{error.message}\n" else error)
