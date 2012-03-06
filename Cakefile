@@ -210,6 +210,8 @@ minify = ->
 Tasks
 ###
 
+option '-g', '--global', 'Use with fetch to install supporting libraries and tools globally'
+
 #task 'build', "Build the entire mecha module", ->
 #  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
 #  buildMecha()()
@@ -242,20 +244,22 @@ task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
-task 'fetch:npm', "Fetch the npm package manager", ->
+task 'fetch:npm', "Fetch the npm package manager (always global)", ->
+  if options.global
+    console.warn "npm is always installed globally"
   exec "curl http://npmjs.org/install.sh | sudo sh", (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
     console.log "Done."
 
-task 'fetch:uglifyjs', "Fetch the UglifyJS minification tool", ->
-  exec "npm install uglify-js", (err, stdout, stderr) ->
+task 'fetch:uglifyjs', "Fetch the UglifyJS minification tool", (options) ->
+  exec "#{if options.global then 'sudo ' else ''}npm install uglify-js #{if options.global then '-g' else ''}", (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
     console.log "Done."
 
 task 'fetch:async', "Fetch the async library", ->
-  exec "npm install async", (err, stdout, stderr) ->
+  exec "#{if options.global then 'sudo ' else ''}npm install async #{if options.global then '-g' else ''}", (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
     console.log "Done."
