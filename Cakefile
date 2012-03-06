@@ -269,6 +269,30 @@ task 'fetch:express', "Fetch the express server (for running a local server)", (
     console.log stdout + stderr
     console.log "Done."
 
+task 'fetch:libraries', "Update all supporting libraries", (options) ->
+  invoke 'fetch:glquery'
+  #invoke 'fetch:jquery'
+  #invoke 'fetch:jsandbox'
+  #invoke 'fetch:uglifyjs-parser'
+
+task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
+  if options.global
+    console.warn "glquery is always installed locally"
+  urls = [
+    'https://raw.github.com/glQuery/glQuery/master/dist/glquery.js'
+    'https://raw.github.com/glQuery/glQuery/master/dist/glquery.min.js'
+    'https://raw.github.com/glQuery/glQuery/master/dist/extra/glquery.math.module.js'
+    'https://raw.github.com/glQuery/glQuery/master/dist/extra/glquery.math.module.min.js'
+  ]
+  remaining = urls.length
+  downloadCallback = (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    --remaining
+    console.log "Done." if remaining == 0
+  for url in urls
+    exec "wget -nv -O static/lib/glquery/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
 task 'minify', "Minify the resulting application file after build", ->
   minify()
 
