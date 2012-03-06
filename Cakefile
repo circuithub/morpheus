@@ -244,6 +244,11 @@ task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
+task 'fetch:tools', "Fetch all supporting tools", (options) ->
+  invoke 'fetch:npm'
+  invoke 'fetch:uglifyjs'
+  invoke 'fetch:express'
+
 task 'fetch:npm', "Fetch the npm package manager (always global)", ->
   if options.global
     console.warn "npm is always installed globally"
@@ -258,8 +263,8 @@ task 'fetch:uglifyjs', "Fetch the UglifyJS minification tool", (options) ->
     console.log stdout + stderr
     console.log "Done."
 
-task 'fetch:async', "Fetch the async library", ->
-  exec "#{if options.global then 'sudo ' else ''}npm install async #{if options.global then '-g' else ''}", (err, stdout, stderr) ->
+task 'fetch:express', "Fetch the express server (for running a local server)", (options) ->
+  exec "#{if options.global then 'sudo ' else ''}npm install express #{if options.global then '-g' else ''}", (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
     console.log "Done."
