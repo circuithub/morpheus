@@ -254,7 +254,7 @@ mecha.gui =
 
   sceneInit = safeExport('mecha.gui: sceneInit', void 0, function() {
     var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
+    csmSourceCode = mecha.compiler.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
     requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
@@ -274,7 +274,7 @@ mecha.gui =
           attr = _ref3[name];
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
-        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        model.shaders = mecha.generator.compileGLSL(mecha.compiler.compileASM(result), model.params);
         mecha.logDebug(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         mecha.renderer.modelArguments('scene', model.args);

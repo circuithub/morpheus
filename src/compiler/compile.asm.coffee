@@ -7,7 +7,7 @@
 # TODO: Some of these list comprehensions aren't as efficient as they could be, but for now we prefer clarity over speed
 #       We'll optimize if it turns out that there's bottleneck here
 
-compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel) ->
+compileASM = safeExport 'mecha.compiler.compileASM', null, (concreteSolidModel) ->
   if not concreteSolidModel?
     return null
   

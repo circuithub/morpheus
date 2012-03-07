@@ -1,5 +1,6 @@
 # Generic routines for manipulating / traversing the ASM hierarchy
 
+# TODO: safeExport 'mecha.compiler.mapASM', {}, 
 mapASM = (preDispatch, postDispatch, stack, node, flags) ->
   stack.reverse()
   resultNode = { type: node.type, attr: node.attr, nodes: [] }

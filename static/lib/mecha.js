@@ -3,10 +3,10 @@
  */
 var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (https://developer.mozilla.org/en/JavaScript/Reference/Scope_Cheatsheet) */
 
-mecha.generator = 
+mecha.compiler = 
 (function() {
   "use strict";
-  var asm, compileASM, compileASMBounds, compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, toStringPrototype, translateCSM,
+  var asm, compileASM, compileASMBounds, exports, flatten, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, translateCSM,
     __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -87,23 +87,7 @@ mecha.generator =
     }
   };
 
-  gl = glQueryMath;
-
-  toStringPrototype = (function() {
-
-    function toStringPrototype(str) {
-      this.str = str;
-    }
-
-    toStringPrototype.prototype.toString = function() {
-      return this.str;
-    };
-
-    return toStringPrototype;
-
-  })();
-
-  translateCSM = safeExport('mecha.generator.translateCSM', '', function(apiSourceCode, csmSourceCode) {
+  translateCSM = safeExport('mecha.compiler.translateCSM', '', function(apiSourceCode, csmSourceCode) {
     var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
@@ -499,7 +483,7 @@ mecha.generator =
     return result;
   };
 
-  compileASM = safeExport('mecha.generator.compileASM', null, function(concreteSolidModel) {
+  compileASM = safeExport('mecha.compiler.compileASM', null, function(concreteSolidModel) {
     var compileASMNode, dispatch;
     if (!(concreteSolidModel != null)) return null;
     dispatch = {
@@ -884,6 +868,123 @@ mecha.generator =
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
   });
+
+  exports = exports != null ? exports : {};
+
+  exports.translateCSM = translateCSM;
+
+  exports.compileASM = compileASM;
+
+  exports.mapASM = mapASM;
+
+  return exports;
+
+}).call(this);
+
+
+/*
+ * Copyright 2011, CircuitHub.com
+ */
+var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (https://developer.mozilla.org/en/JavaScript/Reference/Scope_Cheatsheet) */
+
+mecha.generator = 
+(function() {
+  "use strict";
+  var compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, safeExport, safeTry, shallowClone, toStringPrototype;
+
+  flatten = function(array) {
+    var a, _ref;
+    return (_ref = []).concat.apply(_ref, (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = array.length; _i < _len; _i++) {
+        a = array[_i];
+        _results.push(Array.isArray(a) ? flatten(a) : [a]);
+      }
+      return _results;
+    })());
+  };
+
+  shallowClone = function(array) {
+    return array.slice(0);
+  };
+
+  math_sqrt2 = Math.sqrt(2.0);
+
+  math_invsqrt2 = 1.0 / math_sqrt2;
+
+  math_degToRad = Math.PI / 180.0;
+
+  math_radToDeg = 180.0 / Math.PI;
+
+  Math.clamp = function(s, min, max) {
+    return Math.min(Math.max(s, min), max);
+  };
+
+  mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logDebug = ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug && (typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
+    return console.log.apply(console, arguments);
+  } : function() {});
+
+  mecha.logInternalError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiError = ((typeof console !== "undefined" && console !== null) && (console.error != null) ? function() {
+    return console.error.apply(console, arguments);
+  } : function() {});
+
+  mecha.logApiWarning = ((typeof console !== "undefined" && console !== null) && (console.warn != null) ? function() {
+    return console.warn.apply(console, arguments);
+  } : function() {});
+
+  mecha.logException = function(locationName, error) {
+    var logArgs;
+    logArgs = ["Uncaught exception in `" + locationName + "`:\n"];
+    logArgs.push((error.message != null ? "" + error.message + "\n" : error));
+    if (error.stack != null) logArgs.push(error.stack);
+    mecha.logInternalError.apply(mecha, logArgs);
+  };
+
+  safeExport = function(name, errorValue, callback) {
+    return safeTry(name, callback, function(error) {
+      mecha.logException(name, error);
+      return errorValue;
+    });
+  };
+
+  safeTry = function(name, callback, errorCallback) {
+    if ((typeof mechaDebug !== "undefined" && mechaDebug !== null) && mechaDebug) {
+      return callback;
+    } else {
+      return function() {
+        try {
+          return callback.apply(null, arguments);
+        } catch (error) {
+          return errorCallback(error);
+        }
+      };
+    }
+  };
+
+  gl = glQueryMath;
+
+  toStringPrototype = (function() {
+
+    function toStringPrototype(str) {
+      this.str = str;
+    }
+
+    toStringPrototype.prototype.toString = function() {
+      return this.str;
+    };
+
+    return toStringPrototype;
+
+  })();
 
   glsl = (function() {
     var api, isArrayType;
@@ -1485,7 +1586,7 @@ mecha.generator =
     };
     flags.glslPrelude.code = "";
     flags.glslPrelude.counter = 0;
-    result = mapASM(preDispatch, postDispatch, [
+    result = mecha.compiler.mapASM(preDispatch, postDispatch, [
       {
         nodes: []
       }
@@ -2166,10 +2267,6 @@ mecha.generator =
 
   exports = exports != null ? exports : {};
 
-  exports.translateCSM = translateCSM;
-
-  exports.compileASM = compileASM;
-
   exports.compileGLSL = compileGLSL;
 
   return exports;
@@ -2700,7 +2797,7 @@ mecha.gui =
 
   sceneInit = safeExport('mecha.gui: sceneInit', void 0, function() {
     var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
+    csmSourceCode = mecha.compiler.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
     requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
@@ -2720,7 +2817,7 @@ mecha.gui =
           attr = _ref3[name];
           if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
         }
-        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        model.shaders = mecha.generator.compileGLSL(mecha.compiler.compileASM(result), model.params);
         mecha.logDebug(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         mecha.renderer.modelArguments('scene', model.args);

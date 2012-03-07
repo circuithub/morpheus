@@ -7,7 +7,7 @@ canvasInit = () ->
 
 # Initialize nodes in the scene graph
 sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
-  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
+  csmSourceCode = mecha.compiler.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
 
   # Run the script inside a webworker sandbox
   requestId = JSandbox.eval 
@@ -25,7 +25,7 @@ sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
         if not model.args[name]?
           model.args[name] = attr.defaultArg
       # Generate shaders for the model
-      model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
+      model.shaders = mecha.generator.compileGLSL (mecha.compiler.compileASM result), model.params
       mecha.logDebug model.shaders[1] ## TEMPORARY
       # Update the model in the renderer
       mecha.renderer.modelShaders 'scene', model.shaders

@@ -5,4 +5,4 @@ keyDown = safeExport 'mecha.gui: keyDown', undefined, (event) ->
   #switch event.which
   #  when 0
   return
-      
+

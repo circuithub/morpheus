@@ -13,7 +13,7 @@ glslCompiler = (abstractSolidModel, preDispatch, postDispatch) ->
   flags.glslPrelude.code = ""
   flags.glslPrelude.counter = 0
 
-  result = mapASM preDispatch, postDispatch, [{nodes: []}], abstractSolidModel, flags
+  result = mecha.compiler.mapASM preDispatch, postDispatch, [{nodes: []}], abstractSolidModel, flags
   result.flags = flags
   return result
 

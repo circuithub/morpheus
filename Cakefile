@@ -6,9 +6,18 @@ path   = require 'path'
 Files
 ###
 
-mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-editor', 'mecha-renderer', 'mecha-gui']
+mechaModules = [
+  'mecha',
+  'mecha-api',
+  'mecha-compiler',
+  'mecha-generator',
+  'mecha-editor',
+  'mecha-renderer',
+  'mecha-gui'
+]
 
 mechaFiles = [
+  'mecha-compiler'
   'mecha-generator'
   'mecha-editor'
   'mecha-renderer'
@@ -20,6 +29,21 @@ apiFiles = [
   'api/exports'
 ]
 
+compilerFiles  = [
+  'common/directives'
+  'common/array'
+  'common/math'
+  'common/mecha.log'
+  'compiler/core'
+  'compiler/translate.csm'
+  'compiler/compile.asm.api'
+  'compiler/compile.asm.generics'
+  'compiler/compile.asm.optimize'
+  'compiler/compile.asm.bounds'
+  'compiler/compile.asm'
+  'compiler/exports'
+]
+
 generatorFiles  = [
   'common/directives'
   'common/array'
@@ -27,12 +51,6 @@ generatorFiles  = [
   'common/mecha.log'
   'generator/core'
   'generator/util.tostring'
-  'generator/translate.csm'
-  'generator/compile.asm.api'
-  'generator/compile.asm.generics'
-  'generator/compile.asm.optimize'
-  'generator/compile.asm.bounds'
-  'generator/compile.asm'
   'generator/compile.glsl.api'
   'generator/compile.glsl.library'
   'generator/compile.glsl.compiler'
@@ -173,6 +191,11 @@ buildApi = (callback, debug) ->
     (concatFiles apiFiles) prependDebug (buildText 'mecha-api', 'api') callback
   else
     (concatFiles apiFiles) (buildText 'mecha-api', 'api') callback
+buildCompiler = (callback, debug) ->
+  if debug
+    (concatFiles compilerFiles) prependDebug (buildText 'mecha-compiler', 'compiler') callback
+  else
+    (concatFiles compilerFiles) (buildText 'mecha-compiler', 'compiler') callback
 buildGenerator = (callback, debug) ->
   if debug
     (concatFiles generatorFiles) prependDebug (buildText 'mecha-generator', 'generator') callback
@@ -211,6 +234,7 @@ Tasks
 ###
 
 option '-g', '--global', 'Use with fetch to install supporting libraries and tools globally'
+# TODO: option '-bc', '--build-coffee', 'Build coffeescript files instead of javascript files'
 
 #task 'build', "Build the entire mecha module", ->
 #  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
@@ -219,6 +243,10 @@ option '-g', '--global', 'Use with fetch to install supporting libraries and too
 task 'build-api', "Build the API module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   buildApi()()
+
+task 'build-compiler', "Build the compiler module", ->
+  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
+  buildCompiler()()
 
 task 'build-generator', "Build the generator module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
@@ -238,11 +266,11 @@ task 'build-gui', "Build the gui module", ->
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
+  (buildApi buildCompiler buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
 task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
+  (buildApi buildCompiler buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
 
 task 'fetch:tools', "Fetch all supporting tools", (options) ->
   invoke 'fetch:npm'
