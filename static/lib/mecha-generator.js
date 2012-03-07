@@ -86,22 +86,6 @@ mecha.generator =
     }
   };
 
-  gl = glQueryMath;
-
-  toStringPrototype = (function() {
-
-    function toStringPrototype(str) {
-      this.str = str;
-    }
-
-    toStringPrototype.prototype.toString = function() {
-      return this.str;
-    };
-
-    return toStringPrototype;
-
-  })();
-
   glsl = (function() {
     var api, isArrayType;
     isArrayType = function(a, typeString) {
@@ -633,6 +617,22 @@ mecha.generator =
         */
       }
     };
+  })();
+
+  gl = glQueryMath;
+
+  toStringPrototype = (function() {
+
+    function toStringPrototype(str) {
+      this.str = str;
+    }
+
+    toStringPrototype.prototype.toString = function() {
+      return this.str;
+    };
+
+    return toStringPrototype;
+
   })();
 
   glslLibrary = {
@@ -1289,14 +1289,18 @@ mecha.generator =
     #
     */
     vertexShader = function() {
-      var bounds, boundsResult, sceneTranslation;
-      boundsResult = compileASMBounds(abstractSolidModel);
-      if (!(boundsResult != null)) return '';
-      if (boundsResult.nodes.length !== 1) {
-        mecha.logInternalError('GLSL Compiler: Expected exactly one result node from the bounding box compiler.');
-        return '';
-      }
-      bounds = boundsResult.nodes[0].bounds;
+      /* TODO: Bounds calculation is not being used yet
+      boundsResult = compileASMBounds abstractSolidModel
+      if not boundsResult?
+        return ''
+      if boundsResult.nodes.length != 1
+        mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the bounding box compiler.'
+        return ''
+          
+      bounds = boundsResult.nodes[0].bounds
+      */
+      var bounds, sceneTranslation;
+      bounds = [[-1, -1, -1], [1, 1, 1]];
       /* TEMPORARY
       mecha.logDebug "Bounds Result:"
       mecha.logDebug boundsResult

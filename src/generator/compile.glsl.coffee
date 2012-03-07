@@ -15,6 +15,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
 
   # Generate the vertex shader
   vertexShader = ->
+    ### TODO: Bounds calculation is not being used yet
     boundsResult = compileASMBounds abstractSolidModel
     if not boundsResult?
       return ''
@@ -23,6 +24,8 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
       return ''
         
     bounds = boundsResult.nodes[0].bounds
+    ###
+    bounds = [[-1,-1,-1], [1,1,1]]
     
     ### TEMPORARY
     mecha.logDebug "Bounds Result:"
