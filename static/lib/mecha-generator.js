@@ -1278,7 +1278,7 @@ mecha.generator =
     return result;
   }));
 
-  compileGLSL = safeExport('mecha.editor.compileGLSL', ['', ''], function(abstractSolidModel, params) {
+  compileGLSL = function(abstractSolidModel, params) {
     var fragmentShader, rayDirection, rayOrigin, shaders, usePerspectiveProjection, vertexShader;
     rayOrigin = 'ro';
     rayDirection = 'rd';
@@ -1383,11 +1383,11 @@ mecha.generator =
     };
     shaders = [vertexShader(), fragmentShader()];
     return shaders;
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.compileGLSL = compileGLSL;
+  result.compileGLSL = safeExport('mecha.editor.compileGLSL', ['', ''], compileGLSL);
 
   return result;
 

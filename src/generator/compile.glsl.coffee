@@ -3,7 +3,7 @@
 # TODO: Would be nice if CoffeeScript supported '''#{tag}''' syntax
 # TODO: Split
 
-compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidModel, params) ->
+compileGLSL = (abstractSolidModel, params) ->
   rayOrigin = 'ro'
   rayDirection = 'rd'
   usePerspectiveProjection = false

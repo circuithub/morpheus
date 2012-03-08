@@ -620,13 +620,13 @@ mecha.compiler =
     };
   })();
 
-  translateCSM = safeExport('mecha.compiler.translateCSM', '', function(apiSourceCode, csmSourceCode) {
+  translateCSM = function(apiSourceCode, csmSourceCode) {
     var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
     jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
     return jsSourceCode;
-  });
+  };
 
   asm = {
     union: function() {
@@ -1016,7 +1016,7 @@ mecha.compiler =
     return result;
   };
 
-  compileASM = safeExport('mecha.compiler.compileASM', null, function(concreteSolidModel) {
+  compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
     if (!(concreteSolidModel != null)) return null;
     dispatch = {
@@ -1400,15 +1400,15 @@ mecha.compiler =
       return null;
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.translateCSM = translateCSM;
+  result.translateCSM = safeExport('mecha.compiler.translateCSM', '', translateCSM);
 
-  result.compileASM = compileASM;
+  result.compileASM = safeExport('mecha.compiler.compileASM', null, compileASM);
 
-  result.mapASM = mapASM;
+  result.mapASM = safeExport('mecha.compiler.mapASM', {}, mapASM);
 
   return result;
 
@@ -2695,7 +2695,7 @@ mecha.generator =
     return result;
   }));
 
-  compileGLSL = safeExport('mecha.editor.compileGLSL', ['', ''], function(abstractSolidModel, params) {
+  compileGLSL = function(abstractSolidModel, params) {
     var fragmentShader, rayDirection, rayOrigin, shaders, usePerspectiveProjection, vertexShader;
     rayOrigin = 'ro';
     rayDirection = 'rd';
@@ -2800,11 +2800,11 @@ mecha.generator =
     };
     shaders = [vertexShader(), fragmentShader()];
     return shaders;
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.compileGLSL = compileGLSL;
+  result.compileGLSL = safeExport('mecha.editor.compileGLSL', ['', ''], compileGLSL);
 
   return result;
 
@@ -2874,20 +2874,20 @@ mecha.editor =
     return csmSourceCode;
   };
 
-  create = safeExport('mecha.editor.create', void 0, function(domElement, sourceCode) {
+  create = function(domElement, sourceCode) {
     if (!(sourceCode != null)) sourceCode = "";
     domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
-  });
+  };
 
-  getSourceCode = safeExport('mecha.editor.getSourceCode', '', function() {
+  getSourceCode = function() {
     return ($('#mecha-source-code')).val();
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.create = create;
+  result.create = safeExport('mecha.editor.create', void 0, create);
 
-  result.getSourceCode = getSourceCode;
+  result.getSourceCode = safeExport('mecha.editor.getSourceCode', '', getSourceCode);
 
   return result;
 
@@ -2979,7 +2979,7 @@ mecha.renderer =
     rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
   };
 
-  modelShaders = safeExport('mecha.renderer.modelShaders', false, function(modelName, shaders) {
+  modelShaders = function(modelName, shaders) {
     var success;
     success = true;
     if (!(state.context != null)) throw "WebGL context is not available.";
@@ -3010,22 +3010,22 @@ mecha.renderer =
     (gl('scene')).shaderProgram(state.shader.program);
     gl.refresh(state.shader.program);
     return success;
-  });
+  };
 
-  modelArguments = safeExport('mecha.renderer.modelArguments', void 0, function(modelName, args) {
+  modelArguments = function(modelName, args) {
     var name, val;
     for (name in args) {
       val = args[name];
       (gl(modelName)).uniform(name, val);
     }
-  });
+  };
 
-  modelRotate = safeExport('mecha.renderer.modelRotate', void 0, function(modelName, angles) {
+  modelRotate = function(modelName, angles) {
     gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
     (gl(modelName)).uniform('model', state.rotation);
-  });
+  };
 
-  createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
+  createScene = function(context) {
     var indices, positions;
     state.context = context;
     positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
@@ -3041,9 +3041,9 @@ mecha.renderer =
     gl.scene({
       'scene': ''
     }).vertexAttrib('position', state.vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(state.ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
-  });
+  };
 
-  runScene = safeExport('mecha.renderer.runScene', void 0, function(canvas, idleCallback) {
+  runScene = function(canvas, idleCallback) {
     var callback;
     state.context.viewport(0, 0, canvas.width, canvas.height);
     state.context.clearColor(0.0, 0.0, 0.0, 0.0);
@@ -3059,19 +3059,19 @@ mecha.renderer =
       return self.nextFrame = window.requestAnimationFrame(callback, canvas);
     });
     state.nextFrame = window.requestAnimationFrame(callback, canvas);
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.createScene = createScene;
+  result.createScene = safeExport('mecha.renderer.createScene', void 0, createScene);
 
-  result.runScene = runScene;
+  result.runScene = safeExport('mecha.renderer.runScene', void 0, runScene);
 
-  result.modelShaders = modelShaders;
+  result.modelShaders = safeExport('mecha.renderer.modelShaders', false, modelShaders);
 
-  result.modelArguments = modelArguments;
+  result.modelArguments = safeExport('mecha.renderer.modelArguments', void 0, modelArguments);
 
-  result.modelRotate = modelRotate;
+  result.modelRotate = safeExport('mecha.renderer.modelRotate', void 0, modelRotate);
 
   return result;
 

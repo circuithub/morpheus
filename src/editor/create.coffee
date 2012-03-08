@@ -1,5 +1,5 @@
 # Create the DOM elements for the editor
-create = safeExport 'mecha.editor.create', undefined, (domElement, sourceCode) ->
+create = (domElement, sourceCode) ->
   if not sourceCode?
     sourceCode = ""
   domElement.innerHTML =

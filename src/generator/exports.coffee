@@ -1,4 +1,4 @@
 result = exports ? {}
-result.compileGLSL = compileGLSL
+result.compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], compileGLSL
 return result
 

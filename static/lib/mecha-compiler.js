@@ -620,13 +620,13 @@ mecha.compiler =
     };
   })();
 
-  translateCSM = safeExport('mecha.compiler.translateCSM', '', function(apiSourceCode, csmSourceCode) {
+  translateCSM = function(apiSourceCode, csmSourceCode) {
     var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
     jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
     return jsSourceCode;
-  });
+  };
 
   asm = {
     union: function() {
@@ -1016,7 +1016,7 @@ mecha.compiler =
     return result;
   };
 
-  compileASM = safeExport('mecha.compiler.compileASM', null, function(concreteSolidModel) {
+  compileASM = function(concreteSolidModel) {
     var compileASMNode, dispatch;
     if (!(concreteSolidModel != null)) return null;
     dispatch = {
@@ -1400,15 +1400,15 @@ mecha.compiler =
       return null;
     }
     return optimizeASM(compileASMNode(concreteSolidModel));
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.translateCSM = translateCSM;
+  result.translateCSM = safeExport('mecha.compiler.translateCSM', '', translateCSM);
 
-  result.compileASM = compileASM;
+  result.compileASM = safeExport('mecha.compiler.compileASM', null, compileASM);
 
-  result.mapASM = mapASM;
+  result.mapASM = safeExport('mecha.compiler.mapASM', {}, mapASM);
 
   return result;
 

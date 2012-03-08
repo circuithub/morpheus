@@ -1,5 +1,5 @@
 # Translate the CSM source code into a valid javascript program
-translateCSM = safeExport 'mecha.compiler.translateCSM', '', (apiSourceCode, csmSourceCode) ->
+translateCSM = (apiSourceCode, csmSourceCode) ->
   # Extract all parameters from the source
   # (Note: if desired this could be optimized quite a bit)
   variablesSource = csmSourceCode.match /var[^;]*;/g

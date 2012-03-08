@@ -1,4 +1,4 @@
-modelShaders = safeExport 'mecha.renderer.modelShaders', false, (modelName, shaders) ->
+modelShaders = (modelName, shaders) ->
   success = true
 
   # Check whether the webgl context is available    
@@ -32,12 +32,12 @@ modelShaders = safeExport 'mecha.renderer.modelShaders', false, (modelName, shad
   gl.refresh state.shader.program
   return success
 
-modelArguments = safeExport 'mecha.renderer.modelArguments', undefined, (modelName, args) ->
+modelArguments = (modelName, args) ->
   for name,val of args
     (gl modelName).uniform name, val
   return
 
-modelRotate = safeExport 'mecha.renderer.modelRotate', undefined, (modelName, angles) ->
+modelRotate = (modelName, angles) ->
   gl.matrix3.rotateZY state.rotation, state.rotation, angles
   (gl modelName).uniform 'model', state.rotation
   return

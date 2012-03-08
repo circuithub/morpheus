@@ -1,5 +1,5 @@
 # Create the scene
-createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
+createScene = (context) ->
   # Store the context in the state
   # TODO: support multiple contexts in future?
   state.context = context  
@@ -49,7 +49,7 @@ createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
   .triangles()
   return
 
-runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallback) ->
+runScene = (canvas, idleCallback) ->
   # Setup rendering parameters
   state.context.viewport 0, 0, canvas.width, canvas.height
   state.context.clearColor 0.0, 0.0, 0.0, 0.0

@@ -83,7 +83,7 @@ mecha.renderer =
     rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
   };
 
-  modelShaders = safeExport('mecha.renderer.modelShaders', false, function(modelName, shaders) {
+  modelShaders = function(modelName, shaders) {
     var success;
     success = true;
     if (!(state.context != null)) throw "WebGL context is not available.";
@@ -114,22 +114,22 @@ mecha.renderer =
     (gl('scene')).shaderProgram(state.shader.program);
     gl.refresh(state.shader.program);
     return success;
-  });
+  };
 
-  modelArguments = safeExport('mecha.renderer.modelArguments', void 0, function(modelName, args) {
+  modelArguments = function(modelName, args) {
     var name, val;
     for (name in args) {
       val = args[name];
       (gl(modelName)).uniform(name, val);
     }
-  });
+  };
 
-  modelRotate = safeExport('mecha.renderer.modelRotate', void 0, function(modelName, angles) {
+  modelRotate = function(modelName, angles) {
     gl.matrix3.rotateZY(state.rotation, state.rotation, angles);
     (gl(modelName)).uniform('model', state.rotation);
-  });
+  };
 
-  createScene = safeExport('mecha.renderer.createScene', void 0, function(context) {
+  createScene = function(context) {
     var indices, positions;
     state.context = context;
     positions = [1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0];
@@ -145,9 +145,9 @@ mecha.renderer =
     gl.scene({
       'scene': ''
     }).vertexAttrib('position', state.vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(state.ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
-  });
+  };
 
-  runScene = safeExport('mecha.renderer.runScene', void 0, function(canvas, idleCallback) {
+  runScene = function(canvas, idleCallback) {
     var callback;
     state.context.viewport(0, 0, canvas.width, canvas.height);
     state.context.clearColor(0.0, 0.0, 0.0, 0.0);
@@ -163,19 +163,19 @@ mecha.renderer =
       return self.nextFrame = window.requestAnimationFrame(callback, canvas);
     });
     state.nextFrame = window.requestAnimationFrame(callback, canvas);
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.createScene = createScene;
+  result.createScene = safeExport('mecha.renderer.createScene', void 0, createScene);
 
-  result.runScene = runScene;
+  result.runScene = safeExport('mecha.renderer.runScene', void 0, runScene);
 
-  result.modelShaders = modelShaders;
+  result.modelShaders = safeExport('mecha.renderer.modelShaders', false, modelShaders);
 
-  result.modelArguments = modelArguments;
+  result.modelArguments = safeExport('mecha.renderer.modelArguments', void 0, modelArguments);
 
-  result.modelRotate = modelRotate;
+  result.modelRotate = safeExport('mecha.renderer.modelRotate', void 0, modelRotate);
 
   return result;
 

@@ -61,20 +61,20 @@ mecha.editor =
     return csmSourceCode;
   };
 
-  create = safeExport('mecha.editor.create', void 0, function(domElement, sourceCode) {
+  create = function(domElement, sourceCode) {
     if (!(sourceCode != null)) sourceCode = "";
     domElement.innerHTML = "<span><input id='mecha-source-autocompile' name='mecha-source-autocompile' type='checkbox' disabled='disabled'><label id='mecha-source-autocompile-label' for='mecha-source-autocompile'>Auto-compile</label></span>\n<input id='mecha-source-compile' name='mecha-source-compile' type='button' value='Compile'>\n<textarea id='mecha-source-code' name='mecha-source-code'>\n" + sourceCode + "\n</textarea>";
-  });
+  };
 
-  getSourceCode = safeExport('mecha.editor.getSourceCode', '', function() {
+  getSourceCode = function() {
     return ($('#mecha-source-code')).val();
-  });
+  };
 
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  result.create = create;
+  result.create = safeExport('mecha.editor.create', void 0, create);
 
-  result.getSourceCode = getSourceCode;
+  result.getSourceCode = safeExport('mecha.editor.getSourceCode', '', getSourceCode);
 
   return result;
 

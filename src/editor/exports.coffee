@@ -1,5 +1,5 @@
 result = exports ? {}
-result.create = create
-result.getSourceCode = getSourceCode
+result.create = safeExport 'mecha.editor.create', undefined, create
+result.getSourceCode = safeExport 'mecha.editor.getSourceCode', '', getSourceCode
 return result
 
