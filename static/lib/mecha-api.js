@@ -196,7 +196,7 @@ mecha.api =
         };
       })
     });
-    window.scene = function() {
+    (typeof window !== "undefined" && window !== null ? window : global).scene = function() {
       var attr, nodes, serializeAttr, serializeNodes;
       attr = arguments[0], nodes = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       serializeAttr = function(attr) {
@@ -234,7 +234,7 @@ mecha.api =
         nodes: serializeNodes(nodes)
       };
     };
-    extend(window, dispatch);
+    extend(typeof window !== "undefined" && window !== null ? window : global, dispatch);
     globalParamIndex = 0;
     MechaParameter = (function() {
 
@@ -319,7 +319,7 @@ mecha.api =
       return MechaExpression;
 
     })();
-    window.range = function(description, defaultArg, start, end, step) {
+    (typeof window !== "undefined" && window !== null ? window : global).range = function(description, defaultArg, start, end, step) {
       var mul, paramIndex, sub;
       paramIndex = globalParamIndex;
       ++globalParamIndex;
@@ -381,7 +381,7 @@ mecha.api =
         defaultArg: defaultArg
       }));
     };
-    return window.number = function(description, defaultArg) {
+    return (typeof window !== "undefined" && window !== null ? window : global).number = function(description, defaultArg) {
       var paramIndex;
       paramIndex = globalParamIndex;
       ++globalParamIndex;

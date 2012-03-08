@@ -107,7 +107,7 @@ do () ->
       nodes: nodes
 
   # Put API functions into the global namespace
-  window.scene = (attr, nodes...) ->
+  (window ? global).scene = (attr, nodes...) ->
     serializeAttr = (attr) ->
       if attr instanceof MechaExpression
         return attr.serialize()
@@ -124,7 +124,7 @@ do () ->
     attr: attr
     nodes: serializeNodes nodes
 
-  extend window, dispatch
+  extend (window ? global), dispatch
 
   # Parameters
   globalParamIndex = 0
@@ -181,7 +181,7 @@ do () ->
     neg: () ->
       @update "-(#{@serialize()})"
   
-  window.range = (description, defaultArg, start, end, step) ->
+  (window ? global).range = (description, defaultArg, start, end, step) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
     mul = (a,b) ->
@@ -229,7 +229,7 @@ do () ->
       defaultArg: defaultArg
     )
 
-  window.number = (description, defaultArg) ->
+  (window ? global).number = (description, defaultArg) ->
     paramIndex = globalParamIndex
     ++globalParamIndex
     new MechaExpression (new MechaParameter
