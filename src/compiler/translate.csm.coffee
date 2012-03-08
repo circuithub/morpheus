@@ -19,7 +19,7 @@ translateCSM = safeExport 'mecha.compiler.translateCSM', '', (apiSourceCode, csm
     """
     "use strict";
     (function(){
-      /* BEGIN API */
+      /* BEGIN API *\/
       
       var exportedParameters = [];
 
@@ -27,16 +27,16 @@ translateCSM = safeExport 'mecha.compiler.translateCSM', '', (apiSourceCode, csm
     
       try {
 
-      /* BEGIN PARAMETERS */
+      /* BEGIN PARAMETERS *\/
 
     #{if variablesSource then variablesSource.join '\n' else ""}
 
-      /* BEGIN SOURCE */ //HERE
+      /* BEGIN SOURCE *\/
       return scene({ params: exportedParameters }#{if csmSourceCode.trim().length > 0 then ',' else ''}
     
     #{csmSourceCode}
     
-      );//*/
+      );//*\/
       } catch(err) {
         return String(err);
       }

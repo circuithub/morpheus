@@ -213,17 +213,17 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
 
         //* Diffuse shading
         float diffuse = dot(normal, lightDir);
-        //*/
+        //*\/
         //* Phong reflection model
         vec3 reflectDir = reflect(-rayDir, normal);
         vec3 specular = vec3(specularFactor * pow(max(dot(reflectDir, rayDir), 0.0), specularPhongShininess));
-        //*/
+        //*\/
 
         //* Regular shading
         const float ambientFactor = 0.7;
         const float diffuseFactor = 1.0 - ambientFactor;
         diffuse = ambientFactor + diffuse * diffuseFactor;
-        //*/
+        //*\/
 
         /* Cel shading
         const float cellA = 0.3;
@@ -231,7 +231,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
         const float cellC = 0.5;
         const float cellD = 1.0 - cellA;
         diffuse = cellA + max(step(cellA, diffuse)*cellA, max(step(cellB, diffuse)*cellB, max(step(cellC, diffuse)*cellC, step(cellD, diffuse)*cellD)));
-        //*/
+        //*\/
 
         //* Ambient occlusion
         const float aoIterations = 5.0;
@@ -248,7 +248,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
           ao -= aoFactor * invPow2 * (i * aoDistanceDelta - sceneDist(aoPos));
         }
         diffuse *= max(ao, 0.0);
-        //*/
+        //*\/
         
         gl_FragColor = vec4(diffuseColor * diffuse + specular, 1.0);
       }
