@@ -15,6 +15,7 @@ newcap: true, immed: true, maxerr: 1000, strict: true */
 
 var JSandbox = (function (self) {
   "use strict";
+
   var undef_type = "undefined",
   doc            = self.document,
   Worker         = self.Worker;
@@ -197,5 +198,9 @@ var JSandbox = (function (self) {
   }
   
   return Sandbox;
-}(self)),
+})(typeof window !== "undefined" && window !== null ? window : global),
 Sandbox = JSandbox;
+
+if (typeof exports !== "undefined" && exports !== null )
+  exports.JSandbox = JSandbox;
+
