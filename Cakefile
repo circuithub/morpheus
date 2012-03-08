@@ -301,7 +301,7 @@ task 'fetch:express', "Fetch the express server (for running a local server)", (
 task 'fetch:libraries', "Update all supporting libraries", (options) ->
   invoke 'fetch:glquery'
   #invoke 'fetch:jquery'
-  #invoke 'fetch:jsandbox'
+  invoke 'fetch:jsandbox'
   #invoke 'fetch:uglifyjs-parser'
 
 task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
@@ -321,6 +321,22 @@ task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
     console.log "Done." if remaining == 0
   for url in urls
     exec "wget -nv -O static/lib/glquery/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
+task 'fetch:jsandbox', "Update the jsandbox library (always local)", (options) ->
+  if options.global
+    console.warn "jsandbox is always installed locally"
+  urls = [
+    'https://raw.github.com/rehno-lindeque/jsandbox/master/src/jsandbox.js'
+    'https://raw.github.com/rehno-lindeque/jsandbox/master/src/jsandbox-worker.js'
+  ]
+  remaining = urls.length
+  downloadCallback = (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    --remaining
+    console.log "Done." if remaining == 0
+  for url in urls
+    exec "wget -nv -O static/lib/jsandbox/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
 
 task 'minify', "Minify the resulting application file after build", ->
   minify()
