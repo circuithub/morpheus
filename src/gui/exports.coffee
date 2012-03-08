@@ -1,5 +1,5 @@
-exports = exports ? {}
-exports.create = create
-exports.createControls = createControls
-return exports
+result = exports ? {}
+result.create = create
+result.createControls = createControls
+return result
 

@@ -5,7 +5,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 
 mecha.api = 
 (function() {
-  var exports,
+  var result,
     __slice = Array.prototype.slice;
 
   (function() {
@@ -395,8 +395,8 @@ mecha.api =
     };
   })();
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  return exports;
+  return result;
 
 }).call(this);

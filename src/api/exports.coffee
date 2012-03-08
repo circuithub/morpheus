@@ -1,3 +1,3 @@
-exports = exports ? {}
-return exports
+result = exports ? {}
+return result
 

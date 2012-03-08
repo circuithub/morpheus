@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.compiler = 
 (function() {
   "use strict";
-  var asm, compileASM, compileASMBounds, exports, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, translateCSM,
+  var asm, compileASM, compileASMBounds, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, result, safeExport, safeTry, shallowClone, translateCSM,
     __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -1402,15 +1402,15 @@ mecha.compiler =
     return optimizeASM(compileASMNode(concreteSolidModel));
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.translateCSM = translateCSM;
+  result.translateCSM = translateCSM;
 
-  exports.compileASM = compileASM;
+  result.compileASM = compileASM;
 
-  exports.mapASM = mapASM;
+  result.mapASM = mapASM;
 
-  return exports;
+  return result;
 
 }).call(this);
 
@@ -1423,7 +1423,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.generator = 
 (function() {
   "use strict";
-  var compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, safeExport, safeTry, shallowClone, toStringPrototype;
+  var compileGLSL, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, result, safeExport, safeTry, shallowClone, toStringPrototype;
 
   flatten = function(array) {
     var a, _ref;
@@ -2802,11 +2802,11 @@ mecha.generator =
     return shaders;
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.compileGLSL = compileGLSL;
+  result.compileGLSL = compileGLSL;
 
-  return exports;
+  return result;
 
 }).call(this);
 
@@ -2819,7 +2819,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.editor = 
 (function() {
   "use strict";
-  var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
+  var create, getSourceCode, result, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
@@ -2883,13 +2883,13 @@ mecha.editor =
     return ($('#mecha-source-code')).val();
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.create = create;
+  result.create = create;
 
-  exports.getSourceCode = getSourceCode;
+  result.getSourceCode = getSourceCode;
 
-  return exports;
+  return result;
 
 }).call(this);
 
@@ -2902,7 +2902,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.renderer = 
 (function() {
   "use strict";
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
+  var createScene, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, result, runScene, safeExport, safeTry, state;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -3061,19 +3061,19 @@ mecha.renderer =
     state.nextFrame = window.requestAnimationFrame(callback, canvas);
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.createScene = createScene;
+  result.createScene = createScene;
 
-  exports.runScene = runScene;
+  result.runScene = runScene;
 
-  exports.modelShaders = modelShaders;
+  result.modelShaders = modelShaders;
 
-  exports.modelArguments = modelArguments;
+  result.modelArguments = modelArguments;
 
-  exports.modelRotate = modelRotate;
+  result.modelRotate = modelRotate;
 
-  return exports;
+  return result;
 
 }).call(this);
 
@@ -3086,7 +3086,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -3522,12 +3522,12 @@ mecha.gui =
     return true;
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.create = create;
+  result.create = create;
 
-  exports.createControls = createControls;
+  result.createControls = createControls;
 
-  return exports;
+  return result;
 
 }).call(this);

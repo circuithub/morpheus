@@ -1,6 +1,6 @@
-exports = exports ? {}
-exports.translateCSM = translateCSM
-exports.compileASM = compileASM
-exports.mapASM = mapASM
-return exports
+result = exports ? {}
+result.translateCSM = translateCSM
+result.compileASM = compileASM
+result.mapASM = mapASM
+return result
 

@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.editor = 
 (function() {
   "use strict";
-  var create, exports, getSourceCode, safeExport, safeTry, translateSugaredJS;
+  var create, getSourceCode, result, safeExport, safeTry, translateSugaredJS;
 
   mecha.log = ((typeof console !== "undefined" && console !== null) && (console.log != null) ? function() {
     return console.log.apply(console, arguments);
@@ -70,12 +70,12 @@ mecha.editor =
     return ($('#mecha-source-code')).val();
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.create = create;
+  result.create = create;
 
-  exports.getSourceCode = getSourceCode;
+  result.getSourceCode = getSourceCode;
 
-  return exports;
+  return result;
 
 }).call(this);

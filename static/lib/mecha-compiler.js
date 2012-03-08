@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.compiler = 
 (function() {
   "use strict";
-  var asm, compileASM, compileASMBounds, exports, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, safeExport, safeTry, shallowClone, translateCSM,
+  var asm, compileASM, compileASMBounds, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, result, safeExport, safeTry, shallowClone, translateCSM,
     __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -1402,14 +1402,14 @@ mecha.compiler =
     return optimizeASM(compileASMNode(concreteSolidModel));
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.translateCSM = translateCSM;
+  result.translateCSM = translateCSM;
 
-  exports.compileASM = compileASM;
+  result.compileASM = compileASM;
 
-  exports.mapASM = mapASM;
+  result.mapASM = mapASM;
 
-  return exports;
+  return result;
 
 }).call(this);

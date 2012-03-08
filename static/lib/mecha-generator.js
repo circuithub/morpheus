@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.generator = 
 (function() {
   "use strict";
-  var compileGLSL, exports, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, safeExport, safeTry, shallowClone, toStringPrototype;
+  var compileGLSL, flatten, gl, glsl, glslCompiler, glslCompilerDistance, glslLibrary, glslSceneDistance, glslSceneId, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, result, safeExport, safeTry, shallowClone, toStringPrototype;
 
   flatten = function(array) {
     var a, _ref;
@@ -1385,10 +1385,10 @@ mecha.generator =
     return shaders;
   });
 
-  exports = exports != null ? exports : {};
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.compileGLSL = compileGLSL;
+  result.compileGLSL = compileGLSL;
 
-  return exports;
+  return result;
 
 }).call(this);

@@ -1,8 +1,8 @@
-exports = exports ? {}
-exports.createScene = createScene
-exports.runScene = runScene
-exports.modelShaders = modelShaders
-exports.modelArguments = modelArguments
-exports.modelRotate = modelRotate
-return exports
+result = exports ? {}
+result.createScene = createScene
+result.runScene = runScene
+result.modelShaders = modelShaders
+result.modelArguments = modelArguments
+result.modelRotate = modelRotate
+return result
 

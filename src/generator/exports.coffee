@@ -1,4 +1,4 @@
-exports = exports ? {}
-exports.compileGLSL = compileGLSL
-return exports
+result = exports ? {}
+result.compileGLSL = compileGLSL
+return result
 
