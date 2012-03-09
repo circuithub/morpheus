@@ -35,7 +35,7 @@
   <!-- Application logic -->
 
   <script src='../static/lib/mecha-editor.js'></script>
-  <script src='../static/lib/mecha-generator.js'></script>
+  <script src='../static/lib/mecha-compiler.js'></script>
   <script>
 
     window.onload = function(){
@@ -49,7 +49,7 @@
           console.log("Loaded " + apiUrl);
 
           // Perform translation
-          var csmSourceCode = mecha.generator.translateCSM(apiSourceCode, mecha.editor.getSourceCode());
+          var csmSourceCode = mecha.compiler.translateCSM(apiSourceCode, mecha.editor.getSourceCode());
           console.log(csmSourceCode);
           console.log(eval(csmSourceCode));
           //mecha.generator.compileGLSL(mecha.generator.compileASM(eval(csmSourceCode)));

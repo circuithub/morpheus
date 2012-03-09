@@ -22,6 +22,7 @@
   <!-- Application logic -->
   
   <script src="../static/lib/mecha-api.js"></script>
+  <script src="../static/lib/mecha-compiler.js"></script>
   <script src="../static/lib/mecha-generator.js"></script>
   <script>
     var csm = scene({ parameters: [] },
@@ -37,7 +38,7 @@
       cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
       sphere({ radius: 0.3 }).translate({ offset: [0.0, -0.2, 0.0] })
     ),
-    asm = mecha.generator.compileASM(csm),
+    asm = mecha.compiler.compileASM(csm),
     glsl = mecha.generator.compileGLSL(asm);
     console.log(asm);
     console.log(glsl);
