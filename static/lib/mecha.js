@@ -629,11 +629,11 @@ mecha.compiler =
   };
 
   translateCSMWithArguments = function(apiSourceCode, csmSourceCode, args) {
-    var jsSourceCode, key, val, valCode, valCopy, variablesSource, _len;
+    var jsSourceCode, key, val, valCode, valCopy, variablesSource;
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
-    variablesSource = new Array(args.length);
-    for (val = 0, _len = args.length; val < _len; val++) {
-      key = args[val];
+    variablesSource = [];
+    for (key in args) {
+      val = args[key];
       valCode = Array.isArray(val) ? "[" + val + "]" : typeof val === "string" ? (valCopy = "" + val, valCopy.replace(/(\\|")/g, function(match) {
         return "\\" + match;
       }), "\"" + valCopy + "\"") : val;

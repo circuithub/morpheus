@@ -41,8 +41,8 @@ translateCSMWithArguments = (apiSourceCode, csmSourceCode, args) ->
   # (Note: if desired this could be optimized quite a bit)
   csmSourceCode = (csmSourceCode.replace /var[^;]*;/g, '').trim()
 
-  variablesSource = new Array(args.length)
-  for key,val in args 
+  variablesSource = []
+  for key,val of args 
     valCode = 
       if Array.isArray val
         "[#{val}]"
