@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.compiler = 
 (function() {
   "use strict";
-  var asm, compileASM, compileASMBounds, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, result, safeExport, safeTry, shallowClone, translateCSM,
+  var asm, compileASM, compileASMBounds, flatten, glsl, mapASM, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, optimizeASM, result, safeExport, safeTry, shallowClone, translateCSM, translateCSMWithArguments,
     __slice = Array.prototype.slice;
 
   flatten = function(array) {
@@ -624,6 +624,21 @@ mecha.compiler =
     var jsSourceCode, variablesSource;
     variablesSource = csmSourceCode.match(/var[^;]*;/g);
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
+    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
+    return jsSourceCode;
+  };
+
+  translateCSMWithArguments = function(apiSourceCode, csmSourceCode, args) {
+    var jsSourceCode, key, val, valCode, valCopy, variablesSource, _len;
+    csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
+    variablesSource = new Array(args.length);
+    for (val = 0, _len = args.length; val < _len; val++) {
+      key = args[val];
+      valCode = Array.isArray(val) ? "[" + val + "]" : typeof val === "string" ? (valCopy = "" + val, valCopy.replace(/(\\|")/g, function(match) {
+        return "\\" + match;
+      }), "\"" + valCopy + "\"") : val;
+      variablesSource.push("var " + key + " = " + valCode + ";");
+    }
     jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
     return jsSourceCode;
   };
@@ -1405,6 +1420,8 @@ mecha.compiler =
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
   result.translateCSM = safeExport('mecha.compiler.translateCSM', '', translateCSM);
+
+  result.translateCSMWithArguments = safeExport('mecha.compiler.translateCSMWithArguments', '', translateCSMWithArguments);
 
   result.compileASM = safeExport('mecha.compiler.compileASM', null, compileASM);
 
