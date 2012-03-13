@@ -96,18 +96,24 @@ glsl = do ->
         switch a
           when 0 then 0
           when 1 then b
-          when -1 then "-#{glsl.literal b}"
-          else 
-            # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.floatLit a} * #{glsl.literal b}"
+          when -1 then glsl.neg b
+          else
+            if (Array.isArray b) and (isArrayType b, 'number')
+              (a * b[i]) for i in [0...b.length]
+            else
+              # Number must not be integers (bitwise op converts operand to integer)
+              "#{glsl.floatLit a} * #{glsl.literal b}"
       else if typeof b == 'number'
         switch b
           when 0 then 0
           when 1 then a
-          when -1 then "-#{glsl.literal a}"
+          when -1 then glsl.neg a
           else 
-            # Number must not be integers (bitwise op converts operand to integer)
-            "#{glsl.literal a} * #{glsl.floatLit b}"
+            if (Array.isArray a) and (isArrayType a, 'number')
+              (a[i] * b) for i in [0...a.length]
+            else
+              # Number must not be integers (bitwise op converts operand to integer)
+              "#{glsl.literal a} * #{glsl.floatLit b}"
       else if (Array.isArray a) and (Array.isArray b)
         if a.length != b.length
           throw "Cannot perform multiply operation with array operands of different lengths."

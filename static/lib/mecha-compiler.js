@@ -215,7 +215,7 @@ mecha.compiler =
         }
       },
       mul: function(a, b) {
-        var i, _ref, _results;
+        var i, _ref, _ref2, _ref3, _results, _results2, _results3;
         if (typeof a === 'number' && typeof b === 'number') {
           return a * b;
         } else if (typeof a === 'number') {
@@ -225,9 +225,17 @@ mecha.compiler =
             case 1:
               return b;
             case -1:
-              return "-" + (glsl.literal(b));
+              return glsl.neg(b);
             default:
-              return "" + (glsl.floatLit(a)) + " * " + (glsl.literal(b));
+              if ((Array.isArray(b)) && (isArrayType(b, 'number'))) {
+                _results = [];
+                for (i = 0, _ref = b.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+                  _results.push(a * b[i]);
+                }
+                return _results;
+              } else {
+                return "" + (glsl.floatLit(a)) + " * " + (glsl.literal(b));
+              }
           }
         } else if (typeof b === 'number') {
           switch (b) {
@@ -236,20 +244,28 @@ mecha.compiler =
             case 1:
               return a;
             case -1:
-              return "-" + (glsl.literal(a));
+              return glsl.neg(a);
             default:
-              return "" + (glsl.literal(a)) + " * " + (glsl.floatLit(b));
+              if ((Array.isArray(a)) && (isArrayType(a, 'number'))) {
+                _results2 = [];
+                for (i = 0, _ref2 = a.length; 0 <= _ref2 ? i < _ref2 : i > _ref2; 0 <= _ref2 ? i++ : i--) {
+                  _results2.push(a[i] * b);
+                }
+                return _results2;
+              } else {
+                return "" + (glsl.literal(a)) + " * " + (glsl.floatLit(b));
+              }
           }
         } else if ((Array.isArray(a)) && (Array.isArray(b))) {
           if (a.length !== b.length) {
             throw "Cannot perform multiply operation with array operands of different lengths.";
           }
           if ((isArrayType(a, 'number')) && (isArrayType(b, 'number'))) {
-            _results = [];
-            for (i = 0, _ref = a.length; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-              _results.push(a[i] * b[i]);
+            _results3 = [];
+            for (i = 0, _ref3 = a.length; 0 <= _ref3 ? i < _ref3 : i > _ref3; 0 <= _ref3 ? i++ : i--) {
+              _results3.push(a[i] * b[i]);
             }
-            return _results;
+            return _results3;
           } else {
             return "" + (glsl.vecLit(a)) + " * " + (glsl.vecLit(b));
           }
