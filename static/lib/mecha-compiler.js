@@ -1078,11 +1078,11 @@ mecha.compiler =
                     val: glsl.mul (glsl.index node.attr.dimensions, i), 0.5
                     axis: i
                 asm.mirror { axes: [0,1,2] }, asm.intersect halfspaces[0], halfspaces[1], halfspaces[2]
-        */        return asm.mirror({
+        */        return asm.intersect(asm.mirror({
           axes: [0, 1, 2]
         }, asm.corner({
           val: glsl.mul(node.attr.dimensions, 0.5)
-        }));
+        })));
       },
       sphere: function(node) {
         return asm.sphere({

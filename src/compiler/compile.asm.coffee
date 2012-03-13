@@ -30,7 +30,7 @@ compileASM = (concreteSolidModel) ->
       ###
         
       # TODO: For now we always use a corner because the halfspace optimization code needs refactoring
-      asm.mirror { axes: [0,1,2] }, asm.corner { val: (glsl.mul node.attr.dimensions, 0.5) }
+      asm.intersect (asm.mirror { axes: [0,1,2] }, asm.corner { val: (glsl.mul node.attr.dimensions, 0.5) })
 
       # TODO: Implement chamfer
       #if node.attr.chamfer?
