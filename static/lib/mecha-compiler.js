@@ -1094,10 +1094,10 @@ mecha.compiler =
         if (node.attr.length != null) {
           halfspaces = [
             asm.halfspace({
-              val: node.attr.length * 0.5,
+              val: glsl.mul(node.attr.length, 0.5),
               axis: node.attr.axis
             }), asm.invert(asm.halfspace({
-              val: node.attr.length * -0.5,
+              val: glsl.mul(node.attr.length, -0.5),
               axis: node.attr.axis
             }))
           ];
