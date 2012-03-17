@@ -47,9 +47,10 @@
   <!-- Application logic -->
 
   <script src='../static/lib/mecha.js'></script>
+
   <script>
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), "box({ dimensions: [0.4,0.4,0.5] }).rotate({ axis: 2, angle: 30.0 })");
+      mecha.editor.create(document.getElementById('mecha-editor'), "var t = range('Translation', [0.25, 0.25, 0.25], [-0.5,-0.5,-0.5], [0.5,0.5,0.5]);\nbox({ dimensions: [0.4,0.4,0.5] }).translate({ offset: t })");
       mecha.gui.create('mecha-gui');
       mecha.gui.createControls('mecha-controls');
     };

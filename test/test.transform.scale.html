@@ -49,7 +49,7 @@
   <script src='../static/lib/mecha.js'></script>
   <script>
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), "var s = range('Scale', 0.25, 0.0, 4.0);\nbox({ dimensions: [0.4,0.4,0.5] }).scale({ factor: s })");
+      mecha.editor.create(document.getElementById('mecha-editor'), "box({ dimensions: [0.4,0.4,0.5] }).scale({ factor: 0.25 })");
       mecha.gui.create('mecha-gui');
       mecha.gui.createControls('mecha-controls');
     };
