@@ -2597,7 +2597,6 @@ mecha.gui =
           };
         }
         params = (_ref = result != null ? (_ref2 = result.attr) != null ? _ref2.params : void 0 : void 0) != null ? _ref : {};
-        console.log(params, model.params);
         _ref3 = model.params;
         for (name in _ref3) {
           attr = _ref3[name];
@@ -2781,7 +2780,6 @@ mecha.gui =
         _ref2 = model.params;
         for (param in _ref2) {
           val = _ref2[param];
-          console.log(param, val);
           html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
           switch (val.param) {
             case 'range':
@@ -2815,11 +2813,9 @@ mecha.gui =
             case 'number':
               switch (val.type) {
                 case 'float':
-                  console.log(val.start, val.end, val.step);
                   minAttr = val.start != null ? " min='" + val.start + "'" : '';
                   maxAttr = val.end != null ? " max='" + val.end + "'" : '';
                   stepAttr = val.step != null ? " step='" + (roundDecimals(val.step)) + "'" : '';
-                  console.log(minAttr, maxAttr, stepAttr);
                   html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'" + minAttr + maxAttr + stepAttr + "></input>";
                   break;
                 case 'vec2':
