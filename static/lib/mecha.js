@@ -2825,7 +2825,7 @@ mecha.gui =
   };
 
   init = function(containerEl, canvasEl) {
-    var mechaScriptCode;
+    var mechaScriptCode, _ref, _ref2;
     state.viewport.domElement = containerEl;
     state.canvas = canvasEl;
     if (state.canvas != null) {
@@ -2833,7 +2833,7 @@ mecha.gui =
       mecha.renderer.runScene(state.canvas, (function() {}));
     }
     canvasInit();
-    mechaScriptCode = mecha.editor != null ? mecha.editor.getSourceCode() : "";
+    mechaScriptCode = (_ref = (_ref2 = mecha.editor) != null ? _ref2.getSourceCode() : void 0) != null ? _ref : "";
     apiInit(sceneScript, mechaScriptCode);
     registerDOMEvents();
     registerEditorEvents();

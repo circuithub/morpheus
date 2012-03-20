@@ -121,7 +121,7 @@ init = (containerEl, canvasEl) ->
     state.scene = mecha.renderer.createScene state.canvas.getContext 'experimental-webgl'
     mecha.renderer.runScene state.canvas, (->)
   canvasInit()
-  mechaScriptCode = if mecha.editor? then mecha.editor.getSourceCode() else ""
+  mechaScriptCode = mecha.editor?.getSourceCode() ? ""
   apiInit sceneScript, mechaScriptCode
   registerDOMEvents()
   registerEditorEvents()
