@@ -24,8 +24,12 @@ sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) 
               attr.primitiveType != oldAttr.primitiveType or
               attr.type != oldAttr.type or
               ((not Array.isArray attr.defaultArg) and attr.defaultArg != oldAttr.defaultArg)
-            # Argument is unassigned or the parameter has changed
+            # Argument is unassigned or the parameter has changed, use the default argument
             model.args[name] = attr.defaultArg
+      for name,attr of params
+        if not (name in model.args)
+          # New parameter supplied, use the default argument
+          model.args[name] = attr.defaultArg
       model.params = params
       # Generate shaders for the model
       model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
@@ -40,6 +44,7 @@ sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) 
       #state.application.sceneInitialized = false
   return
 
+# Reset all arguments in the scene (used when loading a completely new script)
 sceneReset = safeExport 'mecha.gui: sceneReset', undefined, () ->
   state.models['scene'] = { shaders: [], params: {}, args: {} }
 

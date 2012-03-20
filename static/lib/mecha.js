@@ -2609,6 +2609,12 @@ mecha.gui =
             }
           }
         }
+        for (name in params) {
+          attr = params[name];
+          if (!(__indexOf.call(model.args, name) >= 0)) {
+            model.args[name] = attr.defaultArg;
+          }
+        }
         model.params = params;
         model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
         mecha.logDebug(model.shaders[1]);
