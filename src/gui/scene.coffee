@@ -13,7 +13,6 @@ sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) 
       if not model?
         model = state.models['scene'] = { shaders: [], params: {}, args: {} }
       params = result?.attr?.params ? {}
-      console.log params, model.params
       # Initialize any model arguments to their default values when they are unassigned or when their definitions change
       for name,attr of model.params
         if not (name in params)

@@ -25,7 +25,6 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
     html = '<table>'
     for name, model of state.models
       for param, val of model.params
-        console.log param, val
         html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
         switch val.param
           when 'range'
@@ -53,11 +52,9 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
           when 'number'
             switch val.type
               when 'float'
-                console.log val.start, val.end, val.step
                 minAttr = if val.start? then " min='#{val.start}'" else ''
                 maxAttr = if val.end? then " max='#{val.end}'" else ''
                 stepAttr = if val.step? then " step='#{roundDecimals val.step}'" else ''
-                console.log minAttr, maxAttr, stepAttr
                 html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'#{minAttr}#{maxAttr}#{stepAttr}></input>"
               when 'vec2'
                 minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
