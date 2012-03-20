@@ -2759,7 +2759,19 @@ mecha.gui =
   };
 
   controlsInit = safeExport('mecha.gui: controlsInit', void 0, function() {
-    var el, html, maxAttr, minAttr, model, name, param, stepAttr, val, _ref, _ref2;
+    var el, html, maxAttr, minAttr, model, name, param, roundDecimals, stepAttr, val, _ref, _ref2;
+    roundDecimals = function(n) {
+      var nonzeroDigits, parts, zeroDigits;
+      parts = (String(n)).split('.');
+      if (parts.length === 1) return parts[0];
+      nonzeroDigits = parts[1].match(/[1-9]+/g);
+      zeroDigits = parts[1].match(/^0+/);
+      if (nonzeroDigits.length === 0) return parts[0];
+      if (zeroDigits.length > 0) {
+        return "" + parts[0] + "." + zeroDigits[0] + nonzeroDigits[0];
+      }
+      return "" + parts[0] + "." + nonzeroDigits[0];
+    };
     el = state.parameters.domElement;
     if (el != null) {
       html = '<table>';
@@ -2803,22 +2815,24 @@ mecha.gui =
             case 'number':
               switch (val.type) {
                 case 'float':
+                  console.log(val.start, val.end, val.step);
                   minAttr = val.start != null ? " min='" + val.start + "'" : '';
                   maxAttr = val.end != null ? " max='" + val.end + "'" : '';
-                  stepAttr = val.step != null ? " step='" + val.step + "'" : '';
-                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input>";
+                  stepAttr = val.step != null ? " step='" + (roundDecimals(val.step)) + "'" : '';
+                  console.log(minAttr, maxAttr, stepAttr);
+                  html += "<input name='" + param + "' id='" + param + "' class='mecha-param-number' type='number' value='" + val.defaultArg + "'" + minAttr + maxAttr + stepAttr + "></input>";
                   break;
                 case 'vec2':
                   minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'"] : ['', ''];
                   maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'"] : ['', ''];
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
+                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'"] : ['', ''];
                   html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
                   html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
                   break;
                 case 'vec3':
                   minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'", " min='" + val.start[2] + "'"] : ['', '', ''];
                   maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'", " max='" + val.end[2] + "'"] : ['', '', ''];
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
+                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'", " step='" + (roundDecimals(val.step[2])) + "'"] : ['', '', ''];
                   html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
                   html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
                   html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'" + minAttr[2] + maxAttr[2] + stepAttr[2] + "></input></div>";
@@ -2826,7 +2840,7 @@ mecha.gui =
                 case 'vec4':
                   minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'", " min='" + val.start[2] + "'", " min='" + val.start[3] + "'"] : ['', '', '', ''];
                   maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'", " max='" + val.end[2] + "'", " max='" + val.end[3] + "'"] : ['', '', '', ''];
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
+                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'", " step='" + (roundDecimals(val.step[2])) + "'", " step='" + (roundDecimals(val.step[3])) + "'"] : ['', '', '', ''];
                   html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='mecha-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
                   html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='mecha-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
                   html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='mecha-param-number' type='number' value='" + val.defaultArg[2] + "'" + minAttr[2] + maxAttr[2] + stepAttr[2] + "></input></div>";

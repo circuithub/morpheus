@@ -7,6 +7,19 @@ canvasInit = () ->
 
 # Initialize html controls for interacting with mecha
 controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
+  roundDecimals = (n) ->
+    # Throw away digits separated by one or more 0's in the number's decimals
+    parts = (String n).split '.'
+    if parts.length == 1
+      return parts[0]
+    nonzeroDigits = parts[1].match /[1-9]+/g
+    zeroDigits = parts[1].match /^0+/
+    if nonzeroDigits.length == 0
+      return parts[0]
+    if zeroDigits.length > 0
+      return "#{parts[0]}.#{zeroDigits[0]}#{nonzeroDigits[0]}"
+    return "#{parts[0]}.#{nonzeroDigits[0]}"
+
   el = state.parameters.domElement
   if el?
     html = '<table>'
@@ -40,27 +53,29 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
           when 'number'
             switch val.type
               when 'float'
+                console.log val.start, val.end, val.step
                 minAttr = if val.start? then " min='#{val.start}'" else ''
                 maxAttr = if val.end? then " max='#{val.end}'" else ''
-                stepAttr = if val.step? then " step='#{val.step}'" else ''
-                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input>"
+                stepAttr = if val.step? then " step='#{roundDecimals val.step}'" else ''
+                console.log minAttr, maxAttr, stepAttr
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'#{minAttr}#{maxAttr}#{stepAttr}></input>"
               when 'vec2'
                 minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
                 maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"] else ['','']
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
+                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"] else ['','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
               when 'vec3'
                 minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"] else ['','','']
                 maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"] else ['','','']
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
+                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"] else ['','','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
                 html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
               when 'vec4'
                 minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"," min='#{val.start[3]}'"] else ['','','','']
                 maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"," max='#{val.end[3]}'"] else ['','','','']
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
+                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"," step='#{roundDecimals val.step[3]}'"] else ['','','','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
                 html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
