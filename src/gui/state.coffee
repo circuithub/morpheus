@@ -17,6 +17,7 @@ state =
     sourceCode: null
   application:
     initialized: false
+    sceneInitialized: false
   models: {}
   parameters:
     domElement: null

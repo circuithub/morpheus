@@ -2546,7 +2546,8 @@ mecha.gui =
       sourceCode: null
     },
     application: {
-      initialized: false
+      initialized: false,
+      sceneInitialized: false
     },
     models: {},
     parameters: {
@@ -2724,7 +2725,8 @@ mecha.gui =
         mecha.logDebug(model.shaders[1]);
         mecha.renderer.modelShaders('scene', model.shaders);
         mecha.renderer.modelArguments('scene', model.args);
-        return controlsInit();
+        controlsInit();
+        return state.application.sceneInitialized = true;
       },
       onerror: function(data, request) {
         return mecha.logInternalError("Error compiling the solid model.");
@@ -2805,7 +2807,7 @@ mecha.gui =
     }
   });
 
-  apiInit = function(callback, mechaScriptCode) {
+  apiInit = function(mechaScriptCode, callback) {
     var $apiLink;
     $apiLink = $("link[rel='api']");
     if (typeof state.paths.mechaUrlRoot === 'string') {
@@ -2818,13 +2820,13 @@ mecha.gui =
     return ($.get(state.api.url, void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
       mecha.log("Loaded " + state.api.url);
-      if (callback != null) return callback(mechaScriptCode);
+      return typeof callback === "function" ? callback(mechaScriptCode) : void 0;
     }).error(function() {
       return mecha.log("Error loading API script");
     });
   };
 
-  init = function(containerEl, canvasEl) {
+  init = function(containerEl, canvasEl, callback) {
     var mechaScriptCode, _ref, _ref2;
     state.viewport.domElement = containerEl;
     state.canvas = canvasEl;
@@ -2834,13 +2836,16 @@ mecha.gui =
     }
     canvasInit();
     mechaScriptCode = (_ref = (_ref2 = mecha.editor) != null ? _ref2.getSourceCode() : void 0) != null ? _ref : "";
-    apiInit(sceneScript, mechaScriptCode);
+    apiInit(mechaScriptCode, function() {
+      if (typeof callback === "function") callback();
+      if (!state.application.sceneInitialized) return sceneScript(mechaScriptCode);
+    });
     registerDOMEvents();
     registerEditorEvents();
     return state.application.initialized = true;
   };
 
-  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight) {
+  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight, callback) {
     var containerEl, errorHtml;
     errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
     if (!(fixedWidth != null)) fixedWidth = 512;
@@ -2862,7 +2867,7 @@ mecha.gui =
     if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
     if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
     if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
-    init(containerEl, document.getElementById('mecha-canvas'));
+    init(containerEl, document.getElementById('mecha-canvas', callback));
     return true;
   });
 

@@ -1,5 +1,5 @@
 # Create the DOM elements for the GUI (canvas etc)
-create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight) ->
+create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight, callback) ->
   errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>"
 
   # Default paramters
@@ -39,7 +39,7 @@ create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrl
     JSandbox.create state.paths.jsandboxUrl
 
   # Initialize the application
-  init containerEl, document.getElementById 'mecha-canvas'
+  init containerEl, document.getElementById 'mecha-canvas', callback
   return true
 
 createControls = safeExport 'mecha.gui.createControls', false, (container) ->

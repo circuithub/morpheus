@@ -31,8 +31,10 @@ sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) 
       mecha.renderer.modelShaders 'scene', model.shaders
       mecha.renderer.modelArguments 'scene', model.args
       controlsInit()
+      state.application.sceneInitialized = true
     onerror: (data,request) ->
       mecha.logInternalError "Error compiling the solid model."
+      #state.application.sceneInitialized = false
   return
 
 # Initialize html controls for interacting with mecha
@@ -90,7 +92,7 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
   return
 
 # Initialize the CSM API (by loading the code from the given url)
-apiInit = (callback, mechaScriptCode) ->
+apiInit = (mechaScriptCode, callback) ->
   # Get the API code
   $apiLink = $ "link[rel='api']"
   if typeof state.paths.mechaUrlRoot == 'string' 
@@ -109,12 +111,12 @@ apiInit = (callback, mechaScriptCode) ->
       # TODO: test that the correct api was actually fetched
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
-      callback(mechaScriptCode) if callback?
+      callback?(mechaScriptCode)
     .error () ->
       mecha.log "Error loading API script"
 
 # Initialize the gui controls and register events once the rest of the document has completely loaded
-init = (containerEl, canvasEl) ->
+init = (containerEl, canvasEl, callback) ->
   state.viewport.domElement = containerEl
   state.canvas = canvasEl
   if state.canvas?
@@ -122,7 +124,9 @@ init = (containerEl, canvasEl) ->
     mecha.renderer.runScene state.canvas, (->)
   canvasInit()
   mechaScriptCode = mecha.editor?.getSourceCode() ? ""
-  apiInit sceneScript, mechaScriptCode
+  apiInit mechaScriptCode, ->
+    callback?()
+    sceneScript mechaScriptCode if not state.application.sceneInitialized
   registerDOMEvents()
   registerEditorEvents()
   state.application.initialized = true
