@@ -32,7 +32,7 @@ Basic installation using either [npm](http://npmjs.org/) or [cake](http://coffee
     <pre>> npm install</pre>
   </td>
   <td>
-    You have cake:
+    You already have cake:
     <pre>> cake install</pre>
   </td>
 </tr></table>
