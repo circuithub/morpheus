@@ -51,6 +51,7 @@ guiFiles  = [
   'gui/constants'
   'gui/state'
   'gui/mouse'
+  'gui/scene'
   'gui/events.window'
   'gui/events.mouse'
   'gui/events.keyboard'

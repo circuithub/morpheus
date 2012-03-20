@@ -2452,7 +2452,8 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneScript, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
+    __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2579,6 +2580,57 @@ mecha.gui =
     return coords;
   };
 
+  sceneScript = safeExport('mecha.gui: sceneScript', void 0, function(mechaScriptCode) {
+    var csmSourceCode, requestId;
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mechaScriptCode);
+    requestId = JSandbox.eval({
+      data: csmSourceCode,
+      callback: function(result) {
+        var attr, model, name, oldAttr, params, _ref, _ref2, _ref3;
+        mecha.logDebug(result);
+        model = state.models['scene'];
+        if (!(model != null)) {
+          model = state.models['scene'] = {
+            shaders: [],
+            params: {},
+            args: {}
+          };
+        }
+        params = (_ref = result != null ? (_ref2 = result.attr) != null ? _ref2.params : void 0 : void 0) != null ? _ref : {};
+        _ref3 = model.params;
+        for (name in _ref3) {
+          attr = _ref3[name];
+          if (!(__indexOf.call(params, name) >= 0)) {
+            delete model.args[name];
+          } else {
+            oldAttr = model.params[name];
+            if (!(model.args[name] != null) || attr.param !== oldAttr.param || attr.primitiveType !== oldAttr.primitiveType || attr.type !== oldAttr.type || ((!Array.isArray(attr.defaultArg)) && attr.defaultArg !== oldAttr.defaultArg)) {
+              model.args[name] = attr.defaultArg;
+            }
+          }
+        }
+        model.params = params;
+        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
+        mecha.logDebug(model.shaders[1]);
+        mecha.renderer.modelShaders('scene', model.shaders);
+        mecha.renderer.modelArguments('scene', model.args);
+        controlsInit();
+        return state.application.sceneInitialized = true;
+      },
+      onerror: function(data, request) {
+        return mecha.logInternalError("Error compiling the solid model.");
+      }
+    });
+  });
+
+  sceneReset = safeExport('mecha.gui: sceneReset', void 0, function() {
+    return state.models['scene'] = {
+      shaders: [],
+      params: {},
+      args: {}
+    };
+  });
+
   windowResize = safeExport('mecha.gui: windowResize', void 0, function() {});
 
   mouseDown = safeExport('mecha.gui: mouseDown', void 0, function(event) {
@@ -2698,41 +2750,6 @@ mecha.gui =
   canvasInit = function() {
     return windowResize();
   };
-
-  sceneScript = safeExport('mecha.gui: sceneScript', void 0, function(mechaScriptCode) {
-    var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mechaScriptCode);
-    requestId = JSandbox.eval({
-      data: csmSourceCode,
-      callback: function(result) {
-        var attr, model, name, _ref, _ref2, _ref3;
-        mecha.logDebug(result);
-        model = state.models['scene'];
-        if (!(model != null)) {
-          model = state.models['scene'] = {
-            shaders: [],
-            params: {},
-            args: {}
-          };
-        }
-        model.params = (_ref = result != null ? (_ref2 = result.attr) != null ? _ref2.params : void 0 : void 0) != null ? _ref : {};
-        _ref3 = model.params;
-        for (name in _ref3) {
-          attr = _ref3[name];
-          if (!(model.args[name] != null)) model.args[name] = attr.defaultArg;
-        }
-        model.shaders = mecha.generator.compileGLSL(mecha.generator.compileASM(result), model.params);
-        mecha.logDebug(model.shaders[1]);
-        mecha.renderer.modelShaders('scene', model.shaders);
-        mecha.renderer.modelArguments('scene', model.args);
-        controlsInit();
-        return state.application.sceneInitialized = true;
-      },
-      onerror: function(data, request) {
-        return mecha.logInternalError("Error compiling the solid model.");
-      }
-    });
-  });
 
   controlsInit = safeExport('mecha.gui: controlsInit', void 0, function() {
     var el, html, model, name, param, stepAttr, val, _ref, _ref2;
@@ -2902,6 +2919,8 @@ mecha.gui =
   exports.createControls = createControls;
 
   exports.sceneScript = sceneScript;
+
+  exports.sceneReset = sceneReset;
 
   return exports;
 
