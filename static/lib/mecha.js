@@ -2698,9 +2698,9 @@ mecha.gui =
     return windowResize();
   };
 
-  sceneInit = safeExport('mecha.gui: sceneInit', void 0, function() {
+  sceneInit = safeExport('mecha.gui: sceneInit', void 0, function(mechaScriptCode) {
     var csmSourceCode, requestId;
-    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mecha.editor.getSourceCode());
+    csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mechaScriptCode);
     requestId = JSandbox.eval({
       data: csmSourceCode,
       callback: function(result) {
@@ -2805,7 +2805,7 @@ mecha.gui =
     }
   });
 
-  apiInit = function(callback) {
+  apiInit = function(callback, mechaScriptCode) {
     var $apiLink;
     $apiLink = $("link[rel='api']");
     if (typeof state.paths.mechaUrlRoot === 'string') {
@@ -2818,13 +2818,14 @@ mecha.gui =
     return ($.get(state.api.url, void 0, void 0, 'text')).success(function(data, textStatus, jqXHR) {
       state.api.sourceCode = data;
       mecha.log("Loaded " + state.api.url);
-      if (callback != null) return callback();
+      if (callback != null) return callback(mechaScriptCode);
     }).error(function() {
       return mecha.log("Error loading API script");
     });
   };
 
   init = function(containerEl, canvasEl) {
+    var mechaScriptCode;
     state.viewport.domElement = containerEl;
     state.canvas = canvasEl;
     if (state.canvas != null) {
@@ -2832,7 +2833,8 @@ mecha.gui =
       mecha.renderer.runScene(state.canvas, (function() {}));
     }
     canvasInit();
-    apiInit(sceneInit);
+    mechaScriptCode = mecha.editor != null ? mecha.editor.getSourceCode() : "";
+    apiInit(sceneInit, mechaScriptCode);
     registerDOMEvents();
     registerEditorEvents();
     return state.application.initialized = true;

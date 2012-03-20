@@ -6,8 +6,8 @@ canvasInit = () ->
   windowResize()
 
 # Initialize nodes in the scene graph
-sceneInit = safeExport 'mecha.gui: sceneInit', undefined, () ->
-  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mecha.editor.getSourceCode()
+sceneInit = safeExport 'mecha.gui: sceneInit', undefined, (mechaScriptCode) ->
+  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mechaScriptCode
 
   # Run the script inside a webworker sandbox
   requestId = JSandbox.eval 
@@ -90,7 +90,7 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
   return
 
 # Initialize the CSM API (by loading the code from the given url)
-apiInit = (callback) ->
+apiInit = (callback, mechaScriptCode) ->
   # Get the API code
   $apiLink = $ "link[rel='api']"
   if typeof state.paths.mechaUrlRoot == 'string' 
@@ -109,7 +109,7 @@ apiInit = (callback) ->
       # TODO: test that the correct api was actually fetched
       state.api.sourceCode = data
       mecha.log "Loaded " + state.api.url
-      callback() if callback?
+      callback(mechaScriptCode) if callback?
     .error () ->
       mecha.log "Error loading API script"
 
@@ -121,7 +121,8 @@ init = (containerEl, canvasEl) ->
     state.scene = mecha.renderer.createScene state.canvas.getContext 'experimental-webgl'
     mecha.renderer.runScene state.canvas, (->)
   canvasInit()
-  apiInit sceneInit
+  mechaScriptCode = if mecha.editor? then mecha.editor.getSourceCode() else ""
+  apiInit sceneInit, mechaScriptCode
   registerDOMEvents()
   registerEditorEvents()
   state.application.initialized = true
