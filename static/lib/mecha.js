@@ -2452,7 +2452,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneScript, state, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -2698,7 +2698,7 @@ mecha.gui =
     return windowResize();
   };
 
-  sceneInit = safeExport('mecha.gui: sceneInit', void 0, function(mechaScriptCode) {
+  sceneScript = safeExport('mecha.gui: sceneScript', void 0, function(mechaScriptCode) {
     var csmSourceCode, requestId;
     csmSourceCode = mecha.generator.translateCSM(state.api.sourceCode, mechaScriptCode);
     requestId = JSandbox.eval({
@@ -2834,7 +2834,7 @@ mecha.gui =
     }
     canvasInit();
     mechaScriptCode = mecha.editor != null ? mecha.editor.getSourceCode() : "";
-    apiInit(sceneInit, mechaScriptCode);
+    apiInit(sceneScript, mechaScriptCode);
     registerDOMEvents();
     registerEditorEvents();
     return state.application.initialized = true;
@@ -2895,6 +2895,8 @@ mecha.gui =
   exports.create = create;
 
   exports.createControls = createControls;
+
+  exports.sceneScript = sceneScript;
 
   return exports;
 

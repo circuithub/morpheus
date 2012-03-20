@@ -6,7 +6,7 @@ canvasInit = () ->
   windowResize()
 
 # Initialize nodes in the scene graph
-sceneInit = safeExport 'mecha.gui: sceneInit', undefined, (mechaScriptCode) ->
+sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) ->
   csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mechaScriptCode
 
   # Run the script inside a webworker sandbox
@@ -122,7 +122,7 @@ init = (containerEl, canvasEl) ->
     mecha.renderer.runScene state.canvas, (->)
   canvasInit()
   mechaScriptCode = if mecha.editor? then mecha.editor.getSourceCode() else ""
-  apiInit sceneInit, mechaScriptCode
+  apiInit sceneScript, mechaScriptCode
   registerDOMEvents()
   registerEditorEvents()
   state.application.initialized = true
