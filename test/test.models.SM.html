@@ -16,9 +16,9 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = range("Chip Dimensions", [0.5, 0.4, 0.4], [0.15,0.1,0.1], [1.5,1.0,1.0]),
-    pinWidth = range("Pin Width", 0.2, 0.05, 0.4),
-    pinExtrude = range("Pin Extrude", 0.02, 0.005, 0.04);
+var chipDimensions = number("Chip Dimensions", [0.5, 0.4, 0.4], [0.15,0.1,0.1], [1.5,1.0,1.0]),
+    pinWidth = number("Pin Width", 0.2, 0.05, 0.4),
+    pinExtrude = number("Pin Extrude", 0.02, 0.005, 0.04);
 
 //* Chip body
 box({ dimensions: chipDimensions })

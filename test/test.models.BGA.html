@@ -16,12 +16,12 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = range("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
-    ballCount = range("Ball Count", [5,5], [1,1], [10,10], [1,1]),
-    ballPitch  = range("Ball Pitch", [0.15,0.15], [0.05,0.05], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
-    ballDiameter = range("Ball Diameter", 0.1, 0.05, 0.15),
-    alignMarkRadius = range("Alignment Mark Radius", 0.075, 0.02, 0.2),
-    borderGap = range("Border Gap", 0.05, 0.01, 0.1);
+var chipDimensions = number("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
+    ballCount = number("Ball Count", [5,5], [1,1], [10,10], [1,1]),
+    ballPitch  = number("Ball Pitch", [0.15,0.15], [0.05,0.05], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
+    ballDiameter = number("Ball Diameter", 0.1, 0.05, 0.15),
+    alignMarkRadius = number("Alignment Mark Radius", 0.075, 0.02, 0.2),
+    borderGap = number("Border Gap", 0.05, 0.01, 0.1);
 
 //* Chip body
 difference(
