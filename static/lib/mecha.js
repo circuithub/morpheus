@@ -2867,7 +2867,7 @@ mecha.gui =
     if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
     if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
     if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
-    init(containerEl, document.getElementById('mecha-canvas', callback));
+    init(containerEl, document.getElementById('mecha-canvas'), callback);
     return true;
   });
 

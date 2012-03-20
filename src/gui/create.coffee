@@ -39,7 +39,7 @@ create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrl
     JSandbox.create state.paths.jsandboxUrl
 
   # Initialize the application
-  init containerEl, document.getElementById 'mecha-canvas', callback
+  init containerEl, (document.getElementById 'mecha-canvas'), callback
   return true
 
 createControls = safeExport 'mecha.gui.createControls', false, (container) ->
