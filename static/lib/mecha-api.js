@@ -9,7 +9,7 @@ mecha.api =
     __slice = Array.prototype.slice;
 
   (function() {
-    var Api, Dispatcher, MechaExpression, MechaParameter, dispatch, extend, globalParamIndex, mechaPrimitiveTypeof, mechaTypeof;
+    var Api, Dispatcher, MechaExpression, MechaParameter, dispatch, extend, mechaPrimitiveTypeof, mechaTypeof;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -235,7 +235,6 @@ mecha.api =
       };
     };
     extend(window, dispatch);
-    globalParamIndex = 0;
     MechaParameter = (function() {
 
       function MechaParameter(attr) {
@@ -319,10 +318,9 @@ mecha.api =
       return MechaExpression;
 
     })();
-    window.range = function(description, defaultArg, start, end, step) {
-      var mul, paramIndex, sub;
-      paramIndex = globalParamIndex;
-      ++globalParamIndex;
+    return (function() {
+      var globalParamIndex, mul, sub;
+      globalParamIndex = 0;
       mul = function(a, b) {
         var i, result, _ref, _ref2;
         if ((Array.isArray(a)) && (Array.isArray(b))) {
@@ -369,30 +367,39 @@ mecha.api =
           throw "No subtract operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
         }
       };
-      return new MechaExpression(new MechaParameter({
-        param: 'range',
-        description: description,
-        type: mechaTypeof(defaultArg),
-        primitiveType: mechaPrimitiveTypeof(defaultArg),
-        paramIndex: paramIndex,
-        start: start,
-        end: end,
-        step: step != null ? step : mul(sub(end, start), 0.01),
-        defaultArg: defaultArg
-      }));
-    };
-    return window.number = function(description, defaultArg) {
-      var paramIndex;
-      paramIndex = globalParamIndex;
-      ++globalParamIndex;
-      return new MechaExpression(new MechaParameter({
-        param: 'number',
-        description: description,
-        type: mechaTypeof(defaultArg),
-        primitiveType: mechaPrimitiveTypeof(defaultArg),
-        defaultArg: defaultArg
-      }));
-    };
+      window.range = function(description, defaultArg, start, end, step) {
+        var paramIndex;
+        paramIndex = globalParamIndex;
+        ++globalParamIndex;
+        return new MechaExpression(new MechaParameter({
+          param: 'range',
+          description: description,
+          type: mechaTypeof(defaultArg),
+          primitiveType: mechaPrimitiveTypeof(defaultArg),
+          paramIndex: paramIndex,
+          defaultArg: defaultArg,
+          start: start,
+          end: end,
+          step: step != null ? step : mul(sub(end, start), 0.01)
+        }));
+      };
+      return window.number = function(description, defaultArg, start, end, step) {
+        var paramIndex;
+        paramIndex = globalParamIndex;
+        ++globalParamIndex;
+        return new MechaExpression(new MechaParameter({
+          param: 'number',
+          description: description,
+          type: mechaTypeof(defaultArg),
+          primitiveType: mechaPrimitiveTypeof(defaultArg),
+          paramIndex: paramIndex,
+          defaultArg: defaultArg,
+          start: start != null ? start : null,
+          end: end != null ? end : null,
+          step: step != null ? step : ((start != null) && (end != null) ? mul(sub(end, start), 0.01) : null)
+        }));
+      };
+    })();
   })();
 
   exports = exports != null ? exports : {};

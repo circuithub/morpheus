@@ -127,8 +127,6 @@ do () ->
   extend window, dispatch
 
   # Parameters
-  globalParamIndex = 0
-  
   class MechaParameter
     constructor: (attr) ->
       @attr = attr
@@ -181,9 +179,8 @@ do () ->
     neg: () ->
       @update "-(#{@serialize()})"
   
-  window.range = (description, defaultArg, start, end, step) ->
-    paramIndex = globalParamIndex
-    ++globalParamIndex
+  do ->
+    globalParamIndex = 0
     mul = (a,b) ->
       if (Array.isArray a) and (Array.isArray b)
         # Perform a dot product if both arguments are arrays (vectors)
@@ -217,26 +214,35 @@ do () ->
       else
         throw "No subtract operator available operands with types `#{typeof a}` and `#{typeof b}`."
 
-    new MechaExpression (new MechaParameter
-      param: 'range'
-      description: description
-      type: mechaTypeof defaultArg
-      primitiveType: mechaPrimitiveTypeof defaultArg
-      paramIndex: paramIndex
-      start: start
-      end: end
-      step: if step? then step else (mul (sub end, start), 0.01)
-      defaultArg: defaultArg
-    )
+    window.range = (description, defaultArg, start, end, step) ->
+      paramIndex = globalParamIndex
+      ++globalParamIndex
 
-  window.number = (description, defaultArg) ->
-    paramIndex = globalParamIndex
-    ++globalParamIndex
-    new MechaExpression (new MechaParameter
-      param: 'number'
-      description: description
-      type: mechaTypeof defaultArg
-      primitiveType: mechaPrimitiveTypeof defaultArg
-      defaultArg: defaultArg
-    )
+      new MechaExpression (new MechaParameter
+        param: 'range'
+        description: description
+        type: mechaTypeof defaultArg
+        primitiveType: mechaPrimitiveTypeof defaultArg
+        paramIndex: paramIndex
+        defaultArg: defaultArg
+        start: start
+        end: end
+        step: if step? then step else (mul (sub end, start), 0.01)
+      )
+
+    window.number = (description, defaultArg, start, end, step) ->
+      paramIndex = globalParamIndex
+      ++globalParamIndex
+      
+      new MechaExpression (new MechaParameter
+        param: 'number'
+        description: description
+        type: mechaTypeof defaultArg
+        primitiveType: mechaPrimitiveTypeof defaultArg
+        paramIndex: paramIndex
+        defaultArg: defaultArg
+        start: if start? then start else null
+        end: if end? then end else null
+        step: if step? then step else (if start? and end? then (mul (sub end, start), 0.01) else null)
+      )
 

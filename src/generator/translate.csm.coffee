@@ -21,7 +21,7 @@ translateCSM = safeExport 'mecha.generator.translateCSM', '', (apiSourceCode, cs
     (function(){
       /* BEGIN API */
       
-      var exportedParameters = [];
+      var exportedParameters = {};
 
     #{apiSourceCode}
     

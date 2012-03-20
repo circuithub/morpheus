@@ -12,24 +12,25 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
     html = '<table>'
     for name, model of state.models
       for param, val of model.params
+        console.log param, val
         html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
         switch val.param
           when 'range'
             switch val.type
               when 'float'
-                stepAttr = if val.step then " step='#{val.step}'" else ''
+                stepAttr = if val.step? then " step='#{val.step}'" else ''
                 html += "<input name='#{param}' id='#{param}' class='mecha-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
               when 'vec2'
-                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
               when 'vec3'
-                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
                 html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
               when 'vec4'
-                stepAttr = if val.step then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
                 html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
                 html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
                 html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
@@ -39,19 +40,31 @@ controlsInit = safeExport 'mecha.gui: controlsInit', undefined, () ->
           when 'number'
             switch val.type
               when 'float'
-                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'></input>"
+                minAttr = if val.start? then " min='#{val.start}'" else ''
+                maxAttr = if val.end? then " max='#{val.end}'" else ''
+                stepAttr = if val.step? then " step='#{val.step}'" else ''
+                html += "<input name='#{param}' id='#{param}' class='mecha-param-number' type='number' value='#{val.defaultArg}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input>"
               when 'vec2'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
+                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
+                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"] else ['','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
               when 'vec3'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
+                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"] else ['','','']
+                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"] else ['','','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
               when 'vec4'
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'></input></div>"
-                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-number' type='number' value='#{val.defaultArg[3]}'></input></div>"
+                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"," min='#{val.start[3]}'"] else ['','','','']
+                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"," max='#{val.end[3]}'"] else ['','','','']
+                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
+                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='mecha-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='mecha-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
+                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='mecha-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
+                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='mecha-param-number' type='number' value='#{val.defaultArg[3]}'#{minAttr[3]}#{maxAttr[3]}#{stepAttr[3]}></input></div>"
               else
                 mecha.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
         html += "</td></tr>"
@@ -64,7 +77,7 @@ apiInit = (mechaScriptCode, callback) ->
   # Get the API code
   $apiLink = $ "link[rel='api']"
   if typeof state.paths.mechaUrlRoot == 'string' 
-    state.api.url = 
+    state.api.url =
       if state.paths.mechaUrlRoot.length == 0 or state.paths.mechaUrlRoot[state.paths.mechaUrlRoot.length - 1] == '/'
         state.paths.mechaUrlRoot + 'mecha-api.min.js'
       else
