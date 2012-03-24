@@ -300,7 +300,11 @@ mecha.gui =
 
   registerControlEvents = function() {
     ($('#mecha-param-inputs')).delegate('.mecha-param-range', 'change', controlsParamChange);
-    return ($('#mecha-param-inputs')).delegate('.mecha-param-number', 'change', controlsParamChange);
+    ($('#mecha-param-inputs')).delegate('.mecha-param-number', 'change', controlsParamChange);
+    ($('#mecha-param-inputs')).delegate('.mecha-param-range', 'mousedown', controlsParamChange);
+    ($('#mecha-param-inputs')).delegate('.mecha-param-number', 'mousedown', controlsParamChange);
+    ($('#mecha-param-inputs')).delegate('.mecha-param-range', 'mouseup', controlsParamChange);
+    return ($('#mecha-param-inputs')).delegate('.mecha-param-number', 'mouseup', controlsParamChange);
   };
 
   sceneIdle = function() {

@@ -24,4 +24,8 @@ registerEditorEvents = () ->
 registerControlEvents = () ->
   ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'change', controlsParamChange
   ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'change', controlsParamChange
+  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'mousedown', controlsParamChange
+  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'mousedown', controlsParamChange
+  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'mouseup', controlsParamChange
+  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'mouseup', controlsParamChange
 
