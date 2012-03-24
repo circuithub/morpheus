@@ -243,6 +243,6 @@ do () ->
         defaultArg: defaultArg
         start: if start? then start else null
         end: if end? then end else null
-        step: if step? then step else (if start? and end? then (mul (sub end, start), 0.01) else null)
+        step: if step? then step else (if start? and end? then (mul (sub end, start), 0.05) else null)
       )
 

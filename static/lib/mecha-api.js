@@ -396,7 +396,7 @@ mecha.api =
           defaultArg: defaultArg,
           start: start != null ? start : null,
           end: end != null ? end : null,
-          step: step != null ? step : ((start != null) && (end != null) ? mul(sub(end, start), 0.01) : null)
+          step: step != null ? step : ((start != null) && (end != null) ? mul(sub(end, start), 0.05) : null)
         }));
       };
     })();
