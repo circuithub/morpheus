@@ -54,6 +54,15 @@ translateCSMWithArguments = (apiSourceCode, csmSourceCode, args) ->
       else # if typeof val == "number"
         val
     variablesSource.push "var #{key} = #{valCode};"
+
+  # TODO: It may be a good idea to put these wrappers elsewhere
+  expressionWrappers =
+    """
+      Array.prototype.index = function(i) { return this[i]; };
+      Number.prototype.mul = function(a) { return this * a; };
+      Number.prototype.add = function(a) { return this + a; };
+      Number.prototype.sub = function(a) { return this + a; };
+    """
   
   # Concatenate the sandbox source code
   jsSourceCode =
@@ -65,6 +74,7 @@ translateCSMWithArguments = (apiSourceCode, csmSourceCode, args) ->
       var exportedParameters = [];
 
     #{apiSourceCode}
+    #{expressionWrappers}
     
       try {
 

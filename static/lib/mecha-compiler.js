@@ -645,7 +645,7 @@ mecha.compiler =
   };
 
   translateCSMWithArguments = function(apiSourceCode, csmSourceCode, args) {
-    var jsSourceCode, key, val, valCode, valCopy, variablesSource;
+    var expressionWrappers, jsSourceCode, key, val, valCode, valCopy, variablesSource;
     csmSourceCode = (csmSourceCode.replace(/var[^;]*;/g, '')).trim();
     variablesSource = [];
     for (key in args) {
@@ -655,7 +655,8 @@ mecha.compiler =
       }), "\"" + valCopy + "\"") : val;
       variablesSource.push("var " + key + " = " + valCode + ";");
     }
-    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
+    expressionWrappers = "Array.prototype.index = function(i) { return this[i]; };\nNumber.prototype.mul = function(a) { return this * a; };\nNumber.prototype.add = function(a) { return this + a; };\nNumber.prototype.sub = function(a) { return this + a; };";
+    jsSourceCode = "\"use strict\";\n(function(){\n  /* BEGIN API *\/\n  \n  var exportedParameters = [];\n\n" + apiSourceCode + "\n" + expressionWrappers + "\n\n  try {\n\n  /* BEGIN PARAMETERS *\/\n\n" + (variablesSource ? variablesSource.join('\n') : "") + "\n\n  /* BEGIN SOURCE *\/\n  return scene({ params: exportedParameters }" + (csmSourceCode.trim().length > 0 ? ',' : '') + "\n\n" + csmSourceCode + "\n\n  );//*\/\n  } catch(err) {\n    return String(err);\n  }\n})();";
     return jsSourceCode;
   };
 
