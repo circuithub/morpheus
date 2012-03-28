@@ -61,7 +61,7 @@ translateCSMWithArguments = (apiSourceCode, csmSourceCode, args) ->
       Array.prototype.index = function(i) { return this[i]; };
       Number.prototype.mul = function(a) { return this * a; };
       Number.prototype.add = function(a) { return this + a; };
-      Number.prototype.sub = function(a) { return this + a; };
+      Number.prototype.sub = function(a) { return this - a; };
     """
   
   # Concatenate the sandbox source code
