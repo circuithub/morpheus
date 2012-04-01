@@ -25,6 +25,8 @@ var glQuery = (function() {
   shaderLocations = {},
   // Counters for identifiers
   shaderProgramCounter = 0,
+  // WebGL contexts
+  contexts = [],
   // Event callbacks
   eventCallbacks = { contextlost: [], contextrestored: [] },
   // Logging / information methods
@@ -1310,18 +1312,35 @@ var glQuery = (function() {
       return dummy;
 
     canvasEl.addEventListener("webglcontextlost", function(event) {
-        var i;
-        for (i = 0; i < eventCallbacks.contextlost.length; ++i)
-          eventCallbacks.contextlost[i]();
-        event.preventDefault();
-      }, false);
+      var i;
+      for (i = 0; i < eventCallbacks.contextlost.length; ++i)
+        eventCallbacks.contextlost[i]();
+      // Cancel rendering on all canvases that use request animation frame via
+      // gl.canvas(...).start().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.nextFrame != null)
+          window.cancelAnimationFrame(context.nextFrame);
+      }
+      // Add context to the global list
+      contexts.push(self);
+      // Prevent default handling of event
+      event.preventDefault();
+    }, false);
 
     canvasEl.addEventListener("webglcontextrestored", function(event) {
-        var i;
-        // TODO: reload managed webgl resources
-        for (i = 0; i < eventCallbacks.contextrestored.length; ++i)
-          eventCallbacks.contextrestored[i]();
-      }, false);
+      var i;
+      // TODO: reload managed webgl resources
+      for (i = 0; i < eventCallbacks.contextrestored.length; ++i)
+        eventCallbacks.contextrestored[i]();
+      // Resume rendering on all contexts that have not explicitly been paused
+      // via gl.canvas(...).pause().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.nextFrame == null && context.paused === false)
+          window.requestAnimationFrame(context.callback(), self.ctx.canvas);
+      }
+    }, false);
 
     // Wrap glQuery canvas
     return (function() { 
@@ -1329,6 +1348,7 @@ var glQuery = (function() {
         ctx: canvasCtx,
         rootId: null,
         nextFrame: null,
+        paused: true,
         clearMask: gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
         callback: function() {
           self = this;
@@ -1339,6 +1359,9 @@ var glQuery = (function() {
           };
         }
       };
+      // Add context to the global list
+      contexts.push(self);
+      // Provide context canvas api
       return { // Public
         start: function(rootId) {
           logDebug("canvas.start");
@@ -1346,7 +1369,15 @@ var glQuery = (function() {
             if (!assertType(rootId, 'string', 'canvas.start', 'rootId')) return this;
             self.rootId = rootId;
             self.nextFrame = window.requestAnimationFrame(self.callback(), self.ctx.canvas);
+            self.paused = false;
           }
+          return this;
+        },
+        pause: function() {
+          logDebug("canvas.pause");
+          window.cancelAnimationFrame(self.nextFrame);
+          self.nextFrame = null;
+          self.paused = true;
           return this;
         },
         clear: function(mask) {
