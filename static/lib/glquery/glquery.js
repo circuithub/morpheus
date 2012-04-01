@@ -25,6 +25,8 @@ var glQuery = (function() {
   shaderLocations = {},
   // Counters for identifiers
   shaderProgramCounter = 0,
+  // Event callbacks
+  eventCallbacks = { contextlost: [], contextrestored: [] },
   // Logging / information methods
   logDebug = function(msg) { /*console.log(msg);*/ },
   logInfo = function(msg) { console.log(msg); },
@@ -1301,10 +1303,25 @@ var glQuery = (function() {
       logInfo("Initialized canvas: " + canvasId);
     else
       logInfo("Initialized canvas");
+
     // Initialize the WebGL context
     var canvasCtx = canvasEl.getContext('experimental-webgl', contextAttr);
     if (!assert(canvasCtx != null, "Could not get a 'experimental-webgl' context."))
       return dummy;
+
+    canvasEl.addEventListener("webglcontextlost", function(event) {
+        var i;
+        for (i = 0; i < eventCallbacks.contextlost.length; ++i)
+          eventCallbacks.contextlost[i]();
+        event.preventDefault();
+      }, false);
+
+    canvasEl.addEventListener("webglcontextrestored", function(event) {
+        var i;
+        // TODO: reload managed webgl resources
+        for (i = 0; i < eventCallbacks.contextrestored.length; ++i)
+          eventCallbacks.contextrestored[i]();
+      }, false);
 
     // Wrap glQuery canvas
     return (function() { 
@@ -1423,11 +1440,26 @@ var glQuery = (function() {
     return gl;
   };
 
+  gl.contextlost = function(callback) {
+    if(callback == null)
+      eventCallbacks.contextlost = [];
+    eventCallbacks.contextlost.push(callback);
+  };
+  gl.contextrestored = function(callback) {
+    if(callback == null)
+      eventCallbacks.contextrestored = [];
+    eventCallbacks.contextrestored.push(callback);
+  };
+
+
   gl.worker = function(workerId, js) {
     // TODO:
     logError("(TODO) Workers are not yet implemented...");
   };
 
+  // Export glQuery to a CommonJS module if exports is available
+  if (typeof(exports) !== "undefined" && exports !== null)
+    exports.glQuery = gl;
   return gl;
 })();
 
