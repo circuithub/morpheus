@@ -19,6 +19,7 @@ this project:
 * [UglifyJS parse-js](https://github.com/mishoo/UglifyJS/blob/master/lib/parse-js.js) - [Simplified (2-clause) BSD License](http://www.opensource.org/licenses/BSD-2-Clause)
 * [glMatrix](https://github.com/toji/gl-matrix) - [zlib License](http://www.opensource.org/licenses/Zlib)
 * [jsandbox](https://github.com/eligrey/jsandbox) - [MIT License](http://www.opensource.org/licenses/MIT)
+* [webgl-debug](https://cvs.khronos.org/svn/repos/registry/trunk/public/webgl/sdk/debug/webgl-debug.js) - [New (3-clause) BSD License](http://www.opensource.org/licenses/BSD-3-Clause)
 
 (These licenses can also be found in the `licenses/` folder)
 
