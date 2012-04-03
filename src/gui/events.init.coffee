@@ -117,10 +117,27 @@ apiInit = (callback) ->
 init = (containerEl, canvasEl) ->
   state.viewport.domElement = containerEl
   state.canvas = canvasEl
+  glContext = null
   if state.canvas?
-    state.scene = mecha.renderer.createScene state.canvas.getContext 'experimental-webgl'
-    mecha.renderer.runScene state.canvas, (->)
-  canvasInit()
+    try 
+      glContext = state.canvas.getContext 'webgl'
+      mecha.log state.canvas
+      mecha.log "WebGL context: ", glContext
+    catch e
+      mecha.log "WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
+      mecha.log "Trying experimental-webgl instead..."
+  
+    if not glContext?
+      try 
+        glContext = state.canvas.getContext 'experimental-webgl'
+        mecha.log "Experimental WebGL context: ", glContext
+      catch e
+        mecha.logInternalError "Experimental WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
+
+    if glContext?
+      state.scene = mecha.renderer.createScene glContext
+      mecha.renderer.runScene state.canvas, (->)
+      canvasInit()
   apiInit sceneInit
   registerDOMEvents()
   registerEditorEvents()
