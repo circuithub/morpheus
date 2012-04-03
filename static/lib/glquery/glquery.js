@@ -1492,7 +1492,7 @@ var glQuery = (function() {
   };
 
   var registerContextEvent = function(eventName, callback, active) {
-    var i;
+    var i, active = active;
     // Clear the list of callbacks if nothing was passed in
     if(typeof callback === 'undefined') {
       eventCallbacks[eventName] = [];
@@ -1502,9 +1502,10 @@ var glQuery = (function() {
     assertType(callback, 'function', eventName, 'callback');
     typeof active !== 'undefined' && assertType(active, 'boolean', eventName, 'active');
     // Prevent the same callback from being added to the list twice.
+    active = active === false? active : true;
     for (i = 0; i < eventCallbacks[eventName].length; ++i)
       if (eventCallbacks[eventName][i][0] === callback) {
-        eventCallbacks[eventName][i][1] = (typeof active === 'boolean'? active : true);
+        eventCallbacks[eventName][i][1] = active;
         return;
       }
     // Add the callback
