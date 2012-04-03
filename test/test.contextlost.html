@@ -85,8 +85,8 @@ sphere({ radius: 0.3 })
     window.onload = function(){
       // Make the canvas simulate losing context for testing
       var canvasEl = document.getElementById("mecha-canvas");
-      //canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
-      //canvas.loseContextInNCalls(5);
+      canvasEl = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvasEl);
+      canvasEl.loseContextInNCalls(5);
 
       mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
       mecha.gui.create('mecha-gui', null, null, null, null, canvasEl);
