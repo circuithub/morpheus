@@ -114,30 +114,32 @@ apiInit = (callback) ->
       mecha.log "Error loading API script"
 
 # Initialize the gui controls and register events once the rest of the document has completely loaded
+webglInit = () ->
+  if not state.canvas?
+    return
+  try
+    mecha.log "Getting a WebGL context..."
+    glContext = state.canvas.getContext 'webgl'
+  catch e
+    mecha.log "WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
+    return
+
+  if not glContext?
+    mecha.log "WebGL context not found, trying experimental WebGL instead..."
+    try 
+      glContext = state.canvas.getContext 'experimental-webgl'
+    catch e
+      mecha.logInternalError "Experimental WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
+
+  if glContext?
+    state.scene = mecha.renderer.createScene glContext
+    mecha.renderer.runScene state.canvas, (->)
+    canvasInit()
+
 init = (containerEl, canvasEl) ->
   state.viewport.domElement = containerEl
   state.canvas = canvasEl
-  glContext = null
-  if state.canvas?
-    try 
-      glContext = state.canvas.getContext 'webgl'
-      mecha.log state.canvas
-      mecha.log "WebGL context: ", glContext
-    catch e
-      mecha.log "WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
-      mecha.log "Trying experimental-webgl instead..."
-  
-    if not glContext?
-      try 
-        glContext = state.canvas.getContext 'experimental-webgl'
-        mecha.log "Experimental WebGL context: ", glContext
-      catch e
-        mecha.logInternalError "Experimental WebGL context not supported: ", (if e.message? then "#{e.message}\n" else e)
-
-    if glContext?
-      state.scene = mecha.renderer.createScene glContext
-      mecha.renderer.runScene state.canvas, (->)
-      canvasInit()
+  webglInit()
   apiInit sceneInit
   registerDOMEvents()
   registerEditorEvents()

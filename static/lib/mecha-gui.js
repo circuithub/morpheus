@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneInit, state, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneInit, state, webglInit, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -378,30 +378,55 @@ mecha.gui =
     });
   };
 
+  webglInit = function() {
+    var glContext;
+    if (!(state.canvas != null)) return;
+    try {
+      mecha.log("Getting a WebGL context...");
+      glContext = state.canvas.getContext('webgl');
+    } catch (e) {
+      mecha.log("WebGL context not supported: ", (e.message != null ? "" + e.message + "\n" : e));
+      return;
+    }
+    if (!(glContext != null)) {
+      mecha.log("WebGL context not found, trying experimental WebGL instead...");
+      try {
+        glContext = state.canvas.getContext('experimental-webgl');
+      } catch (e) {
+        mecha.logInternalError("Experimental WebGL context not supported: ", (e.message != null ? "" + e.message + "\n" : e));
+      }
+    }
+    if (glContext != null) {
+      state.scene = mecha.renderer.createScene(glContext);
+      mecha.renderer.runScene(state.canvas, (function() {}));
+      return canvasInit();
+    }
+  };
+
   init = function(containerEl, canvasEl) {
     state.viewport.domElement = containerEl;
     state.canvas = canvasEl;
-    if (state.canvas != null) {
-      state.scene = mecha.renderer.createScene(state.canvas.getContext('experimental-webgl'));
-      mecha.renderer.runScene(state.canvas, (function() {}));
-    }
-    canvasInit();
+    webglInit();
     apiInit(sceneInit);
     registerDOMEvents();
     registerEditorEvents();
     return state.application.initialized = true;
   };
 
-  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight) {
-    var containerEl, errorHtml;
+  create = safeExport('mecha.gui.create', false, function(container, jsandboxUrl, mechaUrlRoot, fixedWidth, fixedHeight, canvas) {
+    var canvasEl, containerEl, errorHtml;
     errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>";
-    if (!(fixedWidth != null)) fixedWidth = 512;
-    if (!(fixedHeight != null)) fixedHeight = 512;
-    if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
+    if (!(fixedWidth != null)) {
+      fixedWidth = (canvas != null) && (canvas['width'] != null) ? Number(canvas.width) : 512;
+    }
+    if (!(fixedHeight != null)) {
+      fixedHeight = (canvas != null) && (canvas['height'] != null) ? Number(canvas.height) : 512;
+    }
+    if ((container != null) && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
       containerEl.innerHTML = errorHtml;
-      mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid container with type '" + (typeof container) + "' supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
-    } else if (container === null) {
+    } else if (!(container != null)) {
       mecha.logApiWarning("Mecha GUI: (WARNING) No container element supplied. Creating a div element here...");
     } else {
       containerEl = typeof container === 'string' ? document.getElementById(container) : container;
@@ -410,11 +435,25 @@ mecha.gui =
       mecha.logApiError("Mecha GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
-    containerEl.innerHTML = ("<canvas id='mecha-canvas' width='" + fixedWidth + "' height='" + fixedHeight + "'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>") + containerEl.innerHTML;
+    if ((canvas != null) && typeof canvas !== 'string' && (typeof canvas !== 'object' || canvas.nodeName !== 'CANVAS')) {
+      containerEl.innerHTML = errorHtml;
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid canvas with type '" + (typeof canvas) + "' supplied, expected type 'string' or dom element of type 'DIV' or none at all.");
+    } else if (!(canvas != null)) {
+      containerEl.innerHTML = ("<canvas id='mecha-canvas' width='" + fixedWidth + "' height='" + fixedHeight + "'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>") + containerEl.innerHTML;
+      canvasEl = document.getElementById('mecha-canvas');
+    } else {
+      canvasEl = typeof canvas === 'string' ? document.getElementById(canvas) : canvas;
+    }
+    if (canvasEl === null) {
+      mecha.logApiError("Mecha GUI: (ERROR) Invalid canvas id '" + container + "' supplied, could not find a matching 'CANVAS' element in the container.");
+      return false;
+    }
+    canvasEl['width'] = fixedWidth;
+    canvasEl['height'] = fixedHeight;
     if (jsandboxUrl != null) state.paths.jsandboxUrl = jsandboxUrl;
     if (mechaUrlRoot != null) state.paths.mechaUrlRoot = mechaUrlRoot;
     if (state.paths.jsandboxUrl != null) JSandbox.create(state.paths.jsandboxUrl);
-    init(containerEl, document.getElementById('mecha-canvas'));
+    init(containerEl, canvasEl);
     return true;
   });
 

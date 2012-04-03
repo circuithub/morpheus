@@ -1,9 +1,9 @@
-# Create the scene
-createScene = (context) ->
-  # Store the context in the state
-  # TODO: support multiple contexts in future?
-  state.context = context  
-
+createResources = (context, event) ->
+  # Register this callback so that all resources will be reinitialized if the
+  # context is ever lost (in glQuery, this function will only ever be
+  # registered once)
+  gl.contextrestored createResources
+  
   # Initialize buffers
   # TODO: Use the model boundaries to set up the box bounds
   positions = [
@@ -25,10 +25,11 @@ createScene = (context) ->
     20,21,22,  20,22,23 
   ]
 
-  if (state.vbo?)
-    context.deleteBuffer state.vbo
-  if (state.ibo?)
-    context.deleteBuffer state.ibo
+  try
+    if (state.vbo?)
+      context.deleteBuffer state.vbo
+    if (state.ibo?)
+      context.deleteBuffer state.ibo
 
   state.vbo = context.createBuffer()
   context.bindBuffer context.ARRAY_BUFFER, state.vbo
@@ -37,6 +38,28 @@ createScene = (context) ->
   state.ibo = context.createBuffer()
   context.bindBuffer context.ELEMENT_ARRAY_BUFFER, state.ibo
   context.bufferData context.ELEMENT_ARRAY_BUFFER, (new Uint16Array indices), context.STATIC_DRAW
+
+setupContext = (context) ->
+  # Register this callback so that the render state will be reinitialized if the
+  # context is ever lost (in glQuery, this function will only ever be
+  # registered once)
+  gl.contextrestored setupContext
+  
+  # Setup rendering parameters
+  state.context.viewport 0, 0, state.canvas.width, state.canvas.height
+  state.context.clearColor 0.0, 0.0, 0.0, 0.0
+  state.context.cullFace state.context.BACK
+  state.context.enable state.context.CULL_FACE
+  # TODO
+
+# Create the scene
+createScene = (context) ->
+  # Store the context in the state
+  # TODO: support multiple contexts in future?
+  state.context = context  
+
+  # Create resources used in this scene
+  createResources context
   
   # Create the scene
   # TODO: Use the model boundaries to set up the projection parameters and the camera distance
@@ -50,11 +73,8 @@ createScene = (context) ->
   return
 
 runScene = (canvas, idleCallback) ->
-  # Setup rendering parameters
-  state.context.viewport 0, 0, canvas.width, canvas.height
-  state.context.clearColor 0.0, 0.0, 0.0, 0.0
-  state.context.cullFace state.context.BACK
-  state.context.enable state.context.CULL_FACE
+  state.canvas = canvas
+  setupContext state.context
 
   # Run the scene with an idle callback function
   callback = safeExport 'mecha.renderer: render', undefined, ->
