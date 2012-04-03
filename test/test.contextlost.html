@@ -46,10 +46,10 @@ sphere({ radius: 0.3 })
 
   <div id='scenejsLog' style='display:block;'></div>
 
-  <div id='morpheus-layout'>
-    <form id='morpheus-editor'></form>
-    <div id='morpheus-gui'>
-      <canvas id='morpheus-canvas' width='512' height='512'>
+  <div id='mecha-layout'>
+    <form id='mecha-editor'></form>
+    <div id='mecha-gui'>
+      <canvas id='mecha-canvas' width='512' height='512'>
         <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
       </canvas>
     </div>
@@ -79,17 +79,17 @@ sphere({ radius: 0.3 })
   <!-- Application logic -->
 
   <script src='../static/lib/mecha.js'></script>
-  <script src='../static/lib/debug/mecha.js'></script>
+  <script src='../static/lib/debug/webgl-debug.js'></script>
 
   <script>
     window.onload = function(){
       // Make the canvas simulate losing context for testing
-      var canvas = document.getElementById("morpheus-canvas");
-      canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
-      canvas.loseContextInNCalls(5);
+      var canvasEl = document.getElementById("mecha-canvas");
+      //canvas = WebGLDebugUtils.makeLostContextSimulatingCanvas(canvas);
+      //canvas.loseContextInNCalls(5);
 
-      mecha.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
-      mecha.gui.create('morpheus-gui');
+      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+      mecha.gui.create('mecha-gui', null, null, null, null, canvasEl);
     };
   </script>
 </body>
