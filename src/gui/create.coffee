@@ -3,8 +3,10 @@ create = safeExport 'mecha.gui.create', false, (container, jsandboxUrl, mechaUrl
   errorHtml = "<div>Could not create Mecha GUI. Please see the console for error messages.</div>"
 
   # Default paramters
-  fixedWidth = 512 if not fixedWidth?
-  fixedHeight = 512 if not fixedHeight?
+  if not fixedWidth?
+    fixedWidth = if canvas? and canvas['width']? then Number(canvas.width) else 512
+  if not fixedHeight? 
+    fixedHeight = if canvas? and canvas['height']? then Number(canvas.height) else 512 
 
   # Check pre-conditions
   if container? and typeof container != 'string' and (typeof container != 'object' or container.nodeName != 'DIV')
