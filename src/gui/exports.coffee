@@ -1,7 +1,9 @@
-exports = exports ? {}
-exports.create = create
-exports.createControls = createControls
-exports.sceneScript = sceneScript
-exports.sceneReset = sceneReset
-return exports
+result =  exports ? {}
+result.create = create
+result.createControls = createControls
+result.sceneScript = sceneScript
+result.sceneReset = sceneReset
+result.getModelArguments = getModelArguments
+result.getModelParameters = getModelParameters
+return result
 

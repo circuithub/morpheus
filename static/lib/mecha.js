@@ -2452,7 +2452,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, exports, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
     __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   math_sqrt2 = Math.sqrt(2.0);
@@ -2946,16 +2946,46 @@ mecha.gui =
     return true;
   });
 
-  exports = exports != null ? exports : {};
+  getModelParameters = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
+    var key, _i, _len, _ref;
+    if ((modelName != null) && (state.models[modelName] != null)) {
+      return state.models[modelName].params;
+    }
+    _ref = state.models;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      return state.models[key].params;
+    }
+    return {};
+  });
 
-  exports.create = create;
+  getModelArguments = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
+    var key, _i, _len, _ref;
+    if ((modelName != null) && (state.models[modelName] != null)) {
+      return state.models[modelName].args;
+    }
+    _ref = state.models;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      return state.models[key].args;
+    }
+    return {};
+  });
 
-  exports.createControls = createControls;
+  result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
-  exports.sceneScript = sceneScript;
+  result.create = create;
 
-  exports.sceneReset = sceneReset;
+  result.createControls = createControls;
 
-  return exports;
+  result.sceneScript = sceneScript;
+
+  result.sceneReset = sceneReset;
+
+  result.getModelArguments = getModelArguments;
+
+  result.getModelParameters = getModelParameters;
+
+  return result;
 
 }).call(this);
