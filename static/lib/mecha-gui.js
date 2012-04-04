@@ -501,27 +501,27 @@ mecha.gui =
   });
 
   getModelParameters = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
-    var key, _i, _len, _ref;
+    var key, val, _len, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return state.models[modelName].params;
     }
     _ref = state.models;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      key = _ref[_i];
-      return state.models[key].params;
+    for (val = 0, _len = _ref.length; val < _len; val++) {
+      key = _ref[val];
+      return val.params;
     }
     return {};
   });
 
   getModelArguments = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
-    var key, _i, _len, _ref;
+    var key, val, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return state.models[modelName].args;
     }
     _ref = state.models;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      key = _ref[_i];
-      return state.models[key].args;
+    for (key in _ref) {
+      val = _ref[key];
+      return val.args;
     }
     return {};
   });
