@@ -78,6 +78,7 @@ guiFiles  = [
   'gui/events.idle'
   'gui/events.init'
   'gui/create'
+  'gui/models'
   'gui/exports'
 ]
 

@@ -3153,7 +3153,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.gui = 
 (function() {
   "use strict";
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneInit, state, webglInit, windowResize;
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneInit, state, webglInit, windowResize;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -3628,11 +3628,41 @@ mecha.gui =
     return true;
   });
 
+  getModelParameters = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
+    var key, _i, _len, _ref;
+    if ((modelName != null) && (state.models[modelName] != null)) {
+      return state.models[modelName].params;
+    }
+    _ref = state.models;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      return state.models[key].params;
+    }
+    return {};
+  });
+
+  getModelArguments = safeExport('mecha.gui.getModelParameters', {}, function(modelName) {
+    var key, _i, _len, _ref;
+    if ((modelName != null) && (state.models[modelName] != null)) {
+      return state.models[modelName].args;
+    }
+    _ref = state.models;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
+      return state.models[key].args;
+    }
+    return {};
+  });
+
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
   result.create = create;
 
   result.createControls = createControls;
+
+  result.getModelArguments = getModelArguments;
+
+  result.getModelParameters = getModelParameters;
 
   return result;
 
