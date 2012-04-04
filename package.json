@@ -1,8 +1,8 @@
 {
-  "name": "mecha",
+  "name": "morpheus",
   "version": "0.0.1",
-  "description": "3D solid modeling for electronic components and circuit boards",
-  "homepage": "http://CircuitHub.com",
+  "description": "A plugable parameteric solid modeller for the WWW
+  "homepage": "https://circuithub.com/opensource/morpheus",
   "author": "Rehno Lindeque (http://rehno.lindeque.name)",
   "private": true,
   "directories": {
