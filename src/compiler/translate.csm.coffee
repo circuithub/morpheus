@@ -59,9 +59,9 @@ translateCSMWithArguments = (apiSourceCode, csmSourceCode, args) ->
   expressionWrappers =
     """
       Array.prototype.index = function(i) { return this[i]; };
-      Number.prototype.mul = function(a) { return this * a; };
-      Number.prototype.add = function(a) { return this + a; };
-      Number.prototype.sub = function(a) { return this - a; };
+      Number.prototype.mul = function(a) { return this * Number(a); };
+      Number.prototype.add = function(a) { return this + Number(a); };
+      Number.prototype.sub = function(a) { return this - Number(a); };
     """
   
   # Concatenate the sandbox source code
