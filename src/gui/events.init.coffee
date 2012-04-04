@@ -117,6 +117,9 @@ apiInit = (callback) ->
 webglInit = () ->
   if not state.canvas?
     return
+
+  # TODO: gl.canvas(state.canvas)
+
   try
     mecha.log "Getting a WebGL context..."
     glContext = state.canvas.getContext 'webgl'

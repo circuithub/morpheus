@@ -6,7 +6,7 @@ var mecha = mecha || {}; /* Redeclaring mecha is fine: behaves like a no-op (htt
 mecha.renderer = 
 (function() {
   "use strict";
-  var createResources, createScene, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, result, runScene, safeExport, safeTry, setupContext, state;
+  var canvas, createResources, createScene, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, result, runScene, safeExport, safeTry, setupContext, state;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -178,6 +178,8 @@ mecha.renderer =
     state.nextFrame = window.requestAnimationFrame(callback, canvas);
   };
 
+  canvas = function(canvasEl) {};
+
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
   result.createScene = safeExport('mecha.renderer.createScene', void 0, createScene);
@@ -189,6 +191,8 @@ mecha.renderer =
   result.modelArguments = safeExport('mecha.renderer.modelArguments', void 0, modelArguments);
 
   result.modelRotate = safeExport('mecha.renderer.modelRotate', void 0, modelRotate);
+
+  result.canvas = safeExport('mecha.renderer.canvas', void 0, canvas);
 
   return result;
 

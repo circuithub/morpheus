@@ -3,6 +3,8 @@ createResources = (context, event) ->
   # context is ever lost (in glQuery, this function will only ever be
   # registered once)
   gl.contextrestored createResources
+
+  #console.log "CREATE RESOURCES"
   
   # Initialize buffers
   # TODO: Use the model boundaries to set up the box bounds

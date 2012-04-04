@@ -89,6 +89,7 @@ rendererFiles  = [
   'renderer/state'
   'renderer/model'
   'renderer/scene'
+  'renderer/canvas'
   'renderer/exports'
 ]
 
