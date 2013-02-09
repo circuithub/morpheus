@@ -1,5 +1,5 @@
 var express = require("express"),
-    app     = express.createServer();
+    app     = express();
     
 app.get("/", function(req, res) {
   res.redirect("/test/index.html");
