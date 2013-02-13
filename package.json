@@ -13,6 +13,8 @@
     "static": "./static"
   },
   "dependencies": {
+    "node": ">=0.8.19",
+    "npm": "1.2.9",
     "coffee-script": ">=1.4.0",
     "express": ">=0.0.0"
   },
