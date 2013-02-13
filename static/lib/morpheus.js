@@ -1866,23 +1866,23 @@ morpheus.generator =
     postDispatch = {
       invert: function(stack, node, flags) {
         flags.invert = !flags.invert;
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       union: function(stack, node, flags) {
         flags.composition.pop();
         compileCompositeNode('Union', (!flags.invert ? minCallback : maxCallback), stack, node, flags);
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       intersect: function(stack, node, flags) {
         flags.composition.pop();
         compileCompositeNode('Intersect', (!flags.invert ? maxCallback : minCallback), stack, node, flags);
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       chamfer: function(stack, node, flags) {
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       bevel: function(stack, node, flags) {
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       translate: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
@@ -1890,7 +1890,7 @@ morpheus.generator =
           morpheus.logInternalError("GLSL Compiler: Translate node is empty.");
           return;
         }
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       rotate: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
@@ -1898,7 +1898,7 @@ morpheus.generator =
           morpheus.logInternalError("GLSL Compiler: Rotate node is empty.");
           return;
         }
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       scale: function(stack, node, flags) {
         if (flags.composition[flags.composition.length - 1] === glslCompiler.COMPOSITION_UNION) {
@@ -1910,15 +1910,15 @@ morpheus.generator =
           node.code = modifyCallback(node.code, glsl.mul("(" + node.code + ")", node.attr.factor));
         }
         glslCompiler.preludePop(flags.glslPrelude);
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       mirror: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       repeat: function(stack, node, flags) {
         glslCompiler.preludePop(flags.glslPrelude);
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       halfspace: function(stack, node, flags) {
         var ro;
@@ -1979,7 +1979,7 @@ morpheus.generator =
         #
         */
 
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       corner: function(stack, node, flags) {
         var bevelRadius, chamferRadius, cornerDist, cornerVal, diagonalDist, dist, ro, roSigned, s, _i, _len;
@@ -2030,7 +2030,7 @@ morpheus.generator =
             node.code = primitiveCallback("length(max(" + dist + ", 0.0))", flags);
           }
         }
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       cylinder: function(stack, node, flags) {
         var planeCoords, ro;
@@ -2041,7 +2041,7 @@ morpheus.generator =
         } else {
           node.code = primitiveCallback(glsl.sub(node.attr.radius, "length(" + ro + "." + planeCoords + ")"), flags);
         }
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       sphere: function(stack, node, flags) {
         var ro;
@@ -2051,14 +2051,14 @@ morpheus.generator =
         } else {
           node.code = primitiveCallback(glsl.sub(node.attr.radius, "length(" + ro + ")"), flags);
         }
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       material: function(stack, node, flags) {
         flags.materialIdStack.pop();
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       },
       "default": function(stack, node, flags) {
-        return stack[0].nodes.push(node);
+        stack[0].nodes.push(node);
       }
     };
     return (function(abstractSolidModel) {
