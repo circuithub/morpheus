@@ -10,16 +10,16 @@ do () ->
       obj[name] = method
     return obj
 
-  mechaTypeof = (value) -> 
+  morpheusTypeof = (value) -> 
     if Array.isArray value
       if value.length <= 4 then "vec#{value.length}" else throw "Parameter type with length `#{value.length}` is not supported."
     else
       # TODO: Support int for loops
       'float'
 
-  mechaPrimitiveTypeof = (value) -> 
+  morpheusPrimitiveTypeof = (value) -> 
     if (Array.isArray value) and value.length > 0
-      mechaPrimitiveTypeof value[0]
+      morpheusPrimitiveTypeof value[0]
     else
       switch typeof value
         when 'number' then 'float'
@@ -109,7 +109,7 @@ do () ->
   # Put API functions into the global namespace
   window.scene = (attr, nodes...) ->
     serializeAttr = (attr) ->
-      if attr instanceof MechaExpression
+      if attr instanceof MorpheusExpression
         return attr.serialize()
       else if Array.isArray attr
         for i in [0...attr.length]
@@ -127,50 +127,50 @@ do () ->
   extend window, dispatch
 
   # Parameters
-  class MechaParameter
+  class MorpheusParameter
     constructor: (attr) ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
       exportedParameters[this.str] = attr
 
-  class MechaExpression
+  class MorpheusExpression
     constructor: (param, str) ->
       @param = param
       @str = if str? then str else new String param.str
     serialize: ->
       @str
     update: (str) ->
-      new MechaExpression @param, str
+      new MorpheusExpression @param, str
     index: (arg) ->
-      if arg instanceof MechaExpression
+      if arg instanceof MorpheusExpression
         @update "(#{@serialize()})[#{arg.serialize()}]"
       else if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "#{@serialize()}[#{arg}]"
       else
         throw "Argument to index must be an integer"
     mul: (arg) ->
-      if arg instanceof MechaExpression
+      if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) * (#{arg.serialize()})"
       else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) * #{arg}.0"
       else
         @update "(#{@serialize()}) * #{arg}"
     div: (arg) ->
-      if arg instanceof MechaExpression
+      if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) / (#{arg.serialize()})"
       else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) / #{arg}.0"
       else
         @update "(#{@serialize()}) / #{arg}"
     add: (arg) ->
-      if arg instanceof MechaExpression
+      if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) + (#{arg.serialize()})"
       else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) + #{arg}.0"
       else
         @update "(#{@serialize()}) + #{arg}"
     sub: (arg) ->
-      if arg instanceof MechaExpression
+      if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) - (#{arg.serialize()})"
       else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) - #{arg}.0"
@@ -218,11 +218,11 @@ do () ->
       paramIndex = globalParamIndex
       ++globalParamIndex
 
-      new MechaExpression (new MechaParameter
+      new MorpheusExpression (new MorpheusParameter
         param: 'range'
         description: description
-        type: mechaTypeof defaultArg
-        primitiveType: mechaPrimitiveTypeof defaultArg
+        type: morpheusTypeof defaultArg
+        primitiveType: morpheusPrimitiveTypeof defaultArg
         paramIndex: paramIndex
         defaultArg: defaultArg
         start: start
@@ -234,11 +234,11 @@ do () ->
       paramIndex = globalParamIndex
       ++globalParamIndex
       
-      new MechaExpression (new MechaParameter
+      new MorpheusExpression (new MorpheusParameter
         param: 'number'
         description: description
-        type: mechaTypeof defaultArg
-        primitiveType: mechaPrimitiveTypeof defaultArg
+        type: morpheusTypeof defaultArg
+        primitiveType: morpheusPrimitiveTypeof defaultArg
         paramIndex: paramIndex
         defaultArg: defaultArg
         start: if start? then start else null

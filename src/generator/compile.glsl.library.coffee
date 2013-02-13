@@ -92,7 +92,7 @@ glslLibrary =
       # if not v then continue
       distanceFunction = @distanceFunctions[f + 'Dist']
       if not distanceFunction
-        mecha.log "GLSL distance function '#{f}Dist' could not be found."
+        morpheus.log "GLSL distance function '#{f}Dist' could not be found."
         continue
       code += '\n'
       code += "#{distanceFunction.returnType} #{distanceFunction.id}("

@@ -9,7 +9,7 @@
 
 # Register document events
 registerDOMEvents = () ->
-  ($ '#mecha-gui').delegate '#mecha-canvas', 'mousedown', mouseDown
+  ($ '#morpheus-gui').delegate '#morpheus-canvas', 'mousedown', mouseDown
   state.viewport.domElement.addEventListener 'mouseup', mouseUp, true
   state.viewport.domElement.addEventListener 'mousemove', mouseMove, true
   state.viewport.domElement.addEventListener 'mousewheel', mouseWheel, true
@@ -19,13 +19,13 @@ registerDOMEvents = () ->
 
 # Register UI controls events
 registerEditorEvents = () ->
-  ($ '#mecha-source-compile').click controlsSourceCompile
+  ($ '#morpheus-source-compile').click controlsSourceCompile
 
 registerControlEvents = () ->
-  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'change', controlsParamChange
-  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'change', controlsParamChange
-  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'mousedown', controlsParamChange
-  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'mousedown', controlsParamChange
-  ($ '#mecha-param-inputs').delegate '.mecha-param-range', 'mouseup', controlsParamChange
-  ($ '#mecha-param-inputs').delegate '.mecha-param-number', 'mouseup', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-range', 'change', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-number', 'change', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-range', 'mousedown', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-number', 'mousedown', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-range', 'mouseup', controlsParamChange
+  ($ '#morpheus-param-inputs').delegate '.morpheus-param-number', 'mouseup', controlsParamChange
 

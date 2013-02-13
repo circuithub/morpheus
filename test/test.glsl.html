@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
 <!--
-      Mecha - A sleek WebGL solid modeling tool for electronic components and circuitboards
-      Copyright (c) 2011 CircuitHub.com
+      Morpheus - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011-2013 CircuitHub.com
 -->
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-  <title>Mecha</title>
+  <title>Morpheus</title>
   <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
   <meta name='author' content='Your Name'>
   <link rel="shortcut icon" href="/favicon.ico">
@@ -43,7 +43,7 @@
     }
     
     /* Application styling */
-    #mecha-editor {
+    #morpheus-editor {
       position: relative;
       float: left;
       width: 502px;
@@ -64,8 +64,8 @@
 
   <div id='scenejsLog' style='display:block;'></div>
 
-  <div id='mecha-layout'>
-    <form id='mecha-editor'><textarea id='shader-fs'>
+  <div id='morpheus-layout'>
+    <form id='morpheus-editor'><textarea id='shader-fs'>
 //*
 #ifdef GL_ES
   precision highp float;
@@ -239,8 +239,8 @@ void main(void) {
 }
 //*/
     </textarea></form>
-    <div id='mecha-gui'>
-      <canvas id='mecha-canvas' width='512' height='512'>
+    <div id='morpheus-gui'>
+      <canvas id='morpheus-canvas' width='512' height='512'>
         <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>
       </canvas>
     </div>
@@ -259,21 +259,21 @@ void main(void) {
   <script src='../static/lib/glquery/glquery.js'></script>
   <script src='../static/lib/glquery/glquery.math.module.js'></script>
   <link rel="jsandbox" href="../static/lib/jsandbox/jsandbox-worker.js">
-  <link rel="api" href="../static/lib/mecha-api.js">
+  <link rel="api" href="../static/lib/morpheus-api.js">
   <script src='../static/lib/jsandbox/jsandbox.js'></script>
   <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
   
   <!-- Application logic -->
 
-  <script src='../static/lib/mecha.js'></script>
+  <script src='../static/lib/morpheus.js'></script>
 
   <script>
     window.onload = function(){
       var vs = document.getElementById('shader-vs').textContent;
       var fs = document.getElementById('shader-fs').textContent;
-      var canvasEl = document.getElementById('mecha-canvas');
-      var scene = mecha.renderer.createScene(canvasEl.getContext('experimental-webgl'));
-      mecha.renderer.runScene(canvasEl, function(){});
+      var canvasEl = document.getElementById('morpheus-canvas');
+      var scene = morpheus.renderer.createScene(canvasEl.getContext('experimental-webgl'));
+      morpheus.renderer.runScene(canvasEl, function(){});
 
       // Create the model parameters
       var model =  { shaders: [], params: {}, args: {} };
@@ -283,8 +283,8 @@ void main(void) {
       // Generate shaders for the model
       model.shaders = [vs,fs];
       // Update the model in the renderer
-      mecha.renderer.modelShaders('scene', model.shaders);
-      mecha.renderer.modelArguments('scene', model.args);
+      morpheus.renderer.modelShaders('scene', model.shaders);
+      morpheus.renderer.modelArguments('scene', model.args);
     };
   </script>
 </body>

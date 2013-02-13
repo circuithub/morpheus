@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
 <!--
-      Mecha - A sleek WebGL solid modeling tool for electronic components and circuitboards
-      Copyright (c) 2011 CircuitHub.com
+      Morpheus - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011-2013 CircuitHub.com
 -->
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-  <title>Mecha</title>
+  <title>Morpheus</title>
   <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
   <meta name='author' content='Your Name'>
   <link rel="shortcut icon" href="/favicon.ico">
@@ -53,10 +53,10 @@ repeat({ count: [ballCount.index(0), ballCount.index(1), 1], interval: [ballPitc
 
   <div id='scenejsLog' style='display:block;'></div>
 
-  <div id='mecha-layout'>
-    <form id='mecha-editor'></form>
-    <div id='mecha-gui'></div>
-    <div id='mecha-controls'></div>
+  <div id='morpheus-layout'>
+    <form id='morpheus-editor'></form>
+    <div id='morpheus-gui'></div>
+    <div id='morpheus-controls'></div>
   </div>
   </div>
 
@@ -73,19 +73,19 @@ repeat({ count: [ballCount.index(0), ballCount.index(1), 1], interval: [ballPitc
   <script src='../static/lib/glquery/glquery.js'></script>
   <script src='../static/lib/glquery/glquery.math.module.js'></script>
   <!--<link rel='jsandbox' href='../static/lib/jsandbox/jsandbox-worker.js'>
-  <link rel='api' href='../static/lib/mecha-api.js'>-->
+  <link rel='api' href='../static/lib/morpheus-api.js'>-->
   <script src='../static/lib/jsandbox/jsandbox.js'></script>
   <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
   
   <!-- Application logic -->
   
-  <script src='../static/lib/mecha.js'></script>
+  <script src='../static/lib/morpheus.js'></script>
   
   <script>
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
-      mecha.gui.create('mecha-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
-      mecha.gui.createControls('mecha-controls');
+      morpheus.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
+      morpheus.gui.create('morpheus-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
+      morpheus.gui.createControls('morpheus-controls');
     };
   </script>
 </body>

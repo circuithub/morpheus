@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
 <!--
-      Mecha - A test harness for debugging the CSM API with translation outside of the webworker sandbox
-      Copyright (c) 2011 CircuitHub.com
+      Morpheus - A test harness for debugging the CSM API with translation outside of the webworker sandbox
+      Copyright (c) 2011-2013 CircuitHub.com
 -->
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-  <title>Mecha - Test CSM API</title>
+  <title>Morpheus - Test CSM API</title>
   <meta name='description' content='Test harness for the API'>
 
   <!-- The CSM script -->
@@ -21,8 +21,8 @@
 </head>
 <body>
 
-  <div id='mecha-layout'>
-    <form id='mecha-editor'></form>
+  <div id='morpheus-layout'>
+    <form id='morpheus-editor'></form>
   </div>
 
   <!-- Framework -->
@@ -30,16 +30,16 @@
   <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
   <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
   <script src='../static/lib/glquery/glquery.math.module.js'></script>
-  <link rel='api' href='../static/lib/mecha-api.js'>
+  <link rel='api' href='../static/lib/morpheus-api.js'>
   
   <!-- Application logic -->
 
-  <script src='../static/lib/mecha-editor.js'></script>
-  <script src='../static/lib/mecha-generator.js'></script>
+  <script src='../static/lib/morpheus-editor.js'></script>
+  <script src='../static/lib/morpheus-generator.js'></script>
   <script>
 
     window.onload = function(){
-      mecha.editor.create(document.getElementById('mecha-editor'), document.getElementById('csm-source-code').textContent);
+      morpheus.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
 
       var apiUrl = $("link[rel='api']").attr('href');
       var apiSourceCode;
@@ -49,10 +49,10 @@
           console.log("Loaded " + apiUrl);
 
           // Perform translation
-          var csmSourceCode = mecha.generator.translateCSM(apiSourceCode, mecha.editor.getSourceCode());
+          var csmSourceCode = morpheus.generator.translateCSM(apiSourceCode, morpheus.editor.getSourceCode());
           console.log(csmSourceCode);
           console.log(eval(csmSourceCode));
-          //mecha.generator.compileGLSL(mecha.generator.compileASM(eval(csmSourceCode)));
+          //morpheus.generator.compileGLSL(morpheus.generator.compileASM(eval(csmSourceCode)));
         })
         .error(function() {
           return console.error("Error loading API script");
@@ -66,9 +66,9 @@
       callback: (result) ->
         console.log result
         shaders = 
-        mecha.renderer.sceneShaders shaders 
+        morpheus.renderer.sceneShaders shaders 
       onerror: (data,request) ->
-        mecha.logInternalError "Error compiling the solid model."*/
+        morpheus.logInternalError "Error compiling the solid model."*/
   </script>
 </body>
 </html>

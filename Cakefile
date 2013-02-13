@@ -6,13 +6,13 @@ path   = require 'path'
 Files
 ###
 
-mechaModules = ['mecha','mecha-api', 'mecha-generator', 'mecha-editor', 'mecha-renderer', 'mecha-gui']
+morpheusModules = ['morpheus','morpheus-api', 'morpheus-generator', 'morpheus-editor', 'morpheus-renderer', 'morpheus-gui']
 
-mechaFiles = [
-  'mecha-generator'
-  'mecha-editor'
-  'mecha-renderer'
-  'mecha-gui'
+morpheusFiles = [
+  'morpheus-generator'
+  'morpheus-editor'
+  'morpheus-renderer'
+  'morpheus-gui'
 ]
 
 apiFiles = [
@@ -24,7 +24,7 @@ generatorFiles  = [
   'common/directives'
   'common/array'
   'common/math'
-  'common/mecha.log'
+  'common/morpheus.log'
   'generator/core'
   'generator/util.tostring'
   'generator/translate.csm'
@@ -46,7 +46,7 @@ generatorFiles  = [
 guiFiles  = [
   'common/directives'
   'common/math'
-  'common/mecha.log'
+  'common/morpheus.log'
   'gui/core'
   'gui/constants'
   'gui/state'
@@ -67,7 +67,7 @@ guiFiles  = [
 rendererFiles  = [
   'common/directives'
   'common/math'
-  'common/mecha.log'
+  'common/morpheus.log'
   'renderer/core'
   'renderer/state'
   'renderer/model'
@@ -77,7 +77,7 @@ rendererFiles  = [
 
 editorFiles = [
   'common/directives'
-  'common/mecha.log'
+  'common/morpheus.log'
   'editor/translate.sugaredjs'
   'editor/create'
   'editor/sourcecode'
@@ -146,7 +146,7 @@ Build scripts
 ###
 
 # Maybe (() -> IO) -> () -> IO
-buildMecha = (callback) -> ->
+buildMorpheus = (callback) -> ->
   # String -> Maybe (() -> IO) -> String -> IO
   writeJSFile = (filename) -> (callback) -> (text) ->
     fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
@@ -164,43 +164,43 @@ buildMecha = (callback) -> ->
         contents[index] = fileContents
         (callback contents) if --remaining is 0 and callback?
   
-  (concatJSFiles mechaFiles) (writeJSFile 'mecha') callback
+  (concatJSFiles morpheusFiles) (writeJSFile 'morpheus') callback
 
 # Maybe (String -> IO) -> String -> IO
-prependDebug = prependText "mechaDebug = true\n"
+prependDebug = prependText "morpheusDebug = true\n"
 
 # Maybe (() -> IO) -> () -> IO
 buildApi = (callback, debug) ->
   if debug
-    (concatFiles apiFiles) prependDebug (buildText 'mecha-api', 'api') callback
+    (concatFiles apiFiles) prependDebug (buildText 'morpheus-api', 'api') callback
   else
-    (concatFiles apiFiles) (buildText 'mecha-api', 'api') callback
+    (concatFiles apiFiles) (buildText 'morpheus-api', 'api') callback
 buildGenerator = (callback, debug) ->
   if debug
-    (concatFiles generatorFiles) prependDebug (buildText 'mecha-generator', 'generator') callback
+    (concatFiles generatorFiles) prependDebug (buildText 'morpheus-generator', 'generator') callback
   else
-    (concatFiles generatorFiles) (buildText 'mecha-generator', 'generator') callback
+    (concatFiles generatorFiles) (buildText 'morpheus-generator', 'generator') callback
 buildEditor = (callback, debug) ->
   if debug
-    (concatFiles editorFiles) prependDebug (buildText 'mecha-editor', 'editor') callback
+    (concatFiles editorFiles) prependDebug (buildText 'morpheus-editor', 'editor') callback
   else
-    (concatFiles editorFiles) (buildText 'mecha-editor', 'editor') callback
+    (concatFiles editorFiles) (buildText 'morpheus-editor', 'editor') callback
 buildRenderer = (callback, debug) ->
   if debug
-    (concatFiles rendererFiles) prependDebug (buildText 'mecha-renderer', 'renderer') callback
+    (concatFiles rendererFiles) prependDebug (buildText 'morpheus-renderer', 'renderer') callback
   else
-    (concatFiles rendererFiles) (buildText 'mecha-renderer', 'renderer') callback
+    (concatFiles rendererFiles) (buildText 'morpheus-renderer', 'renderer') callback
 buildGui = (callback, debug) ->
   if debug
-    (concatFiles guiFiles) prependDebug (buildText 'mecha-gui', 'gui') callback
+    (concatFiles guiFiles) prependDebug (buildText 'morpheus-gui', 'gui') callback
   else
-    (concatFiles guiFiles) (buildText 'mecha-gui', 'gui') callback
+    (concatFiles guiFiles) (buildText 'morpheus-gui', 'gui') callback
 
 # () -> IO
 minify = ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
-    for file in mechaModules then do (file) ->
+    for file in morpheusModules then do (file) ->
       path.exists "static/lib/#{file}.js", (exists) ->
         if exists
           exec "#{tool} static/lib/#{file}.js > static/lib/#{file}.min.js", (err, stdout, stderr) ->
@@ -214,9 +214,9 @@ Tasks
 
 option '-g', '--global', 'Use with fetch to install supporting libraries and tools globally'
 
-#task 'build', "Build the entire mecha module", ->
+#task 'build', "Build the entire morpheus module", ->
 #  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-#  buildMecha()()
+#  buildMorpheus()()
 
 task 'build-api', "Build the API module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
@@ -240,11 +240,11 @@ task 'build-gui', "Build the gui module", ->
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify)()
 
 task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMecha minify)()
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify)()
 
 task 'fetch:tools', "Fetch all supporting tools", (options) ->
   invoke 'fetch:npm'
@@ -300,8 +300,8 @@ task 'minify', "Minify the resulting application file after build", ->
 
 task 'clean', "Cleanup all build files and distribution files", ->
   exec "rm -rf build"
-  remaining = mechaModules.length
-  for file in mechaModules
+  remaining = morpheusModules.length
+  for file in morpheusModules
     exec "rm static/lib/#{file}.js", (err, stdout, stderr) ->
       #console.log stdout + stderr
       console.log "...Done (clean)" if --remaining is 0

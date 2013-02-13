@@ -22,5 +22,5 @@ state =
   parameters:
     domElement: null
   paths:
-    mechaUrlRoot: null
+    morpheusUrlRoot: null
     jsandboxUrl: null

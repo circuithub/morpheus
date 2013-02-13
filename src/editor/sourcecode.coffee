@@ -1,5 +1,5 @@
 # Create the DOM elements for the editor
-getSourceCode = safeExport 'mecha.editor.getSourceCode', '', ->
+getSourceCode = safeExport 'morpheus.editor.getSourceCode', '', ->
   # TODO: possibly avoid jQuery in the future
-  return ($ '#mecha-source-code').val()
+  return ($ '#morpheus-source-code').val()
 

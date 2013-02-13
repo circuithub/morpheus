@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
 <!--
-      Mecha - A test harness for debugging the glsl generator functions
-      Copyright (c) 2011 CircuitHub.com
+      Morpheus - A test harness for debugging the glsl generator functions
+      Copyright (c) 2011-2013 CircuitHub.com
 -->
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-  <title>Mecha - Test CSM API</title>
+  <title>Morpheus - Test CSM API</title>
   <meta name='description' content='Test harness for the API'>
 
   <!-- Stylesheet -->
@@ -21,8 +21,8 @@
 
   <!-- Application logic -->
   
-  <script src="../static/lib/mecha-api.js"></script>
-  <script src="../static/lib/mecha-generator.js"></script>
+  <script src="../static/lib/morpheus-api.js"></script>
+  <script src="../static/lib/morpheus-generator.js"></script>
   <script>
     var csm = scene({ parameters: [] },
       translate(
@@ -37,8 +37,8 @@
       cylinder({ axis: 1, radius: 0.2, length: 0.5 }),
       sphere({ radius: 0.3 }).translate({ offset: [0.0, -0.2, 0.0] })
     ),
-    asm = mecha.generator.compileASM(csm),
-    glsl = mecha.generator.compileGLSL(asm);
+    asm = morpheus.generator.compileASM(csm),
+    glsl = morpheus.generator.compileGLSL(asm);
     console.log(asm);
     console.log(glsl);
   </script>

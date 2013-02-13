@@ -1,12 +1,12 @@
 # Initialize nodes in the scene graph
-sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) ->
-  csmSourceCode = mecha.generator.translateCSM state.api.sourceCode, mechaScriptCode
+sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScriptCode) ->
+  csmSourceCode = morpheus.generator.translateCSM state.api.sourceCode, morpheusScriptCode
 
   # Run the script inside a webworker sandbox
   requestId = JSandbox.eval 
     data: csmSourceCode
     callback: (result) ->
-      mecha.logDebug result ## TEMPORARY
+      morpheus.logDebug result ## TEMPORARY
       
       # Update the model parameters
       model = state.models['scene']
@@ -32,19 +32,19 @@ sceneScript = safeExport 'mecha.gui: sceneScript', undefined, (mechaScriptCode) 
           model.args[name] = attr.defaultArg
       model.params = params
       # Generate shaders for the model
-      model.shaders = mecha.generator.compileGLSL (mecha.generator.compileASM result), model.params
-      mecha.logDebug model.shaders[1] ## TEMPORARY
+      model.shaders = morpheus.generator.compileGLSL (morpheus.generator.compileASM result), model.params
+      morpheus.logDebug model.shaders[1] ## TEMPORARY
       # Update the model in the renderer
-      mecha.renderer.modelShaders 'scene', model.shaders
-      mecha.renderer.modelArguments 'scene', model.args
+      morpheus.renderer.modelShaders 'scene', model.shaders
+      morpheus.renderer.modelArguments 'scene', model.args
       controlsInit()
       state.application.sceneInitialized = true
     onerror: (data,request) ->
-      mecha.logInternalError "Error compiling the solid model."
+      morpheus.logInternalError "Error compiling the solid model."
       #state.application.sceneInitialized = false
   return
 
 # Reset all arguments in the scene (used when loading a completely new script)
-sceneReset = safeExport 'mecha.gui: sceneReset', undefined, () ->
+sceneReset = safeExport 'morpheus.gui: sceneReset', undefined, () ->
   state.models['scene'] = { shaders: [], params: {}, args: {} }
 

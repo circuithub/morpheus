@@ -7,7 +7,7 @@
 # TODO: Some of these list comprehensions aren't as efficient as they could be, but for now we prefer clarity over speed
 #       We'll optimize if it turns out that there's bottleneck here
 
-compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel) ->
+compileASM = safeExport 'morpheus.generator.compileASM', null, (concreteSolidModel) ->
   if not concreteSolidModel?
     return null
   
@@ -176,13 +176,13 @@ compileASM = safeExport 'mecha.generator.compileASM', null, (concreteSolidModel)
         if dispatch[node.type]?
           return dispatch[node.type] node
         else
-          mecha.logInternalError "Unexpected node type '#{node.type}'."
+          morpheus.logInternalError "Unexpected node type '#{node.type}'."
           return {}
       else
-        mecha.logInternalError "Unexpected node of type '#{typeof node}'."
+        morpheus.logInternalError "Unexpected node of type '#{typeof node}'."
         return {}
   if concreteSolidModel.type != 'scene'
-    mecha.logInternalError "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
+    morpheus.logInternalError "Expected node of type 'scene' at the root of the solid model, instead, got '#{concreteSolidModel.type}'."
     return null
   
   return optimizeASM compileASMNode concreteSolidModel

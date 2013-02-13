@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "coffee-script": ">=0.0.0",
-    "express": ">=0.0.0",
+    "express": ">=0.0.0"
+  },
+  "devDependencies": {
     "uglify-js": "*"
   }
 }

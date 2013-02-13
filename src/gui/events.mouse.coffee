@@ -1,7 +1,7 @@
 # Eventful code comes here
 # Program state should not be manipulated outside events files
 
-mouseDown = safeExport 'mecha.gui: mouseDown', undefined, (event) ->
+mouseDown = safeExport 'morpheus.gui: mouseDown', undefined, (event) ->
   state.viewport.mouse.last = [event.clientX, event.clientY]
   
   # Activate the appropriate mouse button mode
@@ -18,7 +18,7 @@ mouseDown = safeExport 'mecha.gui: mouseDown', undefined, (event) ->
     state.viewport.mouse.pickRecord = state.scene.pick coords[0], coords[1]
   ###
 
-mouseUp = safeExport 'mecha.gui: mouseUp', undefined, (event) ->
+mouseUp = safeExport 'morpheus.gui: mouseUp', undefined, (event) ->
   # De-activate the appropriate mouse button and dragging modes
   switch event.which
     when 1 
@@ -30,7 +30,7 @@ mouseUp = safeExport 'mecha.gui: mouseUp', undefined, (event) ->
   return
 
 mouseMove = (event) ->
-  return do safeTry "mecha.gui: mouseMove", (->
+  return do safeTry "morpheus.gui: mouseMove", (->
       #SceneJS.FX.idle()
       # TODO: Get an accurate time measurement since the last mouseMove event
       # Get the delta position of the mouse over this frame
@@ -57,14 +57,14 @@ mouseMove = (event) ->
         # TODO: Replace this....
         #orbitLookAtNode (state.scene.findNode 'main-lookAt'), orbitAngles, [0.0,0.0,1.0]
         
-        mecha.renderer.modelRotate 'scene', orbitAngles
+        morpheus.renderer.modelRotate 'scene', orbitAngles
 
       state.viewport.mouse.last = [event.clientX, event.clientY]
     ), ((error) -> 
       # We probably don't want to log error messages for mouse movement (in production)
     )
 
-mouseWheel = safeExport 'mecha.gui: mouseWheel', undefined, (event) ->
+mouseWheel = safeExport 'morpheus.gui: mouseWheel', undefined, (event) ->
   # TODO: When the camera projection mode is ortho then this will need to scale the view
   # See http://www.javascriptkit.com/javatutors/onmousewheel.shtml
   # But also note, unfortunately firefox actually appears to give different values of event.detail some times.

@@ -63,7 +63,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       node.halfSpaces.push null for i in [0..5]
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if Array.isArray node.attr.factor
-        mecha.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
+        morpheus.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
       else
         glslCompiler.preludePush flags.glslPrelude, (glsl.div ro, node.attr.factor)
       return
@@ -203,7 +203,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
   compileCompositeNode = (name, cmpCallback, stack, node, flags) ->
     # Check that composite node is not empty
     if node.nodes.length == 0
-      #mecha.logInternalError "GLSL Compiler: Union node is empty."
+      #morpheus.logInternalError "GLSL Compiler: Union node is empty."
       return
     codes = []
 
@@ -246,7 +246,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
 
     # Post-condition: All halfspaces must be accounted for
     for h in cornersState.hs when h != null
-      mecha.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
+      morpheus.logInternalError "GLSL Compiler: Post-condition failed, some half spaces were not processed during corner compilation."
       break
 
     # Calculate the composite distances
@@ -283,7 +283,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       glslCompiler.preludePop flags.glslPrelude
       # Check that composite node is not empty
       if node.nodes.length == 0
-        mecha.logInternalError "GLSL Compiler: Translate node is empty."
+        morpheus.logInternalError "GLSL Compiler: Translate node is empty."
         return
       stack[0].nodes.push node
     rotate: (stack, node, flags) ->  
@@ -291,7 +291,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       glslCompiler.preludePop flags.glslPrelude
       # Check that composite node is not empty
       if node.nodes.length == 0
-        mecha.logInternalError "GLSL Compiler: Rotate node is empty."
+        morpheus.logInternalError "GLSL Compiler: Rotate node is empty."
         return
       stack[0].nodes.push node
     scale: (stack, node, flags) ->
@@ -314,7 +314,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
     halfspace: (stack, node, flags) ->
       # Check that geometry node is empty
       if node.nodes.length != 0
-        mecha.logInternalError "GLSL Compiler: Halfspace node is not empty."
+        morpheus.logInternalError "GLSL Compiler: Halfspace node is not empty."
         return
       
       ## Generate code for halfspace primitives directly (without corner compilation)
@@ -390,7 +390,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
           when 'translate','rotate','scale','invert','mirror','repeat'
             continue
         break
-      #mecha.logDebug "NODE ATTR", node.attr
+      #morpheus.logDebug "NODE ATTR", node.attr
       # TODO: Need to squareroot chamfer radius??? (so that 
       if bevelRadius != 0
         # TODO: BUSY HERE

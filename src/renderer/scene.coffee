@@ -1,5 +1,5 @@
 # Create the scene
-createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
+createScene = safeExport 'morpheus.renderer.createScene', undefined, (context) ->
   # Store the context in the state
   # TODO: support multiple contexts in future?
   state.context = context  
@@ -49,7 +49,7 @@ createScene = safeExport 'mecha.renderer.createScene', undefined, (context) ->
   .triangles()
   return
 
-runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallback) ->
+runScene = safeExport 'morpheus.renderer.runScene', undefined, (canvas, idleCallback) ->
   # Setup rendering parameters
   state.context.viewport 0, 0, canvas.width, canvas.height
   state.context.clearColor 0.0, 0.0, 0.0, 0.0
@@ -57,7 +57,7 @@ runScene = safeExport 'mecha.renderer.runScene', undefined, (canvas, idleCallbac
   state.context.enable state.context.CULL_FACE
 
   # Run the scene with an idle callback function
-  callback = safeExport 'mecha.renderer: render', undefined, ->
+  callback = safeExport 'morpheus.renderer: render', undefined, ->
     if gl.update()
       state.context.clear state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT
       (gl 'scene').render state.context

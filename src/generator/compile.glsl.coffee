@@ -3,14 +3,14 @@
 # TODO: Would be nice if CoffeeScript supported '''#{tag}''' syntax
 # TODO: Split
 
-compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidModel, params) ->
+compileGLSL = safeExport 'morpheus.editor.compileGLSL', ['',''], (abstractSolidModel, params) ->
   rayOrigin = 'ro'
   rayDirection = 'rd'
   usePerspectiveProjection = false
   
   ### TEMPORARY
-  mecha.logDebug "ASM:"
-  mecha.logDebug abstractSolidModel
+  morpheus.logDebug "ASM:"
+  morpheus.logDebug abstractSolidModel
   # ###
 
   # Generate the vertex shader
@@ -19,14 +19,14 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     if not boundsResult?
       return ''
     if boundsResult.nodes.length != 1
-      mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the bounding box compiler.'
+      morpheus.logInternalError 'GLSL Compiler: Expected exactly one result node from the bounding box compiler.'
       return ''
         
     bounds = boundsResult.nodes[0].bounds
     
     ### TEMPORARY
-    mecha.logDebug "Bounds Result:"
-    mecha.logDebug boundsResult
+    morpheus.logDebug "Bounds Result:"
+    morpheus.logDebug boundsResult
     # ###
 
     # TODO: Possibly change some of these to constants to uniforms later to avoid recompilation
@@ -59,7 +59,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
     if not distanceResult?
       return ''
     if distanceResult.nodes.length != 1
-      mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the distance compiler.'
+      morpheus.logInternalError 'GLSL Compiler: Expected exactly one result node from the distance compiler.'
 
     ### TEMPORARY
     console.log "Distance Result:"
@@ -68,7 +68,7 @@ compileGLSL = safeExport 'mecha.editor.compileGLSL', ['',''], (abstractSolidMode
 
     idResult = glslSceneId abstractSolidModel
     if idResult.nodes.length != 1
-      mecha.logInternalError 'GLSL Compiler: Expected exactly one result node from the material id compiler.'
+      morpheus.logInternalError 'GLSL Compiler: Expected exactly one result node from the material id compiler.'
 
     ### TEMPORARY
     console.log "Id Result:"

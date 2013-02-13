@@ -1,5 +1,5 @@
-# Mecha
-Copyright (c) 2011 CircuitHub Inc.
+# Morpheus
+Copyright (c) 2011-2013 CircuitHub Inc.
 
 ### About
 
@@ -7,7 +7,7 @@ A plugable parameteric solid modeller for the WWW.
 
 ### Licensing
 
-Mecha is licensed under the permissive [MIT](http://www.opensource.org/licenses/MIT) open source license. Please see 
+Morpheus is licensed under the permissive [MIT](http://www.opensource.org/licenses/MIT) open source license. Please see 
 `LICENSE` for more information.
 
 In addition, the following licenses are used by third party libraries used in

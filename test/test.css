@@ -91,8 +91,8 @@ html, body {
   overflow: hidden;
 }
 
-/* Mecha styling */
-#mecha-editor {
+/* Morpheus styling */
+#morpheus-editor {
   position: relative;
   float: left;
   width: 502px;
@@ -100,16 +100,16 @@ html, body {
   margin: 0 10px;
   font-size: small;
 }
-#mecha-source-code {
+#morpheus-source-code {
   display: block;
   width: 100%;
   height: 480px;
   resize: none;
 }
-#mecha-source-compile {
+#morpheus-source-compile {
   float: right;
 }
-#mecha-controls {
+#morpheus-controls {
   position: absolute;
   top: 0;
   right: 0;

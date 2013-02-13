@@ -359,7 +359,7 @@ glsl = do ->
       if (isArrayType axis, 'number') and (typeof angle == 'number')
         return gl.matrix3.newAxisRotation axis, angle
 
-      mecha.logInternalError "axisRotation is not yet implemented in the GLSL API."
+      morpheus.logInternalError "axisRotation is not yet implemented in the GLSL API."
       ###
       # TODO: This can (should) probably be optimized a lot...
       # Convert rotation to quaternion representation

@@ -69,7 +69,7 @@ optimizeASM = (node, flags) ->
       stack[0].nodes.push node
     halfspace: (stack, node, flags) ->
       if node.nodes.length > 0
-        mecha.logInternalError "ASM Optimize: Unexpected child nodes found in halfspace node."
+        morpheus.logInternalError "ASM Optimize: Unexpected child nodes found in halfspace node."
       for s in stack
         switch s.type
           when 'intersect'
