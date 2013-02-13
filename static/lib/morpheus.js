@@ -1556,20 +1556,28 @@ morpheus.generator =
         flags.invert = !flags.invert;
       },
       union: function(stack, node, flags) {
-        var i, _i;
+        var i;
         flags.composition.push(glslCompiler.COMPOSITION_UNION);
-        node.halfSpaces = [];
-        for (i = _i = 0; _i <= 5; i = ++_i) {
-          node.halfSpaces.push(null);
-        }
+        node.halfSpaces = (function() {
+          var _i, _results;
+          _results = [];
+          for (i = _i = 0; _i <= 5; i = ++_i) {
+            _results.push(null);
+          }
+          return _results;
+        })();
       },
       intersect: function(stack, node, flags) {
-        var i, _i;
+        var i;
         flags.composition.push(glslCompiler.COMPOSITION_INTERSECT);
-        node.halfSpaces = [];
-        for (i = _i = 0; _i <= 5; i = ++_i) {
-          node.halfSpaces.push(null);
-        }
+        node.halfSpaces = (function() {
+          var _i, _results;
+          _results = [];
+          for (i = _i = 0; _i <= 5; i = ++_i) {
+            _results.push(null);
+          }
+          return _results;
+        })();
       },
       chamfer: function(stack, node, flags) {},
       bevel: function(stack, node, flags) {},
@@ -1621,11 +1629,15 @@ morpheus.generator =
         }
       },
       scale: function(stack, node, flags) {
-        var i, ro, _i;
-        node.halfSpaces = [];
-        for (i = _i = 0; _i <= 5; i = ++_i) {
-          node.halfSpaces.push(null);
-        }
+        var i, ro;
+        node.halfSpaces = (function() {
+          var _i, _results;
+          _results = [];
+          for (i = _i = 0; _i <= 5; i = ++_i) {
+            _results.push(null);
+          }
+          return _results;
+        })();
         ro = glslCompiler.preludeTop(flags.glslPrelude);
         if (Array.isArray(node.attr.factor)) {
           morpheus.logInternalError("GLSL Compiler: Scale along multiple axes are not yet supported.");
@@ -1783,13 +1795,13 @@ morpheus.generator =
       }
       codes = [];
       collectCode = function(codes, nodes) {
-        var _i, _len;
+        var n, _i, _len;
         for (_i = 0, _len = nodes.length; _i < _len; _i++) {
-          node = nodes[_i];
-          if (node.code != null) {
-            codes.push(node.code);
+          n = nodes[_i];
+          if (n.code != null) {
+            codes.push(n.code);
           }
-          switch (node.type) {
+          switch (n.type) {
             case 'translate':
             case 'rotate':
             case 'mirror':
@@ -1798,7 +1810,7 @@ morpheus.generator =
             case 'material':
             case 'chamfer':
             case 'bevel':
-              collectCode(codes, node.nodes);
+              collectCode(codes, n.nodes);
           }
         }
       };

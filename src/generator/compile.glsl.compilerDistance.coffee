@@ -7,21 +7,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       return
     union: (stack, node, flags) ->
       flags.composition.push glslCompiler.COMPOSITION_UNION
-      node.halfSpaces = []
-      node.halfSpaces.push null for i in [0..5]
+      node.halfSpaces = (null for i in [0..5])
       return
     intersect: (stack, node, flags) ->
       flags.composition.push glslCompiler.COMPOSITION_INTERSECT
-      node.halfSpaces = []
-      node.halfSpaces.push null for i in [0..5]
+      node.halfSpaces = (null for i in [0..5])
       return
     chamfer: (stack, node, flags) ->
-      #node.halfSpaces = []
-      #node.halfSpaces.push null for i in [0..5]
+      #node.halfSpaces = (null for i in [0..5])
       return
     bevel: (stack, node, flags) ->
-      #node.halfSpaces = []
-      #node.halfSpaces.push null for i in [0..5]
+      #node.halfSpaces = (null for i in [0..5])
       return
     translate: (stack, node, flags) ->
       # Push the modified ray origin onto the prelude stack
@@ -59,8 +55,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         glslCompiler.preludePush flags.glslPrelude, "vec3(#{components})"
       return
     scale: (stack, node, flags) ->
-      node.halfSpaces = []
-      node.halfSpaces.push null for i in [0..5]
+      node.halfSpaces = (null for i in [0..5])
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if Array.isArray node.attr.factor
         morpheus.logInternalError "GLSL Compiler: Scale along multiple axes are not yet supported."
@@ -211,11 +206,11 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
     # Some nodes are only modifiers, so it's necessary to collect their children 
     # to apply the correct composite operation
     collectCode = (codes, nodes) -> 
-      for node in nodes
-        codes.push node.code if node.code?
-        switch node.type
+      for n in nodes
+        codes.push n.code if n.code?
+        switch n.type
           when 'translate','rotate','mirror','repeat','invert','material','chamfer','bevel'
-            collectCode codes, node.nodes
+            collectCode codes, n.nodes
       return
     collectCode codes, node.nodes
 
@@ -261,23 +256,28 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
     invert: (stack, node, flags) ->
       flags.invert = not flags.invert
       stack[0].nodes.push node
+      return
     union: (stack, node, flags) ->
       flags.composition.pop()
       compileCompositeNode 'Union', (if not flags.invert then minCallback else maxCallback), stack, node, flags
       stack[0].nodes.push node
+      return
     intersect: (stack, node, flags) ->
       flags.composition.pop()
       compileCompositeNode 'Intersect', (if not flags.invert then maxCallback else minCallback), stack, node, flags
       stack[0].nodes.push node
+      return
     chamfer: (stack, node, flags) ->
       # NOTE: From now on chamfer must be on the outside of an intersect/union
       #  cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
       #  compileCompositeNode 'Chamfer', cmpCallback, stack, node, flags
       stack[0].nodes.push node
+      return
     bevel: (stack, node, flags) ->
       #  cmpCallback = if flags.composition[flags.composition.length - 1] == glslCompiler.COMPOSITION_UNION then minCallback else maxCallback
       #  compileCompositeNode 'Bevel', cmpCallback, stack, node, flags
       stack[0].nodes.push node
+      return
     translate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
@@ -286,6 +286,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         morpheus.logInternalError "GLSL Compiler: Translate node is empty."
         return
       stack[0].nodes.push node
+      return
     rotate: (stack, node, flags) ->  
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
@@ -294,6 +295,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         morpheus.logInternalError "GLSL Compiler: Rotate node is empty."
         return
       stack[0].nodes.push node
+      return
     scale: (stack, node, flags) ->
       if flags.composition[flags.composition.length-1] == glslCompiler.COMPOSITION_UNION
         compileCompositeNode 'Scale', minCallback, stack, node, flags
@@ -303,14 +305,17 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         node.code = modifyCallback node.code, (glsl.mul "(#{node.code})", node.attr.factor)
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
+      return
     mirror: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
+      return
     repeat: (stack, node, flags) ->
       # Remove the modified ray origin from the prelude stack
       glslCompiler.preludePop flags.glslPrelude
       stack[0].nodes.push node
+      return
     halfspace: (stack, node, flags) ->
       # Check that geometry node is empty
       if node.nodes.length != 0
@@ -371,6 +376,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         break
       # ###
       stack[0].nodes.push node
+      return
     corner: (stack,node,flags) ->
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       dist = glslCompiler.preludeAdd flags.glslPrelude, glsl.sub ro, node.attr.val
@@ -420,6 +426,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
         else
           node.code = primitiveCallback "length(max(#{dist}, 0.0))", flags
       stack[0].nodes.push node
+      return
     cylinder: (stack, node, flags) ->
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       planeCoords = ['yz','xz','xy'][node.attr.axis]
@@ -428,6 +435,7 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       else
         node.code = primitiveCallback (glsl.sub node.attr.radius, "length(#{ro}.#{planeCoords})"), flags
       stack[0].nodes.push node
+      return
     sphere: (stack, node, flags) ->
       ro = glslCompiler.preludeTop flags.glslPrelude # Current ray origin
       if not flags.invert
@@ -435,11 +443,14 @@ glslCompilerDistance = (primitiveCallback, minCallback, maxCallback, modifyCallb
       else
         node.code = primitiveCallback (glsl.sub node.attr.radius, "length(#{ro})"), flags
       stack[0].nodes.push node
+      return
     material: (stack, node, flags) ->
       flags.materialIdStack.pop()
       stack[0].nodes.push node
+      return
     default: (stack, node, flags) ->
       stack[0].nodes.push node
+      return
   
   return ((abstractSolidModel) -> glslCompiler abstractSolidModel, preDispatch, postDispatch)
 
