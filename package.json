@@ -1,6 +1,6 @@
 {
-  "name": "mecha",
-  "version": "0.0.1",
+  "name": "morpheus",
+  "version": "0.0.2",
   "description": "3D solid modeling for electronic components and circuit boards",
   "homepage": "http://CircuitHub.com",
   "author": "Rehno Lindeque (http://rehno.lindeque.name)",
@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "coffee-script": ">=0.0.0",
-    "express": ">=0.0.0"
+    "express": ">=0.0.0",
+    "uglify-js": "*"
   }
 }
 
