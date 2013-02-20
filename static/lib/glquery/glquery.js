@@ -10,6 +10,7 @@ var glQuery = (function() {
   var gl = function(selector) {
     return gl.fn.init(selector);
   },
+  debugLevel = 0,
   // The scenes, each of which contains a hierarchy of identifiers
   scenes = {},
   // Commands to be executed
@@ -25,12 +26,22 @@ var glQuery = (function() {
   shaderLocations = {},
   // Counters for identifiers
   shaderProgramCounter = 0,
+  // WebGL contexts
+  contexts = [],
+  // Event callbacks
+  eventCallbacks = { 
+    contextlost: [], 
+    contextrestored: [], 
+    contextcreationerror: [] 
+  },
   // Logging / information methods
-  logDebug = function(msg) { /*console.log(msg);*/ },
-  logInfo = function(msg) { console.log(msg); },
-  logWarning = function(msg) { console.warn(msg); },
-  logError = function(msg) { console.error(msg); },
-  logApiError = function(func,msg) { console.error("In call to '" + func + "', " + msg); },
+  logDebug = ((!(debugLevel > 0))? function(){} :
+    (debugLevel === 1)? function(msg) { console.debug("glQuery:", msg); } :
+    function() { console.debug.apply(console, ["glQuery:"].concat(Array.prototype.slice.call(arguments))); }),
+  logInfo = function(msg) { console.log("glQuery:", msg); },
+  logWarning = function(msg) { console.warn("glQuery:", msg); },
+  logError = function(msg) { console.error("glQuery:", msg); },
+  logApiError = function(func,msg) { console.error("glQuery:", "In call to '" + func + "', " + msg); },
   // Run-time checks
   // TODO: Should we provide checks that throw exceptions rather than logging messages?
   assert = function(condition, msg) { if (!condition) logError(msg); return condition; },
@@ -766,7 +777,7 @@ var glQuery = (function() {
   commandDispatch = [
     // shaderProgram: 0
     function(context, selector, args) {
-      logDebug("dispatch command: shaderProgram");
+      logDebug("dispatch command: shaderProgram", context, selector, args);
 
       if (args.length > 0) {
         // Generate shader program if necessary
@@ -824,7 +835,7 @@ var glQuery = (function() {
     },
     // geometry: 1
     function(context, selector, args) {
-      logDebug("dispatch command: geometry");
+      logDebug("dispatch command: geometry", context, selector, args);
       if (args.length > 0) {
         for (var i = 0; i < selector.length; ++i) {
           //var commandsStruct = (typeof tagCommands[selector[i]] === 'undefined'? (tagCommands[selector[i]] = {}) : tagCommands[selector[i]]);
@@ -840,7 +851,7 @@ var glQuery = (function() {
     },
     // vertexElem: 2
     function(context, selector, args) {
-      logDebug("dispatch command: vertexElem");
+      logDebug("dispatch command: vertexElem", context, selector, args);
       // Pre-conditions: args.length == 0 || args.length >= 2
       // If no arguments were given, delete the command
       if (args[0] == null) {
@@ -869,7 +880,7 @@ var glQuery = (function() {
     },
     // vertexAttribBuffer: 3
     function(context, selector, args) {
-      logDebug("dispatch command: vertexAttribBuffer");
+      logDebug("dispatch command: vertexAttribBuffer", context, selector, args);
       // Pre-conditions: args.length == 0 || args.length == 1 || args.length >= 3
       // If no arguments were supplied, delete all the vertexAttribBuffer commands
       if (args[0] == null) {
@@ -898,23 +909,23 @@ var glQuery = (function() {
     },
     // vertexAttrib1: 4
     function(context, selector, args) {
-      logDebug("dispatch command: vertexAttrib1");
+      logDebug("dispatch command: vertexAttrib1", context, selector, args);
     },
     // vertexAttrib2: 5
     function(context, selector, args) {
-      logDebug("dispatch command: vertexAttrib2");
+      logDebug("dispatch command: vertexAttrib2", context, selector, args);
     },
     // vertexAttrib3: 6
     function(context, selector, args) {
-      logDebug("dispatch command: vertexAttrib3");
+      logDebug("dispatch command: vertexAttrib3", context, selector, args);
     },
     // vertexAttrib4: 7
     function(context, selector, args) {
-      logDebug("dispatch command: vertexAttrib4");
+      logDebug("dispatch command: vertexAttrib4", context, selector, args);
     },
     // uniform: 8
     function(context, selector, args) {
-      logDebug("dispatch command: uniform");
+      logDebug("dispatch command: uniform", context, selector, args);
       // If no arguments were supplied, delete all the uniform commands
       if (args[0] == null) {
         for (var i = 0; i < selector.length; ++i)
@@ -940,23 +951,23 @@ var glQuery = (function() {
     },
     // insert: 9
     function(context, selector, args) {
-      logDebug("dispatch command: insert");
+      logDebug("dispatch command: insert", context, selector, args);
     },
     // remove: 10
     function(context, selector, args) {
-      logDebug("dispatch command: remove");
+      logDebug("dispatch command: remove", context, selector, args);
     }
   ],
   commandEval = [
     // shaderProgram: 0
     function(context, renderState, args) {
-      logDebug("eval command: shaderProgram");
+      logDebug("eval command: shaderProgram", context, renderState, args);
       context.useProgram(args);
       renderState.shaderProgram = args;
     },
     // geometry: 1
     function(context, renderState, args) {
-      logDebug("eval command: geometry");
+      logDebug("eval command: geometry", context, renderState, args);
       if (renderState.useElements)
         context.drawElements(args[0], args[1] != null? args[1] : renderState.numVertices, renderState.elementsType, renderState.elementsOffset + (args[2] != null? args[2] : 0));
       else
@@ -964,7 +975,7 @@ var glQuery = (function() {
     },
     // vertexElem: 2
     function(context, renderState, args) {
-      logDebug("eval command: vertexElem");
+      logDebug("eval command: vertexElem", context, renderState, args);
       // TODO: Don't rebind buffer if not necessary?
       context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, args[0]); 
       renderState.numVertices = args[1];
@@ -974,7 +985,7 @@ var glQuery = (function() {
     },
     // vertexAttribBuffer: 3
     function(context, renderState, args) {
-      logDebug("eval command: vertexAttribBuffer");
+      logDebug("eval command: vertexAttribBuffer", context, renderState, args);
       var locations = (renderState.shaderProgram != null? shaderLocations[renderState.shaderProgram._glquery_id] : null);
       if (locations != null) {
         var attribLocation = (typeof args[0] == 'number'? args[0] : locations.attributes[args[0]]);
@@ -993,19 +1004,19 @@ var glQuery = (function() {
     },
     // vertexAttrib1: 4
     function(context, renderState, args) {
-      logDebug("eval command: vertexAttrib1");
+      logDebug("eval command: vertexAttrib1", context, renderState, args);
     },
     // vertexAttrib2: 5
     function(context, renderState, args) {
-      logDebug("eval command: vertexAttrib2");
+      logDebug("eval command: vertexAttrib2", context, renderState, args);
     },
     // vertexAttrib3: 6
     function(context, renderState, args) {
-      logDebug("eval command: vertexAttrib3");
+      logDebug("eval command: vertexAttrib3", context, renderState, args);
     },
     // vertexAttrib4: 7
     function(context, renderState, args) {
-      logDebug("eval command: vertexAttrib4");
+      logDebug("eval command: vertexAttrib4", context, renderState, args);
     },
     // uniform: 8
     (function() {
@@ -1029,7 +1040,7 @@ var glQuery = (function() {
       //uniformEval[gl.SAMPLER_CUBE] = 
 
       return function(context, renderState, args) {
-        logDebug("eval command: uniform");
+        logDebug("eval command: uniform", context, renderState, args);
         // TODO: Detect uniformMatrix (supplied without the special transpose flag?)
         // I.e. use attributes stored by getLocation?
         var locations = (renderState.shaderProgram != null? shaderLocations[renderState.shaderProgram._glquery_id] : null);
@@ -1079,7 +1090,7 @@ var glQuery = (function() {
   },
   // Collect and execute webgl commands using a render state structure to keep track of state changes
   evalCommands = function(context, renderState, commandsStack) {
-    logDebug("evalCommands");
+    logDebug("evalCommands", context, renderState, commandsStack);
     
     //var newRenderState = new Array(commandEval.length);
     var newRenderState = commandsStack[0].slice(); // Shallow copy of the state
@@ -1271,6 +1282,12 @@ var glQuery = (function() {
   };
 
 
+  var triggerContextEvents = function(callbacks, event) {
+    for (var i = 0; i < callbacks.length; ++i)
+      if (callbacks[i][1])
+        callbacks[i][0](event);
+  };
+
   // Initialize a WebGL canvas
   gl.canvas = function(htmlCanvas, contextAttr, width, height) {
     var canvasId, canvasEl;
@@ -1301,10 +1318,50 @@ var glQuery = (function() {
       logInfo("Initialized canvas: " + canvasId);
     else
       logInfo("Initialized canvas");
+
     // Initialize the WebGL context
     var canvasCtx = canvasEl.getContext('experimental-webgl', contextAttr);
     if (!assert(canvasCtx != null, "Could not get a 'experimental-webgl' context."))
       return dummy;
+
+    canvasEl.addEventListener("webglcontextlost", function(event) {
+      var i;
+      // Trigger user events
+      triggerContextEvents(eventCallbacks.contextlost, event);
+      // Cancel rendering on all canvases that use request animation frame via
+      // gl.canvas(...).start().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.ctx.canvas !== canvasEl)
+          continue;
+        if (context.nextFrame != null)
+          window.cancelAnimationFrame(context.nextFrame);
+        break;
+      }
+      // Prevent default handling of event
+      event.preventDefault();
+    }, false);
+
+    canvasEl.addEventListener("webglcontextrestored", function(event) {
+      var i;
+      // TODO: reload managed webgl resources
+      // Trigger user events
+      triggerContextEvents(eventCallbacks.contextrestored, event);
+      // Resume rendering on all contexts that have not explicitly been paused
+      // via gl.canvas(...).pause().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.ctx.canvas !== canvasEl)
+          continue;
+        if (context.nextFrame == null && context.paused === false)
+          window.requestAnimationFrame(context.callback(), context.ctx.canvas);
+        break;
+      }
+    }, false);
+
+    canvasEl.addEventListener("webglcontextcreationerror", function(event) {
+      triggerContextEvents(eventCallbacks.contextcreationerror, event);
+    }, false);
 
     // Wrap glQuery canvas
     return (function() { 
@@ -1312,16 +1369,22 @@ var glQuery = (function() {
         ctx: canvasCtx,
         rootId: null,
         nextFrame: null,
+        paused: true,
         clearMask: gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
         callback: function() {
           self = this;
           return function callback() {
+            if (self.ctx.isContextLost())
+              return; // Ensure rendering does not continue if context is lost
             self.ctx.clear(self.clearMask);
             gl(self.rootId).render(self.ctx);
             self.nextFrame = window.requestAnimationFrame(callback, self.ctx.canvas);
           };
         }
       };
+      // Add context to the global list
+      contexts.push(self);
+      // Provide context canvas api
       return { // Public
         start: function(rootId) {
           logDebug("canvas.start");
@@ -1329,7 +1392,15 @@ var glQuery = (function() {
             if (!assertType(rootId, 'string', 'canvas.start', 'rootId')) return this;
             self.rootId = rootId;
             self.nextFrame = window.requestAnimationFrame(self.callback(), self.ctx.canvas);
+            self.paused = false;
           }
+          return this;
+        },
+        pause: function() {
+          logDebug("canvas.pause");
+          window.cancelAnimationFrame(self.nextFrame);
+          self.nextFrame = null;
+          self.paused = true;
           return this;
         },
         clear: function(mask) {
@@ -1423,11 +1494,40 @@ var glQuery = (function() {
     return gl;
   };
 
+  var registerContextEvent = function(eventName, callback, active) {
+    var i, active = active;
+    // Clear the list of callbacks if nothing was passed in
+    if(typeof callback === 'undefined') {
+      eventCallbacks[eventName] = [];
+      return;
+    }
+    // Check that callback is a function and active is a boolean
+    assertType(callback, 'function', eventName, 'callback');
+    typeof active !== 'undefined' && assertType(active, 'boolean', eventName, 'active');
+    // Prevent the same callback from being added to the list twice.
+    active = active === false? active : true;
+    for (i = 0; i < eventCallbacks[eventName].length; ++i)
+      if (eventCallbacks[eventName][i][0] === callback) {
+        eventCallbacks[eventName][i][1] = active;
+        return;
+      }
+    // Add the callback
+    eventCallbacks[eventName].push([callback, active]);
+  };
+  
+  gl.contextlost = function(callback, active) { registerContextEvent('contextlost',callback,active); };
+  gl.contextrestored = function(callback, active) { registerContextEvent('contextrestored',callback,active); };
+  gl.contextcreationerror = function(callback) { registerContextEvent('contextcreationerror',callback,active); };
+
+
   gl.worker = function(workerId, js) {
     // TODO:
     logError("(TODO) Workers are not yet implemented...");
   };
 
+  // Export glQuery to a CommonJS module if exports is available
+  if (typeof(exports) !== "undefined" && exports !== null)
+    exports.glQuery = gl;
   return gl;
 })();
 
