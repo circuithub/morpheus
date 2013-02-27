@@ -89,6 +89,7 @@ completeFiles = [
   'glquery/glquery.math.module'
   'adt/adt'
   'parameterize/parameterize-form'
+  'jsandbox/jsandbox'
   'morpheus'
 ]
 
@@ -206,7 +207,7 @@ buildGui = (callback, debug) ->
     (concatFiles guiFiles) (buildText 'morpheus-gui', 'gui') callback
 
 # () -> IO
-minify = ->
+minify = (callback) ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
     for file in morpheusModules then do (file) ->
@@ -216,9 +217,12 @@ minify = ->
             throw err if err
             console.log stdout + stderr
             console.log "...Done (#{file}.min.js)"
+            callback?()
 
 packComplete = (callback) ->
-  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') callback
+  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') (->
+    console.log "...Done (morpheus.complete.js)"
+    callback?())
 
 ###
 Tasks
@@ -293,7 +297,6 @@ task 'fetch:libraries', "Update all supporting libraries", (options) ->
   #invoke 'fetch:uglifyjs-parser'
   invoke 'fetch:adt.js'
   invoke 'fetch:parameterize-form'
-
 
 task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
   if options.global
