@@ -8,6 +8,8 @@
 #       We'll optimize if it turns out that there's bottleneck here
 
 compileASM = safeExport 'morpheus.generator.compileASM', null, (concreteSolidModel) ->
+  if typeof concreteSolidModel == 'string'
+    throw concreteSolidModel
   if not concreteSolidModel?
     return null
   

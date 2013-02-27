@@ -3828,6 +3828,9 @@ morpheus.generator =
 
   compileASM = safeExport('morpheus.generator.compileASM', null, function(concreteSolidModel) {
     var compileASMNode, dispatch;
+    if (typeof concreteSolidModel === 'string') {
+      throw concreteSolidModel;
+    }
     if (!(concreteSolidModel != null)) {
       return null;
     }
