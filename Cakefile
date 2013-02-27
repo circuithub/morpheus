@@ -84,6 +84,15 @@ editorFiles = [
   'editor/exports'
 ]
 
+completeFiles = [
+  'glquery/glquery'
+  'glquery/glquery.math.module'
+  'adt/adt'
+  'parameterize/parameterize-form'
+  'morpheus'
+]
+
+
 ###
 Generic functions
 ###
@@ -141,29 +150,29 @@ concatFiles = (files) -> (callback) -> ->
       contents[index] = fileContents
       (callback contents) if --remaining is 0 and callback?
 
+# String -> Maybe (() -> IO) -> String -> IO
+writeJSFile = (filename) -> (callback) -> (text) ->
+  fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
+    throw err if err
+    console.log "...Done (#{filename}.js)"
+    callback() if callback?
+
+# [String] -> (String -> IO) -> IO
+concatJSFiles = (files) -> (callback) ->
+  contents = new Array files.length
+  remaining = files.length
+  for file, index in files then do (file, index) ->
+    fs.readFile "static/lib/#{file}.js", 'utf8', (err, fileContents) ->
+      throw err if err
+      contents[index] = fileContents
+      (callback contents) if --remaining is 0 and callback?
+
 ###
 Build scripts
 ###
 
 # Maybe (() -> IO) -> () -> IO
 buildMorpheus = (callback) -> ->
-  # String -> Maybe (() -> IO) -> String -> IO
-  writeJSFile = (filename) -> (callback) -> (text) ->
-    fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
-      throw err if err
-      console.log "...Done (#{filename}.js)"
-      callback() if callback?
-
-  # [String] -> (String -> IO) -> IO
-  concatJSFiles = (files) -> (callback) ->
-    contents = new Array files.length
-    remaining = files.length
-    for file, index in files then do (file, index) ->
-      fs.readFile "static/lib/#{file}.js", 'utf8', (err, fileContents) ->
-        throw err if err
-        contents[index] = fileContents
-        (callback contents) if --remaining is 0 and callback?
-  
   (concatJSFiles morpheusFiles) (writeJSFile 'morpheus') callback
 
 # Maybe (String -> IO) -> String -> IO
@@ -208,6 +217,9 @@ minify = ->
             console.log stdout + stderr
             console.log "...Done (#{file}.min.js)"
 
+packComplete = (callback) ->
+  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') callback
+
 ###
 Tasks
 ###
@@ -238,13 +250,16 @@ task 'build-gui', "Build the gui module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
   buildGui()()
 
+task 'pack-complete', "Pack morpheus with all its dependencies into a single .js file", ->
+  packComplete()
+
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify)()
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify packComplete)()
 
 task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify)()
+  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify packComplete)()
 
 task 'fetch:tools', "Fetch all supporting tools", (options) ->
   invoke 'fetch:npm'
@@ -285,9 +300,7 @@ task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
     console.warn "glquery is always installed locally"
   urls = [
     'https://raw.github.com/glQuery/glQuery/master/dist/glquery.js'
-    'https://raw.github.com/glQuery/glQuery/master/dist/glquery.min.js'
     'https://raw.github.com/glQuery/glQuery/master/dist/extra/glquery.math.module.js'
-    'https://raw.github.com/glQuery/glQuery/master/dist/extra/glquery.math.module.min.js'
   ]
   remaining = urls.length
   downloadCallback = (err, stdout, stderr) ->
@@ -302,8 +315,7 @@ task 'fetch:adt.js', "Update the adt.js library (always local)", (options) ->
   if options.global
     console.warn "adt.js is always installed locally"
   urls = [
-    'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.js',
-    'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.min.js'
+    'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.js'
   ]
   remaining = urls.length
   downloadCallback = (err, stdout, stderr) ->
