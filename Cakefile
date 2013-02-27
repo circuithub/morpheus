@@ -276,6 +276,9 @@ task 'fetch:libraries', "Update all supporting libraries", (options) ->
   #invoke 'fetch:jquery'
   #invoke 'fetch:jsandbox'
   #invoke 'fetch:uglifyjs-parser'
+  invoke 'fetch:adt.js'
+  invoke 'fetch:parameterize-form'
+
 
 task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
   if options.global
@@ -294,6 +297,38 @@ task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
     console.log "Done." if remaining == 0
   for url in urls
     exec "wget -nv -O static/lib/glquery/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
+task 'fetch:adt.js', "Update the adt.js library (always local)", (options) ->
+  if options.global
+    console.warn "adt.js is always installed locally"
+  urls = [
+    'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.js',
+    'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.min.js'
+  ]
+  remaining = urls.length
+  downloadCallback = (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    --remaining
+    console.log "Done." if remaining == 0
+  for url in urls
+    exec "wget -nv -O static/lib/adt/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
+task 'fetch:parameterize-form', "Update the parameterize-form library (always local)", (options) ->
+  if options.global
+    console.warn "parameterize-form is always installed locally"
+  urls = [
+    'https://raw.github.com/circuithub/parameterize-form/master/dist/parameterize-form.js'
+  ]
+  remaining = urls.length
+  downloadCallback = (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    --remaining
+    console.log "Done." if remaining == 0
+  for url in urls
+    exec "wget -nv -O static/lib/parameterize/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
 
 task 'minify', "Minify the resulting application file after build", ->
   minify()
