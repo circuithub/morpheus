@@ -267,26 +267,22 @@ morpheus.gui =
   });
 
   controlsParamChange = safeExport('morpheus.gui.controlsParamChange', void 0, function(event) {
-    var model, paramIndex, paramName, splitElName;
-    splitElName = event.target.name.split('[', 2);
-    paramName = splitElName[0];
-    paramIndex = splitElName.length > 1 ? Number((splitElName[1].split(']', 2))[0]) : 0;
-    model = state.models['scene'];
-    if (model.params[paramName] != null) {
-      switch (model.params[paramName].type) {
-        case 'float':
-          model.args[paramName] = Number(($(event.target)).val());
-          break;
-        case 'vec2':
-        case 'vec3':
-        case 'vec4':
-          model.args[paramName][paramIndex] = Number(($(event.target)).val());
-          break;
-        default:
-          morpheus.logInternalError("Unknown type `" + model.params[paramName].type + "` for parameter `" + paramName + "` during change event.");
-      }
-    }
-    morpheus.renderer.modelArguments('scene', model.args);
+    /* TODO: replace with parameterize-form
+    splitElName = event.target.name.split '[', 2
+    paramName = splitElName[0]
+    paramIndex = if splitElName.length > 1 then (Number (splitElName[1].split ']', 2)[0]) else 0
+    model = state.models['scene']
+    if model.params[paramName]?
+      switch model.params[paramName].type
+        when 'float'
+          model.args[paramName] = Number ($ event.target).val()
+        when 'vec2', 'vec3', 'vec4'
+          model.args[paramName][paramIndex] = Number ($ event.target).val()
+        else
+          morpheus.logInternalError "Unknown type `#{model.params[paramName].type}` for parameter `#{paramName}` during change event."
+    morpheus.renderer.modelArguments 'scene', model.args
+    */
+
   });
 
   registerDOMEvents = function() {
@@ -321,7 +317,7 @@ morpheus.gui =
   };
 
   controlsInit = safeExport('morpheus.gui: controlsInit', void 0, function() {
-    var el, html, maxAttr, minAttr, model, name, param, roundDecimals, stepAttr, val, _ref, _ref1;
+    var el, roundDecimals;
     roundDecimals = function(n) {
       var nonzeroDigits, parts, zeroDigits;
       parts = (String(n)).split('.');
@@ -340,84 +336,70 @@ morpheus.gui =
     };
     el = state.parameters.domElement;
     if (el != null) {
-      html = '<table>';
-      _ref = state.models;
-      for (name in _ref) {
-        model = _ref[name];
-        _ref1 = model.params;
-        for (param in _ref1) {
-          val = _ref1[param];
-          html += "<tr><td><label for='" + param + "'>" + val.description + "</label></td><td>";
-          switch (val.param) {
-            case 'range':
-              switch (val.type) {
-                case 'float':
-                  stepAttr = val.step != null ? " step='" + val.step + "'" : '';
-                  html += "<input name='" + param + "' id='" + param + "' class='morpheus-param-range' type='range' value='" + val.defaultArg + "' min='" + val.start + "' max='" + val.end + "'" + stepAttr + "></input>";
-                  break;
-                case 'vec2':
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'"] : ['', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  break;
-                case 'vec3':
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'"] : ['', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='morpheus-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                  break;
-                case 'vec4':
-                  stepAttr = val.step != null ? [" step='" + val.step[0] + "'", " step='" + val.step[1] + "'", " step='" + val.step[2] + "'", " step='" + val.step[3] + "'"] : ['', '', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-range' type='range' value='" + val.defaultArg[0] + "' min='" + val.start[0] + "' max='" + val.end[0] + "'" + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-range' type='range' value='" + val.defaultArg[1] + "' min='" + val.start[1] + "' max='" + val.end[1] + "'" + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='morpheus-param-range' type='range' value='" + val.defaultArg[2] + "' min='" + val.start[2] + "' max='" + val.end[2] + "'" + stepAttr[2] + "></input></div>";
-                  html += "<div><label for='" + param + "[0]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='morpheus-param-range' type='range' value='" + val.defaultArg[3] + "' min='" + val.start[3] + "' max='" + val.end[3] + "'" + stepAttr[3] + "></input></div>";
-                  break;
-                default:
-                  morpheus.logInternalError("Unknown range type `" + val.type + "` for parameter `" + param + "`.");
-              }
-              break;
-            case 'number':
-              switch (val.type) {
-                case 'float':
-                  minAttr = val.start != null ? " min='" + val.start + "'" : '';
-                  maxAttr = val.end != null ? " max='" + val.end + "'" : '';
-                  stepAttr = val.step != null ? " step='" + (roundDecimals(val.step)) + "'" : '';
-                  html += "<input name='" + param + "' id='" + param + "' class='morpheus-param-number' type='number' value='" + val.defaultArg + "'" + minAttr + maxAttr + stepAttr + "></input>";
-                  break;
-                case 'vec2':
-                  minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'"] : ['', ''];
-                  maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'"] : ['', ''];
-                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'"] : ['', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
-                  break;
-                case 'vec3':
-                  minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'", " min='" + val.start[2] + "'"] : ['', '', ''];
-                  maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'", " max='" + val.end[2] + "'"] : ['', '', ''];
-                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'", " step='" + (roundDecimals(val.step[2])) + "'"] : ['', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='morpheus-param-number' type='number' value='" + val.defaultArg[2] + "'" + minAttr[2] + maxAttr[2] + stepAttr[2] + "></input></div>";
-                  break;
-                case 'vec4':
-                  minAttr = val.start != null ? [" min='" + val.start[0] + "'", " min='" + val.start[1] + "'", " min='" + val.start[2] + "'", " min='" + val.start[3] + "'"] : ['', '', '', ''];
-                  maxAttr = val.end != null ? [" max='" + val.end[0] + "'", " max='" + val.end[1] + "'", " max='" + val.end[2] + "'", " max='" + val.end[3] + "'"] : ['', '', '', ''];
-                  stepAttr = val.step != null ? [" step='" + (roundDecimals(val.step[0])) + "'", " step='" + (roundDecimals(val.step[1])) + "'", " step='" + (roundDecimals(val.step[2])) + "'", " step='" + (roundDecimals(val.step[3])) + "'"] : ['', '', '', ''];
-                  html += "<div><label for='" + param + "[0]'>x</label><input name='" + param + "[0]' id='" + param + "[0]' class='morpheus-param-number' type='number' value='" + val.defaultArg[0] + "'" + minAttr[0] + maxAttr[0] + stepAttr[0] + "></input></div>";
-                  html += "<div><label for='" + param + "[1]'>y</label><input name='" + param + "[1]' id='" + param + "[1]' class='morpheus-param-number' type='number' value='" + val.defaultArg[1] + "'" + minAttr[1] + maxAttr[1] + stepAttr[1] + "></input></div>";
-                  html += "<div><label for='" + param + "[2]'>z</label><input name='" + param + "[2]' id='" + param + "[2]' class='morpheus-param-number' type='number' value='" + val.defaultArg[2] + "'" + minAttr[2] + maxAttr[2] + stepAttr[2] + "></input></div>";
-                  html += "<div><label for='" + param + "[3]'>w</label><input name='" + param + "[3]' id='" + param + "[3]' class='morpheus-param-number' type='number' value='" + val.defaultArg[3] + "'" + minAttr[3] + maxAttr[3] + stepAttr[3] + "></input></div>";
-                  break;
-                default:
-                  morpheus.logInternalError("Unknown number type `" + val.type + "` for parameter `" + param + "`.");
-              }
-          }
-          html += "</td></tr>";
-        }
-      }
-      html += '</table>';
-      el.innerHTML = html;
+      /* TODO: Replace with parameterize-form
+      html = '<table>'
+      for name, model of state.models
+        for param, val of model.params
+          html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
+          switch val.param
+            when 'range'
+              switch val.type
+                when 'float'
+                  stepAttr = if val.step? then " step='#{val.step}'" else ''
+                  html += "<input name='#{param}' id='#{param}' class='morpheus-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
+                when 'vec2'
+                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                when 'vec3'
+                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+                when 'vec4'
+                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
+                  html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-range' type='range' value='#{val.defaultArg[3]}' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
+                else
+                  morpheus.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
+            when 'number'
+              switch val.type
+                when 'float'
+                  minAttr = if val.start? then " min='#{val.start}'" else ''
+                  maxAttr = if val.end? then " max='#{val.end}'" else ''
+                  stepAttr = if val.step? then " step='#{roundDecimals val.step}'" else ''
+                  html += "<input name='#{param}' id='#{param}' class='morpheus-param-number' type='number' value='#{val.defaultArg}'#{minAttr}#{maxAttr}#{stepAttr}></input>"
+                when 'vec2'
+                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
+                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"] else ['','']
+                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"] else ['','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
+                when 'vec3'
+                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"] else ['','','']
+                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"] else ['','','']
+                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"] else ['','','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
+                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
+                when 'vec4'
+                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"," min='#{val.start[3]}'"] else ['','','','']
+                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"," max='#{val.end[3]}'"] else ['','','','']
+                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"," step='#{roundDecimals val.step[3]}'"] else ['','','','']
+                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
+                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
+                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
+                  html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-number' type='number' value='#{val.defaultArg[3]}'#{minAttr[3]}#{maxAttr[3]}#{stepAttr[3]}></input></div>"
+                else
+                  morpheus.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
+          html += "</td></tr>"
+      html += '</table>'
+      el.innerHTML = html
+      */
+
+      el.innerHTML = "<div>TODO</div>";
     }
   });
 

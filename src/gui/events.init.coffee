@@ -22,6 +22,7 @@ controlsInit = safeExport 'morpheus.gui: controlsInit', undefined, () ->
 
   el = state.parameters.domElement
   if el?
+    ### TODO: Replace with parameterize-form
     html = '<table>'
     for name, model of state.models
       for param, val of model.params
@@ -82,6 +83,8 @@ controlsInit = safeExport 'morpheus.gui: controlsInit', undefined, () ->
         html += "</td></tr>"
     html += '</table>'
     el.innerHTML = html
+    ###
+    el.innerHTML = "<div>TODO</div>"
   return
 
 # Initialize the CSM API (by loading the code from the given url)

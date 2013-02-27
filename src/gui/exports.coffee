@@ -1,4 +1,4 @@
-result =  exports ? {}
+result = exports ? {}
 result.create = create
 result.createControls = createControls
 result.sceneScript = sceneScript

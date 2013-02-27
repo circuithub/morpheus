@@ -7,6 +7,7 @@ controlsSourceCompile = safeExport 'morpheus.gui.controlsSourceCompile', undefin
   return
 
 controlsParamChange = safeExport 'morpheus.gui.controlsParamChange', undefined, (event) ->
+  ### TODO: replace with parameterize-form
   splitElName = event.target.name.split '[', 2
   paramName = splitElName[0]
   paramIndex = if splitElName.length > 1 then (Number (splitElName[1].split ']', 2)[0]) else 0
@@ -20,4 +21,5 @@ controlsParamChange = safeExport 'morpheus.gui.controlsParamChange', undefined, 
       else
         morpheus.logInternalError "Unknown type `#{model.params[paramName].type}` for parameter `#{paramName}` during change event."
   morpheus.renderer.modelArguments 'scene', model.args
+  ###
   return

@@ -22,8 +22,13 @@ do () ->
       morpheusPrimitiveTypeof value[0]
     else
       switch typeof value
-        when 'number' then 'float'
+        when 'real' then 'float'
         else throw "Unknown parameter type `#{typeof value}`."
+
+  varCons = (args, datatype) -> 
+    result = Array.prototype.slice.call args, 0
+    result._tag = datatype
+    return result
 
   # Fluid API builder
   Dispatcher = ->
@@ -127,16 +132,18 @@ do () ->
   extend window, dispatch
 
   # Parameters
+  ###
   class MorpheusParameter
     constructor: (attr) ->
       @attr = attr
       @str = "u#{attr.paramIndex}"
       exportedParameters[this.str] = attr
+  ###
 
   class MorpheusExpression
     constructor: (param, str) ->
       @param = param
-      @str = if str? then str else new String param.str
+      @str = new String str
     serialize: ->
       @str
     update: (str) ->
@@ -191,7 +198,7 @@ do () ->
           result += a[i] * b[i]
         return result
       else if Array.isArray a
-        result = a.slice()
+        result = a.slice 0
         for i in [0...a.length]
           result[i] *= b
         return result
@@ -205,7 +212,7 @@ do () ->
         # Subtract two vectors
         if a.length != b.length then throw "No subtract operator available for arrays of different lengths."
         if a.length > 4 then throw "No subtract operator available for arrays of lengths greater than 4."
-        result = a.slice()
+        result = a.slice 0
         for i in [0...a.length]
           result[i] -= b[i]
         return result
@@ -214,35 +221,41 @@ do () ->
       else
         throw "No subtract operator available operands with types `#{typeof a}` and `#{typeof b}`."
 
-    window.range = (description, defaultArg, start, end, step) ->
-      paramIndex = globalParamIndex
+    #window.parameters: (description, children...) ->
+    # TODO
+    
+    #window.section: (heading, children...) ->
+    # TODO
+
+    window.real = (label, description, defaultValue) ->
+      param = varCons arguments, "real"
+      paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
+      exportedParameters[paramStr] = param
+      return new MorpheusExpression param, paramStr
 
-      new MorpheusExpression (new MorpheusParameter
-        param: 'range'
-        description: description
-        type: morpheusTypeof defaultArg
-        primitiveType: morpheusPrimitiveTypeof defaultArg
-        paramIndex: paramIndex
-        defaultArg: defaultArg
-        start: start
-        end: end
-        step: if step? then step else (mul (sub end, start), 0.01)
-      )
-
-    window.number = (description, defaultArg, start, end, step) ->
-      paramIndex = globalParamIndex
+    window.option = (label, description, options, defaultOption) ->
+      param = varCons arguments, "option"
+      paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
-      
-      new MorpheusExpression (new MorpheusParameter
-        param: 'number'
-        description: description
-        type: morpheusTypeof defaultArg
-        primitiveType: morpheusPrimitiveTypeof defaultArg
-        paramIndex: paramIndex
-        defaultArg: defaultArg
-        start: if start? then start else null
-        end: if end? then end else null
-        step: if step? then step else (if start? and end? then (mul (sub end, start), 0.05) else null)
-      )
+      exportedParameters[paramStr] = param
+      return new MorpheusExpression param, paramStr
 
+    window.boolean = (label, description, defaultValue) ->
+      param = varCons arguments, "boolean"
+      paramStr = "u#{globalParamIndex}"
+      ++globalParamIndex
+      exportedParameters[paramStr] = param
+      return new MorpheusExpression param, paramStr
+
+    #window.tolerances = (tolerances...) ->
+    #  paramIndex = globalParamIndex
+    #  ++globalParamIndex
+    #  return new MorpheusExpression (varCons arguments, ""), paramIndex
+
+    window.range = (label, description, defaultValue, range) ->
+      param = varCons arguments, "range"
+      paramStr = "u#{globalParamIndex}"
+      ++globalParamIndex
+      exportedParameters[paramStr] = param
+      return new MorpheusExpression param, paramStr

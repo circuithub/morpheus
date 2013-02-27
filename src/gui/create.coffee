@@ -65,4 +65,3 @@ createControls = safeExport 'morpheus.gui.createControls', false, (container) ->
   controlsInit() 
   registerControlEvents()
   return true
-

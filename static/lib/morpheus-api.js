@@ -10,7 +10,7 @@ morpheus.api =
     __slice = [].slice;
 
   (function() {
-    var Api, Dispatcher, MorpheusExpression, MorpheusParameter, dispatch, extend, morpheusPrimitiveTypeof, morpheusTypeof;
+    var Api, Dispatcher, MorpheusExpression, dispatch, extend, morpheusPrimitiveTypeof, morpheusTypeof, varCons;
     extend = function(obj, mixin) {
       var method, name;
       for (name in mixin) {
@@ -35,12 +35,18 @@ morpheus.api =
         return morpheusPrimitiveTypeof(value[0]);
       } else {
         switch (typeof value) {
-          case 'number':
+          case 'real':
             return 'float';
           default:
             throw "Unknown parameter type `" + (typeof value) + "`.";
         }
       }
+    };
+    varCons = function(args, datatype) {
+      var result;
+      result = Array.prototype.slice.call(args, 0);
+      result._tag = datatype;
+      return result;
     };
     Dispatcher = function() {};
     dispatch = new Dispatcher;
@@ -236,22 +242,19 @@ morpheus.api =
       };
     };
     extend(window, dispatch);
-    MorpheusParameter = (function() {
+    /*
+      class MorpheusParameter
+        constructor: (attr) ->
+          @attr = attr
+          @str = "u#{attr.paramIndex}"
+          exportedParameters[this.str] = attr
+    */
 
-      function MorpheusParameter(attr) {
-        this.attr = attr;
-        this.str = "u" + attr.paramIndex;
-        exportedParameters[this.str] = attr;
-      }
-
-      return MorpheusParameter;
-
-    })();
     MorpheusExpression = (function() {
 
       function MorpheusExpression(param, str) {
         this.param = param;
-        this.str = str != null ? str : new String(param.str);
+        this.str = new String(str);
       }
 
       MorpheusExpression.prototype.serialize = function() {
@@ -337,7 +340,7 @@ morpheus.api =
           }
           return result;
         } else if (Array.isArray(a)) {
-          result = a.slice();
+          result = a.slice(0);
           for (i = _j = 0, _ref1 = a.length; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
             result[i] *= b;
           }
@@ -357,7 +360,7 @@ morpheus.api =
           if (a.length > 4) {
             throw "No subtract operator available for arrays of lengths greater than 4.";
           }
-          result = a.slice();
+          result = a.slice(0);
           for (i = _i = 0, _ref = a.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
             result[i] -= b[i];
           }
@@ -368,37 +371,37 @@ morpheus.api =
           throw "No subtract operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
         }
       };
-      window.range = function(description, defaultArg, start, end, step) {
-        var paramIndex;
-        paramIndex = globalParamIndex;
+      window.real = function(label, description, defaultValue) {
+        var param, paramStr;
+        param = varCons(arguments, "real");
+        paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
-        return new MorpheusExpression(new MorpheusParameter({
-          param: 'range',
-          description: description,
-          type: morpheusTypeof(defaultArg),
-          primitiveType: morpheusPrimitiveTypeof(defaultArg),
-          paramIndex: paramIndex,
-          defaultArg: defaultArg,
-          start: start,
-          end: end,
-          step: step != null ? step : mul(sub(end, start), 0.01)
-        }));
+        exportedParameters[paramStr] = param;
+        return new MorpheusExpression(param, paramStr);
       };
-      return window.number = function(description, defaultArg, start, end, step) {
-        var paramIndex;
-        paramIndex = globalParamIndex;
+      window.option = function(label, description, options, defaultOption) {
+        var param, paramStr;
+        param = varCons(arguments, "option");
+        paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
-        return new MorpheusExpression(new MorpheusParameter({
-          param: 'number',
-          description: description,
-          type: morpheusTypeof(defaultArg),
-          primitiveType: morpheusPrimitiveTypeof(defaultArg),
-          paramIndex: paramIndex,
-          defaultArg: defaultArg,
-          start: start != null ? start : null,
-          end: end != null ? end : null,
-          step: step != null ? step : ((start != null) && (end != null) ? mul(sub(end, start), 0.05) : null)
-        }));
+        exportedParameters[paramStr] = param;
+        return new MorpheusExpression(param, paramStr);
+      };
+      window.boolean = function(label, description, defaultValue) {
+        var param, paramStr;
+        param = varCons(arguments, "boolean");
+        paramStr = "u" + globalParamIndex;
+        ++globalParamIndex;
+        exportedParameters[paramStr] = param;
+        return new MorpheusExpression(param, paramStr);
+      };
+      return window.range = function(label, description, defaultValue, range) {
+        var param, paramStr;
+        param = varCons(arguments, "range");
+        paramStr = "u" + globalParamIndex;
+        ++globalParamIndex;
+        exportedParameters[paramStr] = param;
+        return new MorpheusExpression(param, paramStr);
       };
     })();
   })();
