@@ -115,9 +115,9 @@ concatHeader = (filename, module, callback) ->
       if module?
         fs.readFile "src/#{module}/header.js", 'utf8', (err, headerContents) ->
           throw err if err
-          callback (commonHeaderContents + headerContents + fileContents) if callback?
+          callback?(commonHeaderContents + headerContents + fileContents)
       else
-        callback (commonHeaderContents + fileContents) if callback?
+        callback?(commonHeaderContents + fileContents)
 
 # (String, String) -> Maybe (() -> IO) -> String -> IO
 buildText = (filename, module) -> (callback) -> (text) ->
@@ -134,12 +134,12 @@ buildText = (filename, module) -> (callback) -> (text) ->
           fs.writeFile "static/lib/#{filename}.js", text, 'utf8', (err) ->
             throw err if err
             console.log "...Done (#{filename}.js)"
-            callback() if callback?
+            callback?()
 
 # String -> Maybe (String -> IO) -> String -> IO
 prependText = (preText) -> (callback) -> (text) ->
   console.log "Concatinating debug flag..."
-  callback(preText + text) if callback?
+  callback?(preText + text)
 
 # [String] -> Maybe (String -> () -> IO) -> () -> IO
 concatFiles = (files) -> (callback) -> ->
@@ -156,7 +156,7 @@ writeJSFile = (filename) -> (callback) -> (text) ->
   fs.writeFile "static/lib/#{filename}.js", text.join('\n\n'), 'utf8', (err) ->
     throw err if err
     console.log "...Done (#{filename}.js)"
-    callback() if callback?
+    callback?()
 
 # [String] -> (String -> IO) -> IO
 concatJSFiles = (files) -> (callback) ->
