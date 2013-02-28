@@ -84,4 +84,3 @@ optimizeASM = (node, flags) ->
       stack[0].nodes.push node
 
   return mapASM preDispatch, postDispatch, [{type: 'union', nodes: []}], node, flags
-

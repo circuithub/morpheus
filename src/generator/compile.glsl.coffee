@@ -106,7 +106,19 @@ compileGLSL = safeExport 'morpheus.editor.compileGLSL', ['',''], (abstractSolidM
       result
 
     generateUniforms = (params) ->
-      ("uniform #{attr.type} #{name}; // #{attr.description}" for name,attr of params).join '\n'
+      (for name, data of params
+        [id,meta,defaultValue] = data
+        type = switch data._tag
+          when 'real','dimension1','pitch1','angle' then 'float'
+          when 'dimension2','vector2','point2','pitch2','polar','cylindrical' then 'vec2'
+          when 'dimension3','vector3','point3','pitch3','spherical' then 'vec3'
+          when 'natural','latice1' then 'float' # TODO: uint
+          when 'latice2' then 'vec2' # TODO: uint
+          when 'latice3' then 'vec3' # TODO: uint
+          else "(ERROR #{data._tag})"
+        "uniform #{type} #{name};" + (if meta.description? then " // #{meta.description}" else "")
+      ).join '\n'
+      #("uniform #{attr.type} #{name}; // #{attr.description}" for name,attr of params).join '\n'
 
     # Shader
     distanceCode = distanceResult.nodes[0].code

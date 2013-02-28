@@ -228,14 +228,35 @@ do () ->
     #window.section: (heading, children...) ->
     # TODO
 
-    window.real = (label, description, defaultValue) ->
-      param = varCons arguments, "real"
+    varConsSimple = (type, primitiveType, id, meta, defaultValue) ->
+      param = varCons arguments, type
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr, 'float'
+      return new MorpheusExpression param, paramStr, primitiveType
 
-    window.option = (label, description, options, defaultOption) ->
+    window.real = (id, meta, defaultValue) -> varConsSimple 'real', 'float', arguments...
+    window.dimension1 = (id, meta, defaultValue) -> varConsSimple 'dimension1', 'float', arguments...
+    window.dimension2 = (id, meta, defaultValue) -> varConsSimple 'dimension2', 'float', arguments...
+    window.dimension3 = (id, meta, defaultValue) -> varConsSimple 'dimension3', 'float', arguments...
+    window.vector2 = (id, meta, defaultValue) -> varConsSimple 'vector2', 'float', arguments...
+    window.vector3 = (id, meta, defaultValue) -> varConsSimple 'vector3', 'float', arguments...
+    window.point2 = (id, meta, defaultValue) -> varConsSimple 'point2', 'float', arguments...
+    window.point3 = (id, meta, defaultValue) -> varConsSimple 'point3', 'float', arguments...
+    window.pitch1 = (id, meta, defaultValue) -> varConsSimple 'pitch1', 'float', arguments...
+    window.pitch2 = (id, meta, defaultValue) -> varConsSimple 'pitch2', 'float', arguments...
+    window.pitch3 = (id, meta, defaultValue) -> varConsSimple 'pitch3', 'float', arguments...
+    window.angle = (id, meta, defaultValue) -> varConsSimple 'angle', 'float', arguments...
+    window.polar = (id, meta, defaultValue) -> varConsSimple 'polar', 'float', arguments...
+    window.cylindrical = (id, meta, defaultValue) -> varConsSimple 'cylindrical', 'float', arguments...
+    window.spherical = (id, meta, defaultValue) -> varConsSimple 'spherical', 'float', arguments...
+    
+    window.natural = (id, meta, defaultValue) -> varConsSimple 'natural', 'float', arguments... # TODO: uint
+    window.latice1 = (id, meta, defaultValue) -> varConsSimple 'latice1', 'float', arguments... # TODO: uint
+    window.latice2 = (id, meta, defaultValue) -> varConsSimple 'latice2', 'float', arguments... # TODO: uint
+    window.latice3 = (id, meta, defaultValue) -> varConsSimple 'latice3', 'float', arguments... # TODO: uint
+    
+    window.option = (id, meta, options, defaultOption) ->
       param = varCons arguments, "option"
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
@@ -243,7 +264,7 @@ do () ->
       throw "Option is not supported yet"
       return new MorpheusExpression param, paramStr, undefined
 
-    window.boolean = (label, description, defaultValue) ->
+    window.boolean = (id, meta, defaultValue) ->
       param = varCons arguments, "boolean"
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
@@ -256,7 +277,7 @@ do () ->
     #  ++globalParamIndex
     #  return new MorpheusExpression (varCons arguments, ""), paramIndex
 
-    window.range = (label, description, defaultValue, range) ->
+    window.range = (id, meta, defaultValue, range) ->
       param = varCons arguments, "range"
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex

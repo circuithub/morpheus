@@ -16,12 +16,12 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = real("Chip Dimensions", [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
-    ballCount = real("Ball Count", [5,5], [1,1], [10,10], [1,1]),
-    ballPitch  = real("Ball Pitch", [0.15,0.15], [0.05,0.05], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
-    ballDiameter = real("Ball Diameter", 0.1, 0.05, 0.15),
-    alignMarkRadius = real("Alignment Mark Radius", 0.075, 0.02, 0.2),
-    borderGap = real("Border Gap", 0.05, 0.01, 0.1);
+var chipDimensions = dimension3("chipDimensions", {label: "Chip Dimensions"}, [0.8, 0.8, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]), // assuming we're working in centimeters
+    ballCount = latice2("ballCount", {label: "Ball Count"}, [5,5], [1,1], [10,10], [1,1]),
+    ballPitch  = pitch2("ballPitch", {label: "Ball Pitch"}, [0.15,0.15], [0.05,0.05], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
+    ballDiameter = dimension1("ballDiameter", {label: "Ball Diameter"}, 0.1, 0.05, 0.15),
+    alignMarkRadius = dimension1("alignMarkRadius", {label: "Alignment Mark Radius"}, 0.075, 0.02, 0.2),
+    borderGap = dimension1("borderGap", {label: "Border Gap"}, 0.05, 0.01, 0.1); // Perhaps margin?
 
 //* Chip body
 difference(

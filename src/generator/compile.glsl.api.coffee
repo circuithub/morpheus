@@ -387,5 +387,3 @@ glsl = do ->
         (glsl.mul 2, (glsl.add xz, yw)),               (glsl.mul 2, (glsl.sub yz, xw)),               (glsl.sub 1, (glsl.mul 2, (glsl.mul xx, yy)))
       ]
       ###
-      
-

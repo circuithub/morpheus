@@ -22,4 +22,3 @@ mapASM = (preDispatch, postDispatch, stack, node, flags) ->
     postDispatch['default'] stack, resultNode, flags
   stack.reverse()
   return stack[0]
-

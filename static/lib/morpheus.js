@@ -2198,13 +2198,45 @@ morpheus.generator =
         return result;
       };
       generateUniforms = function(params) {
-        var attr, name;
+        var data, defaultValue, id, meta, name, type;
         return ((function() {
           var _results;
           _results = [];
           for (name in params) {
-            attr = params[name];
-            _results.push("uniform " + attr.type + " " + name + "; // " + attr.description);
+            data = params[name];
+            id = data[0], meta = data[1], defaultValue = data[2];
+            type = (function() {
+              switch (data._tag) {
+                case 'real':
+                case 'dimension1':
+                case 'pitch1':
+                case 'angle':
+                  return 'float';
+                case 'dimension2':
+                case 'vector2':
+                case 'point2':
+                case 'pitch2':
+                case 'polar':
+                case 'cylindrical':
+                  return 'vec2';
+                case 'dimension3':
+                case 'vector3':
+                case 'point3':
+                case 'pitch3':
+                case 'spherical':
+                  return 'vec3';
+                case 'natural':
+                case 'latice1':
+                  return 'float';
+                case 'latice2':
+                  return 'vec2';
+                case 'latice3':
+                  return 'vec3';
+                default:
+                  return "(ERROR " + data._tag + ")";
+              }
+            })();
+            _results.push(("uniform " + type + " " + name + ";") + (meta.description != null ? " // " + meta.description : ""));
           }
           return _results;
         })()).join('\n');

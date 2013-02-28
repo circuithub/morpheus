@@ -324,7 +324,7 @@ morpheus.api =
 
     })();
     return (function() {
-      var globalParamIndex, mul, sub;
+      var globalParamIndex, mul, sub, varConsSimple;
       globalParamIndex = 0;
       mul = function(a, b) {
         var i, result, _i, _j, _ref, _ref1;
@@ -372,15 +372,72 @@ morpheus.api =
           throw "No subtract operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
         }
       };
-      window.real = function(label, description, defaultValue) {
+      varConsSimple = function(type, primitiveType, id, meta, defaultValue) {
         var param, paramStr;
-        param = varCons(arguments, "real");
+        param = varCons(arguments, type);
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr, 'float');
+        return new MorpheusExpression(param, paramStr, primitiveType);
       };
-      window.option = function(label, description, options, defaultOption) {
+      window.real = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['real', 'float'].concat(__slice.call(arguments)));
+      };
+      window.dimension1 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['dimension1', 'float'].concat(__slice.call(arguments)));
+      };
+      window.dimension2 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['dimension2', 'float'].concat(__slice.call(arguments)));
+      };
+      window.dimension3 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['dimension3', 'float'].concat(__slice.call(arguments)));
+      };
+      window.vector2 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['vector2', 'float'].concat(__slice.call(arguments)));
+      };
+      window.vector3 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['vector3', 'float'].concat(__slice.call(arguments)));
+      };
+      window.point2 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['point2', 'float'].concat(__slice.call(arguments)));
+      };
+      window.point3 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['point3', 'float'].concat(__slice.call(arguments)));
+      };
+      window.pitch1 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['pitch1', 'float'].concat(__slice.call(arguments)));
+      };
+      window.pitch2 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['pitch2', 'float'].concat(__slice.call(arguments)));
+      };
+      window.pitch3 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['pitch3', 'float'].concat(__slice.call(arguments)));
+      };
+      window.angle = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['angle', 'float'].concat(__slice.call(arguments)));
+      };
+      window.polar = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['polar', 'float'].concat(__slice.call(arguments)));
+      };
+      window.cylindrical = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['cylindrical', 'float'].concat(__slice.call(arguments)));
+      };
+      window.spherical = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['spherical', 'float'].concat(__slice.call(arguments)));
+      };
+      window.natural = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['natural', 'float'].concat(__slice.call(arguments)));
+      };
+      window.latice1 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['latice1', 'float'].concat(__slice.call(arguments)));
+      };
+      window.latice2 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['latice2', 'float'].concat(__slice.call(arguments)));
+      };
+      window.latice3 = function(id, meta, defaultValue) {
+        return varConsSimple.apply(null, ['latice3', 'float'].concat(__slice.call(arguments)));
+      };
+      window.option = function(id, meta, options, defaultOption) {
         var param, paramStr;
         param = varCons(arguments, "option");
         paramStr = "u" + globalParamIndex;
@@ -389,7 +446,7 @@ morpheus.api =
         throw "Option is not supported yet";
         return new MorpheusExpression(param, paramStr, void 0);
       };
-      window.boolean = function(label, description, defaultValue) {
+      window.boolean = function(id, meta, defaultValue) {
         var param, paramStr;
         param = varCons(arguments, "boolean");
         paramStr = "u" + globalParamIndex;
@@ -398,7 +455,7 @@ morpheus.api =
         throw "Boolean is not supported yet";
         return new MorpheusExpression(param, paramStr, void 0);
       };
-      return window.range = function(label, description, defaultValue, range) {
+      return window.range = function(id, meta, defaultValue, range) {
         var param, paramStr;
         param = varCons(arguments, "range");
         paramStr = "u" + globalParamIndex;
