@@ -141,9 +141,10 @@ do () ->
   ###
 
   class MorpheusExpression
-    constructor: (param, str) ->
+    constructor: (param, str, primitiveType) ->
       @param = param
       @str = new String str
+      @primitiveType = primitiveType
     serialize: ->
       @str
     update: (str) ->
@@ -158,28 +159,28 @@ do () ->
     mul: (arg) ->
       if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) * (#{arg.serialize()})"
-      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+      else if @primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) * #{arg}.0"
       else
         @update "(#{@serialize()}) * #{arg}"
     div: (arg) ->
       if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) / (#{arg.serialize()})"
-      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+      else if @primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) / #{arg}.0"
       else
         @update "(#{@serialize()}) / #{arg}"
     add: (arg) ->
       if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) + (#{arg.serialize()})"
-      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+      else if @primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) + #{arg}.0"
       else
         @update "(#{@serialize()}) + #{arg}"
     sub: (arg) ->
       if arg instanceof MorpheusExpression
         @update "(#{@serialize()}) - (#{arg.serialize()})"
-      else if @param.attr.primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
+      else if @primitiveType == 'float' and typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
         @update "(#{@serialize()}) - #{arg}.0"
       else
         @update "(#{@serialize()}) - #{arg}"
@@ -232,21 +233,23 @@ do () ->
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr
+      return new MorpheusExpression param, paramStr, 'float'
 
     window.option = (label, description, options, defaultOption) ->
       param = varCons arguments, "option"
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr
+      throw "Option is not supported yet"
+      return new MorpheusExpression param, paramStr, undefined
 
     window.boolean = (label, description, defaultValue) ->
       param = varCons arguments, "boolean"
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr
+      throw "Boolean is not supported yet"
+      return new MorpheusExpression param, paramStr, undefined
 
     #window.tolerances = (tolerances...) ->
     #  paramIndex = globalParamIndex
@@ -258,4 +261,4 @@ do () ->
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr
+      return new MorpheusExpression param, paramStr, 'float'

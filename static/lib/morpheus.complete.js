@@ -2958,35 +2958,267 @@ var adt = (function() {
 var __slice = [].slice;
 
 (function(adt, html) {
-  var escapeAttrib, toleranceHTML, wrap;
-  wrap = function() {
-    return html.div.apply(html, [{
-      "class": 'parameter'
-    }].concat(__slice.call(arguments)));
-  };
+  var escapeAttrib, labeledElements, labeledInput, labeledInputs, labeledToleranceInput, labeledToleranceInputs, shortLabelLength, toleranceHTML, toleranceTable, wrap, wrapComposite, wrapTolerance;
+  shortLabelLength = 5;
   escapeAttrib = function(str) {
     return (String(str)).replace(/['"]/gi, "`");
   };
+  wrap = function() {
+    return html.div.apply(html, [{
+      "class": "parameter clearfix"
+    }].concat(__slice.call(arguments)));
+  };
+  wrapComposite = function() {
+    return html.div.apply(html, [{
+      "class": "parameter param-composite clearfix"
+    }].concat(__slice.call(arguments)));
+  };
+  wrapTolerance = function() {
+    return html.div.apply(html, [{
+      "class": "parameter param-tolerance clearfix"
+    }].concat(__slice.call(arguments)));
+  };
+  labeledElements = function() {
+    var elements, label;
+    label = arguments[0], elements = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    return html.label.apply(html, [{
+      "class": "param-label"
+    }, html.span({
+      "class": "param-label-text"
+    }, String(label))].concat(__slice.call(elements)));
+  };
+  labeledInput = function(label, value) {
+    return labeledElements(label, html.input({
+      "class": "param-input",
+      value: String(value)
+    }));
+  };
+  labeledInputs = function(n, labels, values, shortLabels) {
+    var i, _i, _results;
+    if (shortLabels == null) {
+      shortLabels = false;
+    }
+    if (!shortLabels) {
+      _results = [];
+      for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+        _results.push(labeledInput(labels[i], values[i]));
+      }
+      return _results;
+    } else {
+      return [
+        html.table({
+          "class": "param-composite-table"
+        }, html.thead({
+          "class": "param-composite-thead"
+        }, html.tr.apply(html, [{
+          "class": "param-composite-thead-tr"
+        }].concat(__slice.call((function() {
+          var _j, _results1;
+          _results1 = [];
+          for (i = _j = 0; 0 <= n ? _j < n : _j > n; i = 0 <= n ? ++_j : --_j) {
+            _results1.push(html.th({
+              "class": "param-composite-th"
+            }, labeledElements(labels[i])));
+          }
+          return _results1;
+        })())))), html.tbody({
+          "class": "param-composite-tbody"
+        }, html.tr.apply(html, [{
+          "class": "param-composite-tr"
+        }].concat(__slice.call((function() {
+          var _j, _results1;
+          _results1 = [];
+          for (i = _j = 0; 0 <= n ? _j < n : _j > n; i = 0 <= n ? ++_j : --_j) {
+            _results1.push(html.td({
+              "class": "param-composite-td"
+            }, html.input({
+              "class": "param-input",
+              value: String(values[i])
+            })));
+          }
+          return _results1;
+        })())))))
+      ];
+    }
+  };
+  labeledToleranceInput = function(label, tolerance) {
+    return labeledElements(label, html.input({
+      "class": "param-input",
+      value: String(tolerance.min)
+    }), html.input({
+      "class": "param-input",
+      value: String(tolerance.max)
+    }));
+  };
+  labeledToleranceInputs = function(n, labels, tolerances) {
+    var i, _i, _results;
+    _results = [];
+    for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+      _results.push(labeledToleranceInput(labels[i], {
+        min: tolerances.min[i],
+        max: tolerances.max[i]
+      }));
+    }
+    return _results;
+  };
+  toleranceTable = function() {
+    var elements;
+    elements = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    return html.div({
+      "class": "param-tolerance-table"
+    }, html.div({
+      "class": "param-tolerance-legend"
+    }, html.span({
+      "class": "param-tolerance-legend-label"
+    }, "Min"), html.span({
+      "class": "param-tolerance-legend-label"
+    }, "Max")), html.div.apply(html, [{
+      "class": "param-tolerance-body"
+    }].concat(__slice.call(elements))));
+  };
   toleranceHTML = adt({
-    real: function(label, description, defaultTolerance) {
-      return wrap(html.div({
-        "class": "param-real",
-        title: escapeAttrib(description)
+    real: function(id, meta, defaultTolerance) {
+      var _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      return wrapTolerance(html.div({
+        "class": "param-numeric param-real",
+        title: escapeAttrib(meta.description)
+      }, toleranceTable(labeledToleranceInput(meta.label, defaultTolerance))));
+    },
+    dimension1: function(id, meta, defaultTolerance) {
+      var _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      return wrapTolerance(html.div({
+        "class": "param-numeric param-real",
+        title: escapeAttrib(meta.description)
+      }, toleranceTable(labeledToleranceInput(meta.label, defaultTolerance))));
+    },
+    dimension2: function(id, meta, defaultTolerance) {
+      var _ref, _ref1;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      if ((_ref1 = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      if (!Array.isArray(defaultTolerance.min)) {
+        defaultTolerance.min = [defaultTolerance.min, defaultTolerance.min, defaultTolerance.min];
+      }
+      if (!Array.isArray(defaultTolerance.max)) {
+        defaultTolerance.max = [defaultTolerance.max, defaultTolerance.max, defaultTolerance.max];
+      }
+      return wrapTolerance(html.div({
+        "class": "param-numeric param-dimension3",
+        title: escapeAttrib(meta.description)
       }, html.label({
-        "class": "param-label"
+        "class": "param-composite-label"
       }, html.span({
         "class": "param-label-text"
-      }, String(label)), html.span({
-        "class": "param-real param-tolerance-min"
-      }, html.input({
-        "class": "param-input",
-        value: String(defaultTolerance.min)
-      })), html.span({
-        "class": "param-real param-tolerance-max"
-      }, html.input({
-        "class": "param-input",
-        value: String(defaultTolerance.max)
-      })))));
+      }, String(meta.label))), toleranceTable.apply(null, labeledToleranceInputs(2, meta.components, defaultTolerance))));
+    },
+    dimension3: function(id, meta, defaultTolerance) {
+      var _ref, _ref1;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      if ((_ref1 = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      if (!Array.isArray(defaultTolerance.min)) {
+        defaultTolerance.min = [defaultTolerance.min, defaultTolerance.min, defaultTolerance.min];
+      }
+      if (!Array.isArray(defaultTolerance.max)) {
+        defaultTolerance.max = [defaultTolerance.max, defaultTolerance.max, defaultTolerance.max];
+      }
+      return wrapTolerance(html.div({
+        "class": "param-numeric param-dimension3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label))), toleranceTable.apply(null, labeledToleranceInputs(3, meta.components, defaultTolerance))));
+    },
+    vector2: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    vector3: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    point2: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    point3: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    pitch1: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    pitch2: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    pitch3: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    angle: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    polar: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    cylindrical: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
+    },
+    spherical: function() {
+      throw "Unsupported tolerance type `" + this._tag + "` (TODO)";
     },
     _: function() {
       throw "Unsupported tolerance type `" + this._tag + "`";
@@ -3003,27 +3235,196 @@ var __slice = [].slice;
     section: function() {
       var children, heading;
       heading = arguments[0], children = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return wrap(html.section.apply(html, [{
+      return html.section.apply(html, [{
         "class": "param-section"
       }, html.h1({
         "class": "param-heading"
-      }, String(heading))].concat(__slice.call(adt.map(this, children)))));
+      }, String(heading))].concat(__slice.call(adt.map(this, children))));
     },
-    real: function(label, description, defaultValue) {
+    real: function(id, meta, defaultValue) {
+      var _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
       return wrap(html.div({
-        "class": "param-real",
-        title: escapeAttrib(description)
+        "class": "param-numeric param-real",
+        title: escapeAttrib(meta.description)
       }, html.label({
         "class": "param-label"
       }, html.span({
         "class": "param-label-text"
-      }, String(label)), html.input({
+      }, String(meta.label)), html.input({
         "class": "param-input",
         value: String(defaultValue)
       }))));
     },
-    option: function(label, description, options, defaultOption) {
-      var k, keyValue, v;
+    dimension1: function(id, meta, defaultValue) {
+      var _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      return wrap(html.div({
+        "class": "param-numeric param-dimension1",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)), html.input({
+        "class": "param-input",
+        value: String(defaultValue)
+      }))));
+    },
+    dimension2: function(id, meta, defaultValue) {
+      var shortLabels, _ref, _ref1;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      if ((_ref1 = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-dimension2",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
+    },
+    dimension3: function(id, meta, defaultValue) {
+      var shortLabels, _ref, _ref1;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
+      if ((_ref1 = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-dimension3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
+    },
+    vector2: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    vector3: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    point2: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    point3: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    pitch1: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    pitch2: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    pitch3: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    angle: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    polar: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    cylindrical: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    spherical: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    integer: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    natural: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    latice1: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    latice2: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    latice3: function() {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    },
+    option: function(id, meta, options, defaultOption) {
+      var k, keyValue, v, _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
       keyValue = {};
       options = (function() {
         var _i, _len, _results;
@@ -3042,13 +3443,9 @@ var __slice = [].slice;
         defaultOption = (Object.keys(keyValue))[0];
       }
       return wrap(html.div({
-        "class": "param-real",
-        title: escapeAttrib(description)
-      }, html.label({
-        "class": "param-label"
-      }, html.span({
-        "class": "param-label-text"
-      }, String(label)), html.select.apply(html, [{
+        "class": "param-numeric param-real",
+        title: escapeAttrib(meta.description)
+      }, labeledElements(meta.label, html.select.apply(html, [{
         "class": "param-select"
       }].concat(__slice.call((function() {
         var _results;
@@ -3063,31 +3460,35 @@ var __slice = [].slice;
         return _results;
       })()))))));
     },
-    boolean: function(label, description, defaultValue) {
+    boolean: function(id, meta, defaultValue) {
+      var _ref;
+      if (typeof meta === 'string') {
+        meta = {
+          label: meta
+        };
+      } else if (!(meta != null)) {
+        meta = {
+          label: id
+        };
+      } else if (!(meta.label != null)) {
+        meta.label = id;
+      }
+      if ((_ref = meta.description) == null) {
+        meta.description = "";
+      }
       return wrap(html.div({
         "class": "param-boolean",
-        title: escapeAttrib(description)
-      }, html.label({
-        "class": "param-label"
-      }, html.input({
+        title: escapeAttrib(meta.description)
+      }, labeledElements(meta.label, html.input({
         type: "checkbox",
         "class": "param-checkbox"
-      }), html.span(String(label)))));
+      }))));
     },
-    tolerances: function() {
-      var tolerances;
-      tolerances = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      return html.div({
-        "class": "param-tolerance-table"
-      }, html.div({
-        "class": "param-tolerance-legend"
-      }, html.span({
-        "class": "param-tolerance-legend-label"
-      }, "Min"), html.span({
-        "class": "param-tolerance-legend-label"
-      }, "Max")), html.div.apply(html, [{
-        "class": "param-tolerance-body"
-      }].concat(__slice.call(adt.map(toleranceHTML, tolerances)))));
+    tolerance: function(tolerance) {
+      return toleranceHTML(tolerance);
+    },
+    range: function(id, meta, defaultValue, range) {
+      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
     _: function() {
       throw "Unsupported parameter type `" + this._tag + "`";

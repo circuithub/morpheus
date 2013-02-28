@@ -252,9 +252,10 @@ morpheus.api =
 
     MorpheusExpression = (function() {
 
-      function MorpheusExpression(param, str) {
+      function MorpheusExpression(param, str, primitiveType) {
         this.param = param;
         this.str = new String(str);
+        this.primitiveType = primitiveType;
       }
 
       MorpheusExpression.prototype.serialize = function() {
@@ -278,7 +279,7 @@ morpheus.api =
       MorpheusExpression.prototype.mul = function(arg) {
         if (arg instanceof MorpheusExpression) {
           return this.update("(" + (this.serialize()) + ") * (" + (arg.serialize()) + ")");
-        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+        } else if (this.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
           return this.update("(" + (this.serialize()) + ") * " + arg + ".0");
         } else {
           return this.update("(" + (this.serialize()) + ") * " + arg);
@@ -288,7 +289,7 @@ morpheus.api =
       MorpheusExpression.prototype.div = function(arg) {
         if (arg instanceof MorpheusExpression) {
           return this.update("(" + (this.serialize()) + ") / (" + (arg.serialize()) + ")");
-        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+        } else if (this.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
           return this.update("(" + (this.serialize()) + ") / " + arg + ".0");
         } else {
           return this.update("(" + (this.serialize()) + ") / " + arg);
@@ -298,7 +299,7 @@ morpheus.api =
       MorpheusExpression.prototype.add = function(arg) {
         if (arg instanceof MorpheusExpression) {
           return this.update("(" + (this.serialize()) + ") + (" + (arg.serialize()) + ")");
-        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+        } else if (this.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
           return this.update("(" + (this.serialize()) + ") + " + arg + ".0");
         } else {
           return this.update("(" + (this.serialize()) + ") + " + arg);
@@ -308,7 +309,7 @@ morpheus.api =
       MorpheusExpression.prototype.sub = function(arg) {
         if (arg instanceof MorpheusExpression) {
           return this.update("(" + (this.serialize()) + ") - (" + (arg.serialize()) + ")");
-        } else if (this.param.attr.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
+        } else if (this.primitiveType === 'float' && typeof arg === 'number' && (arg | 0) === arg) {
           return this.update("(" + (this.serialize()) + ") - " + arg + ".0");
         } else {
           return this.update("(" + (this.serialize()) + ") - " + arg);
@@ -377,7 +378,7 @@ morpheus.api =
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr);
+        return new MorpheusExpression(param, paramStr, 'float');
       };
       window.option = function(label, description, options, defaultOption) {
         var param, paramStr;
@@ -385,7 +386,8 @@ morpheus.api =
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr);
+        throw "Option is not supported yet";
+        return new MorpheusExpression(param, paramStr, void 0);
       };
       window.boolean = function(label, description, defaultValue) {
         var param, paramStr;
@@ -393,7 +395,8 @@ morpheus.api =
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr);
+        throw "Boolean is not supported yet";
+        return new MorpheusExpression(param, paramStr, void 0);
       };
       return window.range = function(label, description, defaultValue, range) {
         var param, paramStr;
@@ -401,7 +404,7 @@ morpheus.api =
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr);
+        return new MorpheusExpression(param, paramStr, 'float');
       };
     })();
   })();
