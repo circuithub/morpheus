@@ -228,8 +228,8 @@ do () ->
     #window.section: (heading, children...) ->
     # TODO
 
-    varConsSimple = (type, primitiveType, id, meta, defaultValue) ->
-      param = varCons arguments, type
+    varConsSimple = (type, primitiveType, args...) ->
+      param = varCons args, type
       paramStr = "u#{globalParamIndex}"
       ++globalParamIndex
       exportedParameters[paramStr] = param
