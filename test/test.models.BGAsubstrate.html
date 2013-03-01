@@ -16,13 +16,13 @@
   <script id='csm-source-code' type='csm/csm-javascript'>
 // See https://gist.github.com/82b35723a7b65f558356
 
-var chipDimensions = number("Chip Dimensions", [0.7, 0.7, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]),
-    substrateDimensions = number("Substrate Dimensions", [0.8, 0.8, 0.05], [0.5,0.5,0.05], [1.0,1.0,0.2]),
-    ballCount = number("Ball Count", [5,5], [1,1], [10,10], [1,1]),
-    ballPitch = number("Ball Pitch", [0.15,0.15], [0.1,0.1], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
-    ballDiameter = number("Ball Diameter", 0.1, 0.05, 0.15),
-    alignMarkRadius = number("Alignment Mark Radius", 0.075, 0.02, 0.2),
-    borderGap = number("Border Gap", 0.05, 0.01, 0.1);
+var chipDimensions = dimension3("chipDimensions", "Chip Dimensions", [0.7, 0.7, 0.1], [0.5,0.5,0.05], [1.0,1.0,0.3]),
+    substrateDimensions = dimension3("substrateDimensions", "Substrate Dimensions", [0.8, 0.8, 0.05], [0.5,0.5,0.05], [1.0,1.0,0.2]),
+    ballCount = latice2("ballCount", "Ball Count", [5,5], [1,1], [10,10], [1,1]),
+    ballPitch = pitch2("ballPitch", "Ball Pitch", [0.15,0.15], [0.1,0.1], [0.5,0.5]), // Could also calculate this relative to chipDimensions...
+    ballDiameter = dimension1("ballDiameter", "Ball Diameter", 0.1, 0.05, 0.15),
+    alignMarkRadius = dimension1("alignMarkRadius", "Alignment Mark Radius", 0.075, 0.02, 0.2),
+    borderGap = dimension1("borderGap", "Border Gap", 0.05, 0.01, 0.1);
 
 //* Chip body + alignment mark
 difference(
