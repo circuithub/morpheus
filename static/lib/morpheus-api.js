@@ -372,9 +372,10 @@ morpheus.api =
           throw "No subtract operator available operands with types `" + (typeof a) + "` and `" + (typeof b) + "`.";
         }
       };
-      varConsSimple = function(type, primitiveType, id, meta, defaultValue) {
-        var param, paramStr;
-        param = varCons(arguments, type);
+      varConsSimple = function() {
+        var args, param, paramStr, primitiveType, type;
+        type = arguments[0], primitiveType = arguments[1], args = 3 <= arguments.length ? __slice.call(arguments, 2) : [];
+        param = varCons(args, type);
         paramStr = "u" + globalParamIndex;
         ++globalParamIndex;
         exportedParameters[paramStr] = param;

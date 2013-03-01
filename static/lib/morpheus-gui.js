@@ -144,7 +144,7 @@ morpheus.gui =
     requestId = JSandbox["eval"]({
       data: csmSourceCode,
       callback: function(result) {
-        var attr, model, name, oldAttr, params, _ref, _ref1, _ref2;
+        var attr, defaultValue, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2;
         morpheus.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
@@ -157,20 +157,18 @@ morpheus.gui =
         params = (_ref = result != null ? (_ref1 = result.attr) != null ? _ref1.params : void 0 : void 0) != null ? _ref : {};
         _ref2 = model.params;
         for (name in _ref2) {
-          attr = _ref2[name];
-          if (!(__indexOf.call(params, name) >= 0)) {
+          oldAttr = _ref2[name];
+          attr = params[name];
+          if (!(attr != null) || attr._tag !== oldAttr._tag) {
             delete model.args[name];
-          } else {
-            oldAttr = model.params[name];
-            if (!(model.args[name] != null) || attr.param !== oldAttr.param || attr.primitiveType !== oldAttr.primitiveType || attr.type !== oldAttr.type || ((!Array.isArray(attr.defaultArg)) && attr.defaultArg !== oldAttr.defaultArg)) {
-              model.args[name] = attr.defaultArg;
-            }
           }
         }
         for (name in params) {
           attr = params[name];
           if (!(__indexOf.call(model.args, name) >= 0)) {
-            model.args[name] = attr.defaultArg;
+            id = attr[0], meta = attr[1], defaultValue = attr[2];
+            console.log(attr);
+            model.args[name] = defaultValue;
           }
         }
         model.params = params;

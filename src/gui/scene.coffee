@@ -13,23 +13,18 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       if not model?
         model = state.models['scene'] = { shaders: [], params: {}, args: {} }
       params = result?.attr?.params ? {}
-      # Initialize any model arguments to their default values when they are unassigned or when their definitions change
-      for name,attr of model.params
-        if not (name in params)
+      # Reset any model arguments to their default values when their definitions change
+      for name,oldAttr of model.params
+        attr = params[name]          
+        if not attr? or attr._tag != oldAttr._tag
           delete model.args[name]
-        else 
-          oldAttr = model.params[name]
-          if not model.args[name]? or 
-              attr.param != oldAttr.param or
-              attr.primitiveType != oldAttr.primitiveType or
-              attr.type != oldAttr.type or
-              ((not Array.isArray attr.defaultArg) and attr.defaultArg != oldAttr.defaultArg)
-            # Argument is unassigned or the parameter has changed, use the default argument
-            model.args[name] = attr.defaultArg
+      # Initialize unassigned model arguments
       for name,attr of params
         if not (name in model.args)
           # New parameter supplied, use the default argument
-          model.args[name] = attr.defaultArg
+          [id,meta,defaultValue] = attr
+          console.log attr
+          model.args[name] = defaultValue # TODO: handle tolerance value here?
       model.params = params
       # Generate shaders for the model
       model.shaders = morpheus.generator.compileGLSL (morpheus.generator.compileASM result), model.params

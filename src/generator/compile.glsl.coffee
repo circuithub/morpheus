@@ -106,9 +106,9 @@ compileGLSL = safeExport 'morpheus.editor.compileGLSL', ['',''], (abstractSolidM
       result
 
     generateUniforms = (params) ->
-      (for name, data of params
-        [id,meta,defaultValue] = data
-        type = switch data._tag
+      (for name,attr of params
+        [id,meta,defaultValue] = attr
+        type = switch attr._tag
           when 'real','dimension1','pitch1','angle' then 'float'
           when 'dimension2','vector2','point2','pitch2','polar','cylindrical' then 'vec2'
           when 'dimension3','vector3','point3','pitch3','spherical' then 'vec3'

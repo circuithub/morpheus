@@ -2198,15 +2198,15 @@ morpheus.generator =
         return result;
       };
       generateUniforms = function(params) {
-        var data, defaultValue, id, meta, name, type;
+        var attr, defaultValue, id, meta, name, type;
         return ((function() {
           var _results;
           _results = [];
           for (name in params) {
-            data = params[name];
-            id = data[0], meta = data[1], defaultValue = data[2];
+            attr = params[name];
+            id = attr[0], meta = attr[1], defaultValue = attr[2];
             type = (function() {
-              switch (data._tag) {
+              switch (attr._tag) {
                 case 'real':
                 case 'dimension1':
                 case 'pitch1':
