@@ -23,7 +23,6 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
         if not (name in model.args)
           # New parameter supplied, use the default argument
           [id,meta,defaultValue] = attr
-          console.log attr
           model.args[name] = defaultValue # TODO: handle tolerance value here?
       model.params = params
       # Generate shaders for the model

@@ -22,69 +22,12 @@ controlsInit = safeExport 'morpheus.gui: controlsInit', undefined, () ->
 
   el = state.parameters.domElement
   if el?
-    ### TODO: Replace with parameterize-form
-    html = '<table>'
-    for name, model of state.models
-      for param, val of model.params
-        html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
-        switch val.param
-          when 'range'
-            switch val.type
-              when 'float'
-                stepAttr = if val.step? then " step='#{val.step}'" else ''
-                html += "<input name='#{param}' id='#{param}' class='morpheus-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
-              when 'vec2'
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-              when 'vec3'
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-              when 'vec4'
-                stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-range' type='range' value='#{val.defaultArg[3]}' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
-              else
-                morpheus.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
-          when 'number'
-            switch val.type
-              when 'float'
-                minAttr = if val.start? then " min='#{val.start}'" else ''
-                maxAttr = if val.end? then " max='#{val.end}'" else ''
-                stepAttr = if val.step? then " step='#{roundDecimals val.step}'" else ''
-                html += "<input name='#{param}' id='#{param}' class='morpheus-param-number' type='number' value='#{val.defaultArg}'#{minAttr}#{maxAttr}#{stepAttr}></input>"
-              when 'vec2'
-                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
-                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"] else ['','']
-                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"] else ['','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-              when 'vec3'
-                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"] else ['','','']
-                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"] else ['','','']
-                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"] else ['','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
-              when 'vec4'
-                minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"," min='#{val.start[3]}'"] else ['','','','']
-                maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"," max='#{val.end[3]}'"] else ['','','','']
-                stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"," step='#{roundDecimals val.step[3]}'"] else ['','','','']
-                html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-                html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
-                html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-number' type='number' value='#{val.defaultArg[3]}'#{minAttr[3]}#{maxAttr[3]}#{stepAttr[3]}></input></div>"
-              else
-                morpheus.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
-        html += "</td></tr>"
-    html += '</table>'
-    el.innerHTML = html
-    ###
-    el.innerHTML = "<div>TODO</div>"
+    controls = for modelName, model of state.models
+      parameterize.html (parameterize.form.parameters "", 
+        parameterize.form.section "",
+          (param for name, param of model.params)...)
+    el.innerHTML = ""
+    el.appendChild c for c in controls
   return
 
 # Initialize the CSM API (by loading the code from the given url)

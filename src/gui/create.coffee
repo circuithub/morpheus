@@ -58,10 +58,8 @@ createControls = safeExport 'morpheus.gui.createControls', false, (container) ->
     return false
 
   if not state.parameters.domElement?
-    state.parameters.domElement = document.createElement 'form'
-    state.parameters.domElement.id = 'morpheus-param-inputs'
-    containerEl.appendChild state.parameters.domElement
-  
-  controlsInit() 
+    state.parameters.domElement = containerEl
+
+  controlsInit()
   registerControlEvents()
   return true

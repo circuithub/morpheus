@@ -2900,6 +2900,78 @@ var adt = (function() {
 
 
 
+/*
+ * adt-html.js - Algebraic Data Types for JavaScript
+ * adt-html.js is free, public domain software (http://creativecommons.org/publicdomain/zero/1.0/)
+ * Originally created by Rehno Lindeque of http://www.mischievousmeerkat.com
+ * Use it in combination with https://github.com/rehno-lindeque/adt.js
+ */
+var adt = adt || (typeof require === 'function'? require('adt.js') : {}), 
+html = (function() {
+"use strict";
+  // Using the html5 list of tags from (http://joshduck.com/periodic-table.html)
+  // Other html api's should probably be in separate libraries? (xhtml, html4 etc)
+  var
+    _cons = adt(
+      // Root element
+      'html', 
+      // Metadata and scripting
+      'head','title','meta','base','link','style','noscript','script',
+      // Text-level semantics
+      'span','a','rt','rp','dfn','abbr','q','cite','em','time','var','samp','i',
+      'b','sub','sup','small','strong','mark','ruby','ins','del','bdi','bdo',
+      's','kbd','wbr','code',
+      // Grouping content
+      'br','hr','figcaption','figure','p','ol','ul','li','div','pre',
+      'blockquote','dl','dt','dd',
+      // Forms
+      'fieldset','meter','legend','label','input','textarea','form','select',
+      'optgroup','option','output','button','datalist','keygen','progress',
+      // Document sections
+      'body','aside','address','h1','h2','h3','h4','h5','h6','section','header',
+      'nav','article','footer','hgroup',
+      // Tabular data
+      'col','colgroup','caption','table','tr','td','th','tbody','thead','tfoot',
+      // Interactive elements
+      'menu','command','summary','details',
+      // Embedding content
+      'img','area','map','embed','object','param','source','iframe','canvas',
+      'track','audio','video'
+    ),
+    _eval = adt({ _: function(attributes) {
+        var el = document.createElement(this._tag);
+        for (var i = 0; i < arguments.length; ++i)
+          // Check if the argument is a DOM node
+          if (arguments[i].nodeType)
+            el.appendChild(arguments[i]);
+          else if (typeof arguments[i] === 'string')
+            el.appendChild(document.createTextNode(arguments[i]));
+        if (typeof attributes === 'object' && typeof attributes.nodeType === 'undefined') {
+          for (var key in attributes)
+            el.setAttribute(key, attributes[key]);
+        }
+        return el;
+      }
+    }),
+    html = (typeof adt.compose === 'undefined')?
+      function(){ throw "`adt.compose()` is needed in order to use html as a function."; }
+      : adt.compose(_eval, _cons);
+    html.cons = _cons;
+    html.eval = _eval;
+  // Export html to a CommonJS module if exports is available
+  if (typeof module !== "undefined" && module !== null)
+    module.exports = html;
+  return html;
+})();
+
+
+/*
+ * Copyright 2013, CircuitHub.com
+ */
+var parameterize = parameterize || {}; /* Redeclaring parameterize is fine: behaves like a no-op (https://developer.mozilla.org/en/JavaScript/Reference/Scope_Cheatsheet) */
+(function(){
+var originalRequire = this.require || (void 0);
+
 
 (function(/*! Stitch !*/) {
   if (!this.require) {
@@ -3509,6 +3581,18 @@ var __slice = [].slice;
   return module.exports = form;
 })(typeof adt !== "undefined" && adt !== null ? adt : require('adt.js'));
 }});
+
+// Assign this library to a global variable if a global variable is defined
+var parameterizeExports = this.require("parameterize-form");
+parameterize.form = parameterizeExports.form;
+parameterize.html = parameterizeExports.html;
+// Restore the original require method
+if (typeof originalRequire === 'undefined')
+  delete this.require;
+else
+  this.require = originalRequire;
+})();
+
 
 
 /*
@@ -6274,7 +6358,8 @@ morpheus.gui =
   "use strict";
 
   var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __slice = [].slice;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -6432,7 +6517,6 @@ morpheus.gui =
           attr = params[name];
           if (!(__indexOf.call(model.args, name) >= 0)) {
             id = attr[0], meta = attr[1], defaultValue = attr[2];
-            console.log(attr);
             model.args[name] = defaultValue;
           }
         }
@@ -6580,7 +6664,7 @@ morpheus.gui =
   };
 
   controlsInit = safeExport('morpheus.gui: controlsInit', void 0, function() {
-    var el, roundDecimals;
+    var c, controls, el, model, modelName, name, param, roundDecimals, _i, _len;
     roundDecimals = function(n) {
       var nonzeroDigits, parts, zeroDigits;
       parts = (String(n)).split('.');
@@ -6599,70 +6683,30 @@ morpheus.gui =
     };
     el = state.parameters.domElement;
     if (el != null) {
-      /* TODO: Replace with parameterize-form
-      html = '<table>'
-      for name, model of state.models
-        for param, val of model.params
-          html += "<tr><td><label for='#{param}'>#{val.description}</label></td><td>"
-          switch val.param
-            when 'range'
-              switch val.type
-                when 'float'
-                  stepAttr = if val.step? then " step='#{val.step}'" else ''
-                  html += "<input name='#{param}' id='#{param}' class='morpheus-param-range' type='range' value='#{val.defaultArg}' min='#{val.start}' max='#{val.end}'#{stepAttr}></input>"
-                when 'vec2'
-                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"] else ['','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                when 'vec3'
-                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"] else ['','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                when 'vec4'
-                  stepAttr = if val.step? then [" step='#{val.step[0]}'"," step='#{val.step[1]}'"," step='#{val.step[2]}'"," step='#{val.step[3]}'"] else ['','','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-range' type='range' value='#{val.defaultArg[0]}' min='#{val.start[0]}' max='#{val.end[0]}'#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-range' type='range' value='#{val.defaultArg[1]}' min='#{val.start[1]}' max='#{val.end[1]}'#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-range' type='range' value='#{val.defaultArg[2]}' min='#{val.start[2]}' max='#{val.end[2]}'#{stepAttr[2]}></input></div>"
-                  html += "<div><label for='#{param}[0]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-range' type='range' value='#{val.defaultArg[3]}' min='#{val.start[3]}' max='#{val.end[3]}'#{stepAttr[3]}></input></div>"
-                else
-                  morpheus.logInternalError "Unknown range type `#{val.type}` for parameter `#{param}`."
-            when 'number'
-              switch val.type
-                when 'float'
-                  minAttr = if val.start? then " min='#{val.start}'" else ''
-                  maxAttr = if val.end? then " max='#{val.end}'" else ''
-                  stepAttr = if val.step? then " step='#{roundDecimals val.step}'" else ''
-                  html += "<input name='#{param}' id='#{param}' class='morpheus-param-number' type='number' value='#{val.defaultArg}'#{minAttr}#{maxAttr}#{stepAttr}></input>"
-                when 'vec2'
-                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"] else ['','']
-                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"] else ['','']
-                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"] else ['','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-                when 'vec3'
-                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"] else ['','','']
-                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"] else ['','','']
-                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"] else ['','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
-                when 'vec4'
-                  minAttr = if val.start? then [" min='#{val.start[0]}'"," min='#{val.start[1]}'"," min='#{val.start[2]}'"," min='#{val.start[3]}'"] else ['','','','']
-                  maxAttr = if val.end? then [" max='#{val.end[0]}'"," max='#{val.end[1]}'"," max='#{val.end[2]}'"," max='#{val.end[3]}'"] else ['','','','']
-                  stepAttr = if val.step? then [" step='#{roundDecimals val.step[0]}'"," step='#{roundDecimals val.step[1]}'"," step='#{roundDecimals val.step[2]}'"," step='#{roundDecimals val.step[3]}'"] else ['','','','']
-                  html += "<div><label for='#{param}[0]'>x</label><input name='#{param}[0]' id='#{param}[0]' class='morpheus-param-number' type='number' value='#{val.defaultArg[0]}'#{minAttr[0]}#{maxAttr[0]}#{stepAttr[0]}></input></div>"
-                  html += "<div><label for='#{param}[1]'>y</label><input name='#{param}[1]' id='#{param}[1]' class='morpheus-param-number' type='number' value='#{val.defaultArg[1]}'#{minAttr[1]}#{maxAttr[1]}#{stepAttr[1]}></input></div>"
-                  html += "<div><label for='#{param}[2]'>z</label><input name='#{param}[2]' id='#{param}[2]' class='morpheus-param-number' type='number' value='#{val.defaultArg[2]}'#{minAttr[2]}#{maxAttr[2]}#{stepAttr[2]}></input></div>"
-                  html += "<div><label for='#{param}[3]'>w</label><input name='#{param}[3]' id='#{param}[3]' class='morpheus-param-number' type='number' value='#{val.defaultArg[3]}'#{minAttr[3]}#{maxAttr[3]}#{stepAttr[3]}></input></div>"
-                else
-                  morpheus.logInternalError "Unknown number type `#{val.type}` for parameter `#{param}`."
-          html += "</td></tr>"
-      html += '</table>'
-      el.innerHTML = html
-      */
-
-      el.innerHTML = "<div>TODO</div>";
+      controls = (function() {
+        var _ref, _ref1, _results;
+        _ref = state.models;
+        _results = [];
+        for (modelName in _ref) {
+          model = _ref[modelName];
+          _results.push(parameterize.html(parameterize.form.parameters("", (_ref1 = parameterize.form).section.apply(_ref1, [""].concat(__slice.call((function() {
+            var _ref1, _results1;
+            _ref1 = model.params;
+            _results1 = [];
+            for (name in _ref1) {
+              param = _ref1[name];
+              _results1.push(param);
+            }
+            return _results1;
+          })()))))));
+        }
+        return _results;
+      })();
+      el.innerHTML = "";
+      for (_i = 0, _len = controls.length; _i < _len; _i++) {
+        c = controls[_i];
+        el.appendChild(c);
+      }
     }
   });
 
@@ -6759,9 +6803,7 @@ morpheus.gui =
       return false;
     }
     if (!(state.parameters.domElement != null)) {
-      state.parameters.domElement = document.createElement('form');
-      state.parameters.domElement.id = 'morpheus-param-inputs';
-      containerEl.appendChild(state.parameters.domElement);
+      state.parameters.domElement = containerEl;
     }
     controlsInit();
     registerControlEvents();
