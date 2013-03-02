@@ -88,6 +88,7 @@ completeFiles = [
   'glquery/glquery'
   'glquery/glquery.math.module'
   'adt/adt'
+  'adt/adt-html'
   'parameterize/parameterize-form'
   'jsandbox/jsandbox'
   'morpheus'
@@ -298,6 +299,7 @@ task 'fetch:libraries', "Update all supporting libraries", (options) ->
   #invoke 'fetch:jsandbox'
   #invoke 'fetch:uglifyjs-parser'
   invoke 'fetch:adt.js'
+  invoke 'fetch:adt-html.js'
   invoke 'fetch:parameterize-form'
 
 task 'fetch:glquery', "Update the glQuery library (always local)", (options) ->
@@ -321,6 +323,21 @@ task 'fetch:adt.js', "Update the adt.js library (always local)", (options) ->
     console.warn "adt.js is always installed locally"
   urls = [
     'https://raw.github.com/rehno-lindeque/adt.js/master/dist/adt.js'
+  ]
+  remaining = urls.length
+  downloadCallback = (err, stdout, stderr) ->
+    throw err if err
+    console.log stdout + stderr
+    --remaining
+    console.log "Done." if remaining == 0
+  for url in urls
+    exec "wget -nv -O static/lib/adt/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
+
+task 'fetch:adt-html.js', "Update the adt-html.js library (always local)", (options) ->
+  if options.global
+    console.warn "adt-html.js is always installed locally"
+  urls = [
+    'https://raw.github.com/rehno-lindeque/adt-html.js/master/dist/adt-html.js'
   ]
   remaining = urls.length
   downloadCallback = (err, stdout, stderr) ->
