@@ -141,8 +141,8 @@ prependText = (preText) -> (callback) -> (text) ->
   console.log "Concatinating debug flag..."
   callback?(preText + text)
 
-# [String] -> Maybe (String -> () -> IO) -> () -> IO
-concatFiles = (files) -> (callback) -> ->
+# [String] -> Maybe (String -> IO) -> () -> IO
+concatFiles = (files) -> (callback) ->
   contents = new Array files.length
   remaining = files.length
   for file, index in files then do (file, index) ->
@@ -172,44 +172,45 @@ concatJSFiles = (files) -> (callback) ->
 Build scripts
 ###
 
-# Maybe (() -> IO) -> () -> IO
-buildMorpheus = (callback) -> ->
+# Maybe (() -> IO) -> IO
+buildMorpheus = (callback) ->
   (concatJSFiles morpheusFiles) (writeJSFile 'morpheus') callback
 
 # Maybe (String -> IO) -> String -> IO
 prependDebug = prependText "morpheusDebug = true\n"
 
-# Maybe (() -> IO) -> () -> IO
+# Maybe (() -> IO) -> IO
 buildApi = (callback, debug) ->
   if debug
-    (concatFiles apiFiles) prependDebug (buildText 'morpheus-api', 'api') callback
+    (concatFiles apiFiles) (prependDebug (buildText 'morpheus-api', 'api') callback)
   else
     (concatFiles apiFiles) (buildText 'morpheus-api', 'api') callback
 buildGenerator = (callback, debug) ->
   if debug
-    (concatFiles generatorFiles) prependDebug (buildText 'morpheus-generator', 'generator') callback
+    (concatFiles generatorFiles) (prependDebug (buildText 'morpheus-generator', 'generator') callback)
   else
     (concatFiles generatorFiles) (buildText 'morpheus-generator', 'generator') callback
 buildEditor = (callback, debug) ->
   if debug
-    (concatFiles editorFiles) prependDebug (buildText 'morpheus-editor', 'editor') callback
+    (concatFiles editorFiles) (prependDebug (buildText 'morpheus-editor', 'editor') callback)
   else
     (concatFiles editorFiles) (buildText 'morpheus-editor', 'editor') callback
 buildRenderer = (callback, debug) ->
   if debug
-    (concatFiles rendererFiles) prependDebug (buildText 'morpheus-renderer', 'renderer') callback
+    (concatFiles rendererFiles) (prependDebug (buildText 'morpheus-renderer', 'renderer') callback)
   else
     (concatFiles rendererFiles) (buildText 'morpheus-renderer', 'renderer') callback
 buildGui = (callback, debug) ->
   if debug
-    (concatFiles guiFiles) prependDebug (buildText 'morpheus-gui', 'gui') callback
+    (concatFiles guiFiles) (prependDebug (buildText 'morpheus-gui', 'gui') callback)
   else
     (concatFiles guiFiles) (buildText 'morpheus-gui', 'gui') callback
 
-# () -> IO
+# Maybe (() -> IO) -> IO
 minify = (callback) ->
   path.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
+    remaining = morpheusModules.length
     for file in morpheusModules then do (file) ->
       path.exists "static/lib/#{file}.js", (exists) ->
         if exists
@@ -217,12 +218,13 @@ minify = (callback) ->
             throw err if err
             console.log stdout + stderr
             console.log "...Done (#{file}.min.js)"
-            callback?()
+            callback?() if --remaining is 0
 
+# Maybe (() -> IO) -> IO
 packComplete = (callback) ->
-  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') (->
+  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') (-> ->
     console.log "...Done (morpheus.complete.js)"
-    callback?())
+    callback?()) 
 
 ###
 Tasks
@@ -232,38 +234,38 @@ option '-g', '--global', 'Use with fetch to install supporting libraries and too
 
 #task 'build', "Build the entire morpheus module", ->
 #  exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-#  buildMorpheus()()
+#  buildMorpheus()
 
 task 'build-api', "Build the API module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildApi()()
+  buildApi()
 
 task 'build-generator', "Build the generator module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildGenerator()()
+  buildGenerator()
 
 task 'build-editor', "Build the editor module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildEditor()()
+  buildEditor()
 
 task 'build-renderer', "Build the renderer module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildRenderer()()
+  buildRenderer()
 
 task 'build-gui', "Build the gui module", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  buildGui()()
+  buildGui()
 
 task 'pack-complete', "Pack morpheus with all its dependencies into a single .js file", ->
   packComplete()
 
 task 'all', "Build all distribution files", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify packComplete)()
+  buildApi -> buildGenerator -> buildEditor -> buildRenderer -> buildGui -> buildMorpheus -> minify -> packComplete()
 
 task 'debug', "Build all distribution files in debug (development) mode", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) -> return
-  (buildApi buildGenerator buildEditor buildRenderer buildGui buildMorpheus minify packComplete)()
+  buildApi -> buildGenerator -> buildEditor -> buildRenderer -> buildGui -> buildMorpheus -> minify -> packComplete()
 
 task 'fetch:tools', "Fetch all supporting tools", (options) ->
   invoke 'fetch:npm'
@@ -343,7 +345,6 @@ task 'fetch:parameterize-form', "Update the parameterize-form library (always lo
     console.log "Done." if remaining == 0
   for url in urls
     exec "wget -nv -O static/lib/parameterize/#{url.substr url.lastIndexOf('/') + 1} #{url}", downloadCallback
-
 
 task 'minify', "Minify the resulting application file after build", ->
   minify()
