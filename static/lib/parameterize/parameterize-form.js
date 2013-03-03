@@ -63,7 +63,7 @@ var originalRequire = this.require || (void 0);
 var __slice = [].slice;
 
 (function(adt, html) {
-  var escapeAttrib, labeledElements, labeledInput, labeledInputs, labeledToleranceInput, labeledToleranceInputs, shortLabelLength, toleranceHTML, toleranceTable, wrap, wrapComposite, wrapTolerance;
+  var escapeAttrib, labeledElements, labeledInput, labeledInputs, labeledToleranceInput, labeledToleranceInputs, resolveMeta, shortLabelLength, toleranceHTML, toleranceTable, wrap, wrapComposite, wrapTolerance;
   shortLabelLength = 5;
   escapeAttrib = function(str) {
     return (String(str)).replace(/['"]/gi, "`");
@@ -329,6 +329,26 @@ var __slice = [].slice;
       throw "Unsupported tolerance type `" + this._tag + "`";
     }
   });
+  resolveMeta = function(id, meta) {
+    var _ref, _ref1;
+    if (typeof meta === 'string') {
+      meta = {
+        label: meta
+      };
+    } else if (!(meta != null)) {
+      meta = {
+        label: id
+      };
+    } else {
+      if ((_ref = meta.label) == null) {
+        meta.label = id;
+      }
+    }
+    if ((_ref1 = meta.description) == null) {
+      meta.description = "";
+    }
+    return meta;
+  };
   return module.exports = adt({
     parameters: function() {
       var children, description;
@@ -347,21 +367,7 @@ var __slice = [].slice;
       }, String(heading))].concat(__slice.call(adt.map(this, children))));
     },
     real: function(id, meta, defaultValue) {
-      var _ref;
-      if (typeof meta === 'string') {
-        meta = {
-          label: meta
-        };
-      } else if (!(meta != null)) {
-        meta = {
-          label: id
-        };
-      } else if (!(meta.label != null)) {
-        meta.label = id;
-      }
-      if ((_ref = meta.description) == null) {
-        meta.description = "";
-      }
+      meta = resolveMeta(id, meta);
       return wrap(html.div({
         "class": "param-numeric param-real",
         title: escapeAttrib(meta.description)
@@ -375,21 +381,7 @@ var __slice = [].slice;
       }))));
     },
     dimension1: function(id, meta, defaultValue) {
-      var _ref;
-      if (typeof meta === 'string') {
-        meta = {
-          label: meta
-        };
-      } else if (!(meta != null)) {
-        meta = {
-          label: id
-        };
-      } else if (!(meta.label != null)) {
-        meta.label = id;
-      }
-      if ((_ref = meta.description) == null) {
-        meta.description = "";
-      }
+      meta = resolveMeta(id, meta);
       return wrap(html.div({
         "class": "param-numeric param-dimension1",
         title: escapeAttrib(meta.description)
@@ -403,22 +395,9 @@ var __slice = [].slice;
       }))));
     },
     dimension2: function(id, meta, defaultValue) {
-      var shortLabels, _ref, _ref1;
-      if (typeof meta === 'string') {
-        meta = {
-          label: meta
-        };
-      } else if (!(meta != null)) {
-        meta = {
-          label: id
-        };
-      } else if (!(meta.label != null)) {
-        meta.label = id;
-      }
-      if ((_ref = meta.description) == null) {
-        meta.description = "";
-      }
-      if ((_ref1 = meta.components) == null) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
         meta.components = ["X", "Y"];
       }
       shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
@@ -435,22 +414,9 @@ var __slice = [].slice;
       }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
     },
     dimension3: function(id, meta, defaultValue) {
-      var shortLabels, _ref, _ref1;
-      if (typeof meta === 'string') {
-        meta = {
-          label: meta
-        };
-      } else if (!(meta != null)) {
-        meta = {
-          label: id
-        };
-      } else if (!(meta.label != null)) {
-        meta.label = id;
-      }
-      if ((_ref = meta.description) == null) {
-        meta.description = "";
-      }
-      if ((_ref1 = meta.components) == null) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
         meta.components = ["X", "Y", "Z"];
       }
       shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
@@ -466,53 +432,203 @@ var __slice = [].slice;
         "class": "param-label-text"
       }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
     },
-    vector2: function() {
+    vector2: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-vector2",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
+    },
+    vector3: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-vector3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
+    },
+    point2: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-point2",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
+    },
+    point3: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-point3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
+    },
+    pitch1: function(id, meta, defaultValue) {
+      meta = resolveMeta(id, meta);
+      return wrap(html.div({
+        "class": "param-numeric param-pitch1",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)), html.input({
+        "class": "param-input",
+        value: String(defaultValue)
+      }))));
+    },
+    pitch2: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-pitch2",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
+    },
+    pitch3: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-pitch3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
+    },
+    angle: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    vector3: function() {
+    polar: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    point2: function() {
+    cylindrical: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    point3: function() {
+    spherical: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    pitch1: function() {
+    integer: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    pitch2: function() {
+    natural: function(id, meta, defaultValue) {
       throw "Unsupported parameter type `" + this._tag + "` (TODO)";
     },
-    pitch3: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    latice1: function(id, meta, defaultValue) {
+      meta = resolveMeta(id, meta);
+      return wrap(html.div({
+        "class": "param-numeric param-latice1",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)), html.input({
+        "class": "param-input",
+        value: String(defaultValue)
+      }))));
     },
-    angle: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    latice2: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-latice2",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(2, meta.components, defaultValue, shortLabels)))));
     },
-    polar: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    cylindrical: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    spherical: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    integer: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    natural: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    latice1: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    latice2: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
-    },
-    latice3: function() {
-      throw "Unsupported parameter type `" + this._tag + "` (TODO)";
+    latice3: function(id, meta, defaultValue) {
+      var shortLabels, _ref;
+      meta = resolveMeta(id, meta);
+      if ((_ref = meta.components) == null) {
+        meta.components = ["X", "Y", "Z"];
+      }
+      shortLabels = Math.max(meta.components[0].length, meta.components[1].length, meta.components[2].length) < shortLabelLength;
+      if (!Array.isArray(defaultValue)) {
+        defaultValue = [defaultValue, defaultValue, defaultValue];
+      }
+      return wrapComposite(html.div.apply(html, [{
+        "class": "param-numeric param-latice3",
+        title: escapeAttrib(meta.description)
+      }, html.label({
+        "class": "param-composite-label"
+      }, html.span({
+        "class": "param-label-text"
+      }, String(meta.label)))].concat(__slice.call(labeledInputs(3, meta.components, defaultValue, shortLabels)))));
     },
     option: function(id, meta, options, defaultOption) {
       var k, keyValue, v, _ref;
