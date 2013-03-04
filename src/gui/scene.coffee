@@ -22,7 +22,18 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       for name,attr of params
         if not (name in model.args)
           # New parameter supplied, use the default argument
-          [id,meta,defaultValue] = attr
+          [id,meta,defaultValue] = ["", {}, 0]
+          switch attr._tag
+            when 'tolerance'
+              [id,meta,defaultValue] = attr[0] # unwrap tolerance tag
+              if Array.isArray defaultValue.min
+                defaultValue = (defaultValue.min[i] + defaultValue.max[i] for i in [0...defaultValue.min.length])
+              else
+                defaultValue = defaultValue.min + defaultValue.max
+            when 'range'
+              throw "TODO: Range not yet implemented"
+            else
+              [id,meta,defaultValue] = attr
           model.args[name] = defaultValue # TODO: handle tolerance value here?
       model.params = params
       # Generate shaders for the model

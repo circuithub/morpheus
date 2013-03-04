@@ -2705,7 +2705,7 @@ morpheus.gui =
     requestId = JSandbox["eval"]({
       data: csmSourceCode,
       callback: function(result) {
-        var attr, defaultValue, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2;
+        var attr, defaultValue, i, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2, _ref3, _ref4;
         morpheus.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
@@ -2716,7 +2716,6 @@ morpheus.gui =
           };
         }
         params = (_ref = result != null ? (_ref1 = result.attr) != null ? _ref1.params : void 0 : void 0) != null ? _ref : {};
-        console.log(params);
         _ref2 = model.params;
         for (name in _ref2) {
           oldAttr = _ref2[name];
@@ -2728,7 +2727,29 @@ morpheus.gui =
         for (name in params) {
           attr = params[name];
           if (!(__indexOf.call(model.args, name) >= 0)) {
-            id = attr[0], meta = attr[1], defaultValue = attr[2];
+            _ref3 = ["", {}, 0], id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
+            switch (attr._tag) {
+              case 'tolerance':
+                _ref4 = attr[0], id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
+                if (Array.isArray(defaultValue.min)) {
+                  defaultValue = (function() {
+                    var _i, _ref5, _results;
+                    _results = [];
+                    for (i = _i = 0, _ref5 = defaultValue.min.length; 0 <= _ref5 ? _i < _ref5 : _i > _ref5; i = 0 <= _ref5 ? ++_i : --_i) {
+                      _results.push(defaultValue.min[i] + defaultValue.max[i]);
+                    }
+                    return _results;
+                  })();
+                } else {
+                  defaultValue = defaultValue.min + defaultValue.max;
+                }
+                break;
+              case 'range':
+                throw "TODO: Range not yet implemented";
+                break;
+              default:
+                id = attr[0], meta = attr[1], defaultValue = attr[2];
+            }
             model.args[name] = defaultValue;
           }
         }
