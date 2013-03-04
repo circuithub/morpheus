@@ -2198,45 +2198,56 @@ morpheus.generator =
         return result;
       };
       generateUniforms = function(params) {
-        var attr, defaultValue, id, meta, name, type;
+        var attr, generateUniform, name;
+        generateUniform = function(attr) {
+          var defaultValue, id, meta, type;
+          id = attr[0], meta = attr[1], defaultValue = attr[2];
+          type = (function() {
+            switch (attr._tag) {
+              case 'real':
+              case 'dimension1':
+              case 'pitch1':
+              case 'angle':
+                return 'float';
+              case 'dimension2':
+              case 'vector2':
+              case 'point2':
+              case 'pitch2':
+              case 'polar':
+              case 'cylindrical':
+                return 'vec2';
+              case 'dimension3':
+              case 'vector3':
+              case 'point3':
+              case 'pitch3':
+              case 'spherical':
+                return 'vec3';
+              case 'natural':
+              case 'latice1':
+                return 'float';
+              case 'latice2':
+                return 'vec2';
+              case 'latice3':
+                return 'vec3';
+              default:
+                return "(ERROR " + attr._tag + ")";
+            }
+          })();
+          return ("uniform " + type + " " + name + ";") + (meta.description != null ? " // " + meta.description : "");
+        };
         return ((function() {
           var _results;
           _results = [];
           for (name in params) {
             attr = params[name];
-            id = attr[0], meta = attr[1], defaultValue = attr[2];
-            type = (function() {
-              switch (attr._tag) {
-                case 'real':
-                case 'dimension1':
-                case 'pitch1':
-                case 'angle':
-                  return 'float';
-                case 'dimension2':
-                case 'vector2':
-                case 'point2':
-                case 'pitch2':
-                case 'polar':
-                case 'cylindrical':
-                  return 'vec2';
-                case 'dimension3':
-                case 'vector3':
-                case 'point3':
-                case 'pitch3':
-                case 'spherical':
-                  return 'vec3';
-                case 'natural':
-                case 'latice1':
-                  return 'float';
-                case 'latice2':
-                  return 'vec2';
-                case 'latice3':
-                  return 'vec3';
-                default:
-                  return "(ERROR " + data._tag + ")";
-              }
-            })();
-            _results.push(("uniform " + type + " " + name + ";") + (meta.description != null ? " // " + meta.description : ""));
+            switch (attr._tag) {
+              case 'tolerance':
+              case 'range':
+                _results.push(generateUniform(attr[0]));
+                break;
+              default:
+                _results.push(generateUniform(attr));
+            }
           }
           return _results;
         })()).join('\n');
@@ -2705,6 +2716,7 @@ morpheus.gui =
           };
         }
         params = (_ref = result != null ? (_ref1 = result.attr) != null ? _ref1.params : void 0 : void 0) != null ? _ref : {};
+        console.log(params);
         _ref2 = model.params;
         for (name in _ref2) {
           oldAttr = _ref2[name];

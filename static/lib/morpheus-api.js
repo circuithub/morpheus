@@ -456,13 +456,15 @@ morpheus.api =
         throw "Boolean is not supported yet";
         return new MorpheusExpression(param, paramStr, void 0);
       };
-      return window.range = function(id, meta, defaultValue, range) {
-        var param, paramStr;
-        param = varCons(arguments, "range");
-        paramStr = "u" + globalParamIndex;
-        ++globalParamIndex;
-        exportedParameters[paramStr] = param;
-        return new MorpheusExpression(param, paramStr, 'float');
+      window.tolerance = function(paramExpression) {
+        exportedParameters[paramExpression.str] = [exportedParameters[paramExpression.str]];
+        exportedParameters[paramExpression.str]._tag = 'tolerance';
+        return paramExpression;
+      };
+      return window.range = function(paramExpression) {
+        exportedParameters[paramExpression.str] = [exportedParameters[paramExpression.str]];
+        exportedParameters[paramExpression.str]._tag = 'range';
+        return paramExpression;
       };
     })();
   })();

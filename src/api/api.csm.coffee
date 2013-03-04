@@ -272,14 +272,14 @@ do () ->
       throw "Boolean is not supported yet"
       return new MorpheusExpression param, paramStr, undefined
 
-    #window.tolerances = (tolerances...) ->
-    #  paramIndex = globalParamIndex
-    #  ++globalParamIndex
-    #  return new MorpheusExpression (varCons arguments, ""), paramIndex
+    window.tolerance = (paramExpression) ->
+      # Wrap the exported parameter with a tolerance tag
+      exportedParameters[paramExpression.str] = [exportedParameters[paramExpression.str]]
+      exportedParameters[paramExpression.str]._tag = 'tolerance'
+      return paramExpression
 
-    window.range = (id, meta, defaultValue, range) ->
-      param = varCons arguments, "range"
-      paramStr = "u#{globalParamIndex}"
-      ++globalParamIndex
-      exportedParameters[paramStr] = param
-      return new MorpheusExpression param, paramStr, 'float'
+    window.range = (paramExpression) ->
+      # Wrap the exported parameter with a range tag
+      exportedParameters[paramExpression.str] = [exportedParameters[paramExpression.str]]
+      exportedParameters[paramExpression.str]._tag = 'range'
+      return paramExpression

@@ -106,7 +106,7 @@ compileGLSL = safeExport 'morpheus.editor.compileGLSL', ['',''], (abstractSolidM
       result
 
     generateUniforms = (params) ->
-      (for name,attr of params
+      generateUniform = (attr) ->
         [id,meta,defaultValue] = attr
         type = switch attr._tag
           when 'real','dimension1','pitch1','angle' then 'float'
@@ -115,8 +115,14 @@ compileGLSL = safeExport 'morpheus.editor.compileGLSL', ['',''], (abstractSolidM
           when 'natural','latice1' then 'float' # TODO: uint
           when 'latice2' then 'vec2' # TODO: uint
           when 'latice3' then 'vec3' # TODO: uint
-          else "(ERROR #{data._tag})"
+          else "(ERROR #{attr._tag})"
         "uniform #{type} #{name};" + (if meta.description? then " // #{meta.description}" else "")
+      (for name,attr of params
+        switch attr._tag
+          when 'tolerance','range'
+            generateUniform attr[0]
+          else
+            generateUniform attr
       ).join '\n'
       #("uniform #{attr.type} #{name}; // #{attr.description}" for name,attr of params).join '\n'
 
