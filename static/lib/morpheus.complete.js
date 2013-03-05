@@ -6484,7 +6484,7 @@ morpheus.gui =
 (function() {
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelDefaultArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
@@ -6652,12 +6652,12 @@ morpheus.gui =
                     var _i, _ref5, _results;
                     _results = [];
                     for (i = _i = 0, _ref5 = defaultValue.min.length; 0 <= _ref5 ? _i < _ref5 : _i > _ref5; i = 0 <= _ref5 ? ++_i : --_i) {
-                      _results.push(defaultValue.min[i] + defaultValue.max[i]);
+                      _results.push((defaultValue.min[i] + defaultValue.max[i]) * 0.5);
                     }
                     return _results;
                   })();
                 } else {
-                  defaultValue = defaultValue.min + defaultValue.max;
+                  defaultValue = (defaultValue.min + defaultValue.max) * 0.5;
                 }
                 break;
               case 'range':
@@ -6985,6 +6985,43 @@ morpheus.gui =
     return {};
   });
 
+  getModelDefaultArguments = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
+    var attr, defaultValue, i, id, meta, name, _ref, _ref1, _results;
+    _results = [];
+    for (name in params) {
+      attr = params[name];
+      if (!(__indexOf.call(model.args, name) >= 0)) {
+        _ref = ["", {}, 0], id = _ref[0], meta = _ref[1], defaultValue = _ref[2];
+        switch (attr._tag) {
+          case 'tolerance':
+            _ref1 = attr[0], id = _ref1[0], meta = _ref1[1], defaultValue = _ref1[2];
+            if (Array.isArray(defaultValue.min)) {
+              defaultValue = (function() {
+                var _i, _ref2, _results1;
+                _results1 = [];
+                for (i = _i = 0, _ref2 = defaultValue.min.length; 0 <= _ref2 ? _i < _ref2 : _i > _ref2; i = 0 <= _ref2 ? ++_i : --_i) {
+                  _results1.push((defaultValue.min[i] + defaultValue.max[i]) * 0.5);
+                }
+                return _results1;
+              })();
+            } else {
+              defaultValue = (defaultValue.min + defaultValue.max) * 0.5;
+            }
+            break;
+          case 'range':
+            throw "TODO: Range not yet implemented";
+            break;
+          default:
+            id = attr[0], meta = attr[1], defaultValue = attr[2];
+        }
+        _results.push(model.args[name] = defaultValue);
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  });
+
   result = typeof exports !== "undefined" && exports !== null ? exports : {};
 
   result.create = create;
@@ -6995,9 +7032,11 @@ morpheus.gui =
 
   result.sceneReset = sceneReset;
 
+  result.getModelParameters = getModelParameters;
+
   result.getModelArguments = getModelArguments;
 
-  result.getModelParameters = getModelParameters;
+  result.getModelDefaultArguments = getModelDefaultArguments;
 
   return result;
 
