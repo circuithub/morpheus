@@ -27,9 +27,9 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
             when 'tolerance'
               [id,meta,defaultValue] = attr[0] # unwrap tolerance tag
               if Array.isArray defaultValue.min
-                defaultValue = (defaultValue.min[i] + defaultValue.max[i] for i in [0...defaultValue.min.length])
+                defaultValue = ((defaultValue.min[i] + defaultValue.max[i]) * 0.5 for i in [0...defaultValue.min.length])
               else
-                defaultValue = defaultValue.min + defaultValue.max
+                defaultValue = (defaultValue.min + defaultValue.max) * 0.5
             when 'range'
               throw "TODO: Range not yet implemented"
             else
