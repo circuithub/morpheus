@@ -488,29 +488,37 @@ morpheus.gui =
   };
 
   getModelParameters = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
-    var key, val, _ref;
+    var key, val;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return wrapParams(state.models[modelName].params);
     }
-    _ref = state.models;
-    for (key in _ref) {
-      val = _ref[key];
-      return wrapParams(val.params);
-    }
-    return parameterize.form.parameters("");
+    return (function() {
+      var _ref, _results;
+      _ref = state.models;
+      _results = [];
+      for (key in _ref) {
+        val = _ref[key];
+        _results.push(wrapParams(val.params));
+      }
+      return _results;
+    })();
   });
 
   getModelArguments = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
-    var key, val, _ref;
+    var key, val;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return state.models[modelName].args;
     }
-    _ref = state.models;
-    for (key in _ref) {
-      val = _ref[key];
-      return val.args;
-    }
-    return {};
+    return (function() {
+      var _ref, _results;
+      _ref = state.models;
+      _results = [];
+      for (key in _ref) {
+        val = _ref[key];
+        _results.push(val.args);
+      }
+      return _results;
+    })();
   });
 
   /*
