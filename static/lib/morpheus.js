@@ -2568,7 +2568,7 @@ morpheus.gui =
 (function() {
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize,
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize, wrapParams,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
@@ -2897,7 +2897,7 @@ morpheus.gui =
   };
 
   controlsInit = safeExport('morpheus.gui: controlsInit', void 0, function() {
-    var c, controls, el, model, modelName, name, param, roundDecimals, _i, _len;
+    var c, controls, el, model, modelName, roundDecimals, _i, _len;
     roundDecimals = function(n) {
       var nonzeroDigits, parts, zeroDigits;
       parts = (String(n)).split('.');
@@ -2917,21 +2917,12 @@ morpheus.gui =
     el = state.parameters.domElement;
     if (el != null) {
       controls = (function() {
-        var _ref, _ref1, _results;
+        var _ref, _results;
         _ref = state.models;
         _results = [];
         for (modelName in _ref) {
           model = _ref[modelName];
-          _results.push(parameterize.html(parameterize.form.parameters("", (_ref1 = parameterize.form).section.apply(_ref1, [""].concat(__slice.call((function() {
-            var _ref1, _results1;
-            _ref1 = model.params;
-            _results1 = [];
-            for (name in _ref1) {
-              param = _ref1[name];
-              _results1.push(param);
-            }
-            return _results1;
-          })()))))));
+          _results.push(parameterize.html(getModelParameters(modelName)));
         }
         return _results;
       })();
@@ -3043,15 +3034,28 @@ morpheus.gui =
     return true;
   });
 
+  wrapParams = function(params) {
+    var name, param, _ref;
+    return parameterize.form.parameters("", (_ref = parameterize.form).section.apply(_ref, [""].concat(__slice.call((function() {
+      var _results;
+      _results = [];
+      for (name in params) {
+        param = params[name];
+        _results.push(param);
+      }
+      return _results;
+    })()))));
+  };
+
   getModelParameters = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
     var key, val, _i, _len, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
-      return state.models[modelName].params;
+      return wrapParams(state.models[modelName].params);
     }
     _ref = state.models;
     for (val = _i = 0, _len = _ref.length; _i < _len; val = ++_i) {
       key = _ref[val];
-      return val.params;
+      return wrapParams(val.params);
     }
     return {};
   });

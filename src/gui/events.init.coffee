@@ -23,9 +23,7 @@ controlsInit = safeExport 'morpheus.gui: controlsInit', undefined, () ->
   el = state.parameters.domElement
   if el?
     controls = for modelName, model of state.models
-      parameterize.html (parameterize.form.parameters "", 
-        parameterize.form.section "",
-          (param for name, param of model.params)...)
+      parameterize.html getModelParameters modelName
     el.innerHTML = ""
     el.appendChild c for c in controls
   return
