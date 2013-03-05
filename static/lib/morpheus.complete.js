@@ -6973,7 +6973,7 @@ morpheus.gui =
       key = _ref[val];
       return wrapParams(val.params);
     }
-    return {};
+    return parameterize.form.parameters("");
   });
 
   getModelArguments = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {

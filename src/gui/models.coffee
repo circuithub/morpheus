@@ -7,7 +7,7 @@ getModelParameters = safeExport 'morpheus.gui.getModelParameters', {}, (modelNam
   return wrapParams state.models[modelName].params if modelName? and state.models[modelName]?
   for key,val in state.models
     return wrapParams val.params
-  return {}
+  return parameterize.form.parameters ""
 
 getModelArguments = safeExport 'morpheus.gui.getModelParameters', {}, (modelName) ->
   return state.models[modelName].args if modelName? and state.models[modelName]?
