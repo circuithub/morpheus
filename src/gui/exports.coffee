@@ -5,6 +5,6 @@ result.sceneScript = sceneScript
 result.sceneReset = sceneReset
 result.getModelParameters = getModelParameters
 result.getModelArguments = getModelArguments
-result.getModelDefaultArguments = getModelDefaultArguments
+#result.getModelDefaultArguments = getModelDefaultArguments
 return result
 

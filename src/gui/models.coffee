@@ -10,8 +10,9 @@ getModelArguments = safeExport 'morpheus.gui.getModelParameters', {}, (modelName
     return val.args
   return {}
 
+###
 getModelDefaultArguments = safeExport 'morpheus.gui.getModelParameters', {}, (modelName) ->
-  # Initialize unassigned model arguments
+  params = state?.models[modelName]?.params
   for name,attr of params
     if not (name in model.args)
       [id,meta,defaultValue] = ["", {}, 0]
@@ -27,4 +28,5 @@ getModelDefaultArguments = safeExport 'morpheus.gui.getModelParameters', {}, (mo
         else
           [id,meta,defaultValue] = attr
       model.args[name] = defaultValue # TODO: handle tolerance value here?
+###
 
