@@ -44,12 +44,12 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       morpheus.renderer.modelArguments 'scene', model.args
       controlsInit()
       state.application.sceneInitialized = true
-      callback()
+      callback?()
       return
     onerror: (data, request) ->
       morpheus.logInternalError "Error compiling the solid model."
       #state.application.sceneInitialized = false
-      callback "Error compiling the solid model."
+      callback? "Error compiling the solid model."
       return
   return
 

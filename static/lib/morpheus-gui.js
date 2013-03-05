@@ -200,11 +200,15 @@ morpheus.gui =
         morpheus.renderer.modelArguments('scene', model.args);
         controlsInit();
         state.application.sceneInitialized = true;
-        callback();
+        if (typeof callback === "function") {
+          callback();
+        }
       },
       onerror: function(data, request) {
         morpheus.logInternalError("Error compiling the solid model.");
-        callback("Error compiling the solid model.");
+        if (typeof callback === "function") {
+          callback("Error compiling the solid model.");
+        }
       }
     });
   });
