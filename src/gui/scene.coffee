@@ -1,5 +1,5 @@
 # Initialize nodes in the scene graph
-sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScriptCode) ->
+sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScriptCode, callback) ->
   csmSourceCode = morpheus.generator.translateCSM state.api.sourceCode, morpheusScriptCode
 
   # Run the script inside a webworker sandbox
@@ -44,9 +44,13 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       morpheus.renderer.modelArguments 'scene', model.args
       controlsInit()
       state.application.sceneInitialized = true
-    onerror: (data,request) ->
+      callback()
+      return
+    onerror: (data, request) ->
       morpheus.logInternalError "Error compiling the solid model."
       #state.application.sceneInitialized = false
+      callback "Error compiling the solid model."
+      return
   return
 
 # Reset all arguments in the scene (used when loading a completely new script)

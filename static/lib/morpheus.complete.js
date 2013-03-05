@@ -6615,7 +6615,7 @@ morpheus.gui =
     return coords;
   };
 
-  sceneScript = safeExport('morpheus.gui: sceneScript', void 0, function(morpheusScriptCode) {
+  sceneScript = safeExport('morpheus.gui: sceneScript', void 0, function(morpheusScriptCode, callback) {
     var csmSourceCode, requestId;
     csmSourceCode = morpheus.generator.translateCSM(state.api.sourceCode, morpheusScriptCode);
     requestId = JSandbox["eval"]({
@@ -6675,10 +6675,12 @@ morpheus.gui =
         morpheus.renderer.modelShaders('scene', model.shaders);
         morpheus.renderer.modelArguments('scene', model.args);
         controlsInit();
-        return state.application.sceneInitialized = true;
+        state.application.sceneInitialized = true;
+        callback();
       },
       onerror: function(data, request) {
-        return morpheus.logInternalError("Error compiling the solid model.");
+        morpheus.logInternalError("Error compiling the solid model.");
+        callback("Error compiling the solid model.");
       }
     });
   });
