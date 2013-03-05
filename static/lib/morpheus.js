@@ -3048,13 +3048,13 @@ morpheus.gui =
   };
 
   getModelParameters = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
-    var key, val, _i, _len, _ref;
+    var key, val, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return wrapParams(state.models[modelName].params);
     }
     _ref = state.models;
-    for (val = _i = 0, _len = _ref.length; _i < _len; val = ++_i) {
-      key = _ref[val];
+    for (key in _ref) {
+      val = _ref[key];
       return wrapParams(val.params);
     }
     return parameterize.form.parameters("");

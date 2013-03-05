@@ -5,7 +5,7 @@ wrapParams = (params) ->
 
 getModelParameters = safeExport 'morpheus.gui.getModelParameters', {}, (modelName) ->
   return wrapParams state.models[modelName].params if modelName? and state.models[modelName]?
-  for key,val in state.models
+  for key,val of state.models
     return wrapParams val.params
   return parameterize.form.parameters ""
 
