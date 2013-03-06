@@ -253,11 +253,18 @@ var __slice = [].slice;
         defaultTolerance.max = [defaultTolerance.max, defaultTolerance.max, defaultTolerance.max];
       }
       trs = !(meta.label != null) ? [] : [
-        html.tr(html.th({
+        html.tr({}, html.th({
           "class": "param-composite-label",
-          colspan: 3,
           scope: "rowgroup"
-        }, escapeAttrib(meta.label)))
+        }, html.span({
+          "class": "param-composite-label-text"
+        }, escapeAttrib(meta.label))), html.th({
+          "class": "param-tolerance-legend",
+          scope: "col"
+        }, "Min"), html.th({
+          "class": "param-tolerance-legend",
+          scope: "col"
+        }, "Max"))
       ];
       trs = trs.concat((function() {
         var _i, _len, _ref2, _results;
