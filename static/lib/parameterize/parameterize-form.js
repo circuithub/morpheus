@@ -819,7 +819,6 @@ var __slice = [].slice;
         default:
           return;
       }
-      console.log(e.which);
       callback.apply(null, arguments);
     });
   };
