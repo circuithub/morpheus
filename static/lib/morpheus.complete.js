@@ -3220,11 +3220,18 @@ var __slice = [].slice;
         defaultTolerance.max = [defaultTolerance.max, defaultTolerance.max, defaultTolerance.max];
       }
       trs = !(meta.label != null) ? [] : [
-        html.tr(html.th({
+        html.tr({}, html.th({
           "class": "param-composite-label",
-          colspan: 3,
           scope: "rowgroup"
-        }, escapeAttrib(meta.label)))
+        }, html.span({
+          "class": "param-composite-label-text"
+        }, escapeAttrib(meta.label))), html.th({
+          "class": "param-tolerance-legend",
+          scope: "col"
+        }, "Min"), html.th({
+          "class": "param-tolerance-legend",
+          scope: "col"
+        }, "Max"))
       ];
       trs = trs.concat((function() {
         var _i, _len, _ref2, _results;
@@ -3743,15 +3750,55 @@ var __slice = [].slice;
   form.form = adt.constructors(form.html);
   form.get = function(formElement) {};
   form.set = function(formElement, form) {};
-  form.on = function(eventKey, callback) {};
+  form.on = function(eventKey, selector, callback) {
+    var $selector;
+    if (!(typeof $ !== "undefined" && $ !== null)) {
+      throw "JQuery could not be found. Please ensure that $ is available before using parameterize.on.";
+    }
+    $selector = $(selector);
+    $selector.on('change', 'input[type="checkbox"],select', callback);
+    $selector.on('keypress', 'input[type="text"]', function(e) {
+      if (e.which === 0) {
+        return;
+      }
+      callback.apply(null, arguments);
+    });
+    $selector.on('keydown', 'input[type="text"]', function(e) {
+      if (e.which === 0) {
+        return;
+      }
+      switch (e.which) {
+        case 8:
+        case 46:
+          void 0;
+          break;
+        case 45:
+          if (!e.shiftKey) {
+            return;
+          }
+          break;
+        case 86:
+        case 88:
+          if (!e.ctrlKey) {
+            return;
+          }
+          break;
+        default:
+          return;
+      }
+      console.log(e.which);
+      callback.apply(null, arguments);
+    });
+  };
   return module.exports = form;
 })(typeof adt !== "undefined" && adt !== null ? adt : require('adt.js'));
 }});
 
 // Assign this library to a global variable if a global variable is defined
 var parameterizeExports = this.require("parameterize-form");
-parameterize.form = parameterizeExports.form;
-parameterize.html = parameterizeExports.html;
+var k;
+for (k in parameterizeExports)
+  parameterize[k] = parameterizeExports[k];
 // Restore the original require method
 if (typeof originalRequire === 'undefined')
   delete this.require;
