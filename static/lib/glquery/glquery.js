@@ -10,7 +10,7 @@ var glQuery = (function() {
   var gl = function(selector) {
     return gl.fn.init(selector);
   },
-  debugLevel = 0,
+  debugLevel = 1,
   // The scenes, each of which contains a hierarchy of identifiers
   scenes = {},
   // Commands to be executed

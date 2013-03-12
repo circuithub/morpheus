@@ -9,7 +9,7 @@ getModelParameters = safeExport 'morpheus.gui.getModelParameters', {}, (modelNam
   # Fetch all models' parameters
   params = {}
   for k,v of state.models
-    params[k] = v.params
+    params[k] = wrapParams v.params
   return params
 
 getModelArguments = safeExport 'morpheus.gui.getModelArguments', {}, (modelName) ->

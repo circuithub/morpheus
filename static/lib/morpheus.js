@@ -3064,7 +3064,7 @@ morpheus.gui =
     _ref = state.models;
     for (k in _ref) {
       v = _ref[k];
-      params[k] = v.params;
+      params[k] = wrapParams(v.params);
     }
     return params;
   });

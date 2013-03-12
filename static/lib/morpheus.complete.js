@@ -10,7 +10,7 @@ var glQuery = (function() {
   var gl = function(selector) {
     return gl.fn.init(selector);
   },
-  debugLevel = 0,
+  debugLevel = 1,
   // The scenes, each of which contains a hierarchy of identifiers
   scenes = {},
   // Commands to be executed
@@ -7419,7 +7419,7 @@ morpheus.gui =
     _ref = state.models;
     for (k in _ref) {
       v = _ref[k];
-      params[k] = v.params;
+      params[k] = wrapParams(v.params);
     }
     return params;
   });
