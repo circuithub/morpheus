@@ -7227,7 +7227,7 @@ morpheus.gui =
   });
 
   registerDOMEvents = function() {
-    ($('#morpheus-gui')).delegate('#morpheus-canvas', 'mousedown', mouseDown);
+    ($('#morpheus-gui')).on('mousedown', '#morpheus-canvas', mouseDown);
     state.viewport.domElement.addEventListener('mouseup', mouseUp, true);
     state.viewport.domElement.addEventListener('mousemove', mouseMove, true);
     state.viewport.domElement.addEventListener('mousewheel', mouseWheel, true);
@@ -7241,12 +7241,12 @@ morpheus.gui =
   };
 
   registerControlEvents = function() {
-    ($('#morpheus-param-inputs')).delegate('.morpheus-param-range', 'change', controlsParamChange);
-    ($('#morpheus-param-inputs')).delegate('.morpheus-param-number', 'change', controlsParamChange);
-    ($('#morpheus-param-inputs')).delegate('.morpheus-param-range', 'mousedown', controlsParamChange);
-    ($('#morpheus-param-inputs')).delegate('.morpheus-param-number', 'mousedown', controlsParamChange);
-    ($('#morpheus-param-inputs')).delegate('.morpheus-param-range', 'mouseup', controlsParamChange);
-    return ($('#morpheus-param-inputs')).delegate('.morpheus-param-number', 'mouseup', controlsParamChange);
+    ($('#morpheus-param-inputs')).on('change', '.morpheus-param-range', controlsParamChange);
+    ($('#morpheus-param-inputs')).on('change', '.morpheus-param-number', controlsParamChange);
+    ($('#morpheus-param-inputs')).on('mousedown', '.morpheus-param-range', controlsParamChange);
+    ($('#morpheus-param-inputs')).on('mousedown', '.morpheus-param-number', controlsParamChange);
+    ($('#morpheus-param-inputs')).on('mouseup', '.morpheus-param-range', controlsParamChange);
+    return ($('#morpheus-param-inputs')).on('mouseup', '.morpheus-param-number', controlsParamChange);
   };
 
   sceneIdle = function() {
