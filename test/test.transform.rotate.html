@@ -47,8 +47,8 @@
   <script>
     window.onload = function(){
       morpheus.editor.create(document.getElementById('morpheus-editor'), "var r = range('Rotation', 0.0, 0.0, 360.0);\nbox({ dimensions: [0.4,0.4,0.5] }).rotate({ axis: 2, angle: r })");
-      morpheus.gui.create('morpheus-gui');
-      morpheus.gui.createControls('morpheus-controls');
+      morpheus.gui.create('#morpheus-gui');
+      morpheus.gui.createControls('#morpheus-controls');
     };
   </script>
 </body>

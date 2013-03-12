@@ -48,8 +48,8 @@
   <script>
     window.onload = function(){
       morpheus.editor.create(document.getElementById('morpheus-editor'), "sphere({ radius: 0.3 }).wedge({ axis: 1, from: 35, to: 75 })");
-      morpheus.gui.create('morpheus-gui');
-      morpheus.gui.createControls('morpheus-controls');
+      morpheus.gui.create('#morpheus-gui');
+      morpheus.gui.createControls('#morpheus-controls');
     };
   </script>
 </body>

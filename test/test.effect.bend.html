@@ -48,8 +48,8 @@
   <script>
     window.onload = function(){
       morpheus.editor.create(document.getElementById('morpheus-editor'), "var d = range('D',[0.5,0.1,0.1],[0.0,0.0,0.0],[0.9,0.2,0.2]);\nvar a = range('Angle',15.0,0.0,180.0);\nbox({ dimensions: d }).bend({ axis: 2, angle: a, offsetAxis: 0, offset: -0.1, direction: 1 })");
-      morpheus.gui.create('morpheus-gui');
-      morpheus.gui.createControls('morpheus-controls');
+      morpheus.gui.create('#morpheus-gui');
+      morpheus.gui.createControls('#morpheus-controls');
     };
   </script>
 </body>

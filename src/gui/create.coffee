@@ -9,16 +9,16 @@ create = safeExport 'morpheus.gui.create', false, (container, jsandboxUrl, morph
   # Check pre-conditions
   if container != null and typeof container != 'string' and (typeof container != 'object' or container.nodeName != 'DIV')
     containerEl.innerHTML = errorHtml;
-    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container id '#{container}' supplied, expected type 'string' or dom element of type 'DIV'."
+    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container selector '#{container}' supplied, expected type 'string' or dom element of type 'DIV'."
     return false
   else if container == null
     morpheus.logApiWarning "Morpheus GUI: (WARNING) No container element supplied. Creating a div element here...";
     #TODO...
   else
-    containerEl = if typeof container == 'string' then document.getElementById container else container
+    containerEl = if typeof container == 'string' then document.querySelector container else container
 
-  if containerEl == null
-    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container id '#{container}' supplied, could not find a matching 'DIV' element in the document."
+  if containerEl == null or containerEl.nodeName != 'DIV'
+    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container selector '#{container}' supplied, could not find a matching 'DIV' element in the document."
     return false
 
   containerEl.innerHTML = 
@@ -45,15 +45,15 @@ create = safeExport 'morpheus.gui.create', false, (container, jsandboxUrl, morph
 createControls = safeExport 'morpheus.gui.createControls', false, (container) ->
   # Check pre-conditions
   if container != null and typeof container != 'string' and (typeof container != 'object' or container.nodeName != 'DIV')
-    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container id '#{container}' supplied, expected type 'string' or dom element of type 'DIV'."
+    morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container selector '#{container}' supplied, expected type 'string' or dom element of type 'DIV'."
     return false
   else if container == null
     morpheus.logApiWarning "Morpheus GUI: (WARNING) No container element supplied. Creating a div element here...";
     #TODO...
   else
-    containerEl = if typeof container == 'string' then document.getElementById container else container
+    containerEl = if typeof container == 'string' then document.querySelector container else container
 
-  if containerEl == null
+  if containerEl == null or containerEl.nodeName != 'DIV'
     morpheus.logApiError "Morpheus GUI: (ERROR) Invalid container id '#{container}' supplied, could not find a matching 'DIV' element in the document."
     return false
 

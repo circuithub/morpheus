@@ -83,8 +83,8 @@ repeat({ count: [1, pinCount, 1], interval: [0.5, pinPitch, 0.5] },
   <script>
     window.onload = function(){
       morpheus.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
-      morpheus.gui.create('morpheus-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
-      morpheus.gui.createControls('morpheus-controls');
+      morpheus.gui.create('#morpheus-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
+      morpheus.gui.createControls('#morpheus-controls');
     };
   </script>
 </body>

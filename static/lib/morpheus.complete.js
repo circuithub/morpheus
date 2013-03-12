@@ -7348,15 +7348,15 @@ morpheus.gui =
     }
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
       containerEl.innerHTML = errorHtml;
-      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container selector '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
     } else if (container === null) {
       morpheus.logApiWarning("Morpheus GUI: (WARNING) No container element supplied. Creating a div element here...");
     } else {
-      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+      containerEl = typeof container === 'string' ? document.querySelector(container) : container;
     }
-    if (containerEl === null) {
-      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
+    if (containerEl === null || containerEl.nodeName !== 'DIV') {
+      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container selector '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }
     containerEl.innerHTML = ("<canvas id='morpheus-canvas' width='" + fixedWidth + "' height='" + fixedHeight + "'>\n  <p>This application requires a browser that supports the<a href='http://www.w3.org/html/wg/html5/'>HTML5</a>&lt;canvas&gt; feature.</p>\n</canvas>") + containerEl.innerHTML;
@@ -7376,14 +7376,14 @@ morpheus.gui =
   createControls = safeExport('morpheus.gui.createControls', false, function(container) {
     var containerEl;
     if (container !== null && typeof container !== 'string' && (typeof container !== 'object' || container.nodeName !== 'DIV')) {
-      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container id '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
+      morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container selector '" + container + "' supplied, expected type 'string' or dom element of type 'DIV'.");
       return false;
     } else if (container === null) {
       morpheus.logApiWarning("Morpheus GUI: (WARNING) No container element supplied. Creating a div element here...");
     } else {
-      containerEl = typeof container === 'string' ? document.getElementById(container) : container;
+      containerEl = typeof container === 'string' ? document.querySelector(container) : container;
     }
-    if (containerEl === null) {
+    if (containerEl === null || containerEl.nodeName !== 'DIV') {
       morpheus.logApiError("Morpheus GUI: (ERROR) Invalid container id '" + container + "' supplied, could not find a matching 'DIV' element in the document.");
       return false;
     }

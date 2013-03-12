@@ -47,8 +47,8 @@
   <script>
     window.onload = function(){
       morpheus.editor.create(document.getElementById('morpheus-editor'), "var s = range('Scale', 0.25, 0.0, 4.0);\nbox({ dimensions: [0.4,0.4,0.5] }).scale({ factor: s })");
-      morpheus.gui.create('morpheus-gui');
-      morpheus.gui.createControls('morpheus-controls');
+      morpheus.gui.create('#morpheus-gui');
+      morpheus.gui.createControls('#morpheus-controls');
     };
   </script>
 </body>
