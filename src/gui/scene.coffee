@@ -15,7 +15,7 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       params = result?.attr?.params ? {}
       # Reset any model arguments to their default values when their definitions change
       for name,oldAttr of model.params
-        attr = params[name]          
+        attr = params[name]
         if not attr? or attr._tag != oldAttr._tag
           delete model.args[name]
       # Initialize unassigned model arguments
@@ -26,10 +26,6 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
           switch attr._tag
             when 'tolerance'
               [id,meta,defaultValue] = attr[0] # unwrap tolerance tag
-              if Array.isArray defaultValue.min
-                defaultValue = ((defaultValue.min[i] + defaultValue.max[i]) * 0.5 for i in [0...defaultValue.min.length])
-              else
-                defaultValue = (defaultValue.min + defaultValue.max) * 0.5
             when 'range'
               throw "TODO: Range not yet implemented"
             else

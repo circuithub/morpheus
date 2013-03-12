@@ -7079,7 +7079,7 @@ morpheus.gui =
     requestId = JSandbox["eval"]({
       data: csmSourceCode,
       callback: function(result) {
-        var attr, defaultValue, i, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2, _ref3, _ref4;
+        var attr, defaultValue, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2, _ref3, _ref4;
         morpheus.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
@@ -7105,18 +7105,6 @@ morpheus.gui =
             switch (attr._tag) {
               case 'tolerance':
                 _ref4 = attr[0], id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
-                if (Array.isArray(defaultValue.min)) {
-                  defaultValue = (function() {
-                    var _i, _ref5, _results;
-                    _results = [];
-                    for (i = _i = 0, _ref5 = defaultValue.min.length; 0 <= _ref5 ? _i < _ref5 : _i > _ref5; i = 0 <= _ref5 ? ++_i : --_i) {
-                      _results.push((defaultValue.min[i] + defaultValue.max[i]) * 0.5);
-                    }
-                    return _results;
-                  })();
-                } else {
-                  defaultValue = (defaultValue.min + defaultValue.max) * 0.5;
-                }
                 break;
               case 'range':
                 throw "TODO: Range not yet implemented";
