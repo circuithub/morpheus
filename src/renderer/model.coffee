@@ -34,10 +34,20 @@ modelShaders = safeExport 'morpheus.renderer.modelShaders', false, (modelName, s
 
 modelArguments = safeExport 'morpheus.renderer.modelArguments', undefined, (modelName, args) ->
   for name,val of args
-    (gl modelName).uniform name, val
+    # If the value is a toleranced type then calculate nominal as the average of min and max
+    if (not Array.isArray val) and (typeof val == 'object') and val.min? and val.max?
+      nom = null
+      if Array.isArray val.min
+        nom = ((x + val.max[i]) * 0.5 for x,i in val.min)
+      else
+        nom = (val.min + val.max) * 0.5
+      (gl modelName).uniform name, nom
+    else
+      (gl modelName).uniform name, val
   return
 
 modelRotate = safeExport 'morpheus.renderer.modelRotate', undefined, (modelName, angles) ->
   gl.matrix3.rotateZY state.rotation, state.rotation, angles
   (gl modelName).uniform 'model', state.rotation
   return
+

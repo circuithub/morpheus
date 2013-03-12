@@ -123,10 +123,29 @@ morpheus.renderer =
   });
 
   modelArguments = safeExport('morpheus.renderer.modelArguments', void 0, function(modelName, args) {
-    var name, val;
+    var i, name, nom, val, x;
     for (name in args) {
       val = args[name];
-      (gl(modelName)).uniform(name, val);
+      if ((!Array.isArray(val)) && (typeof val === 'object') && (val.min != null) && (val.max != null)) {
+        nom = null;
+        if (Array.isArray(val.min)) {
+          nom = (function() {
+            var _i, _len, _ref, _results;
+            _ref = val.min;
+            _results = [];
+            for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+              x = _ref[i];
+              _results.push((x + val.max[i]) * 0.5);
+            }
+            return _results;
+          })();
+        } else {
+          nom = (val.min + val.max) * 0.5;
+        }
+        (gl(modelName)).uniform(name, nom);
+      } else {
+        (gl(modelName)).uniform(name, val);
+      }
     }
   });
 
