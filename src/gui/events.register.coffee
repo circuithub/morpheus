@@ -13,13 +13,7 @@ registerDOMEvents = () ->
 
 # Register UI controls events
 registerEditorEvents = () ->
-  ($ '#morpheus-source-compile').click controlsSourceCompile
+  ($ '#morpheus-source-compile').on 'click', controlsSourceCompile
 
 registerControlEvents = () ->
-  ($ '#morpheus-param-inputs').on 'change', '.morpheus-param-range', controlsParamChange
-  ($ '#morpheus-param-inputs').on 'change', '.morpheus-param-number', controlsParamChange
-  ($ '#morpheus-param-inputs').on 'mousedown', '.morpheus-param-range', controlsParamChange
-  ($ '#morpheus-param-inputs').on 'mousedown', '.morpheus-param-number', controlsParamChange
-  ($ '#morpheus-param-inputs').on 'mouseup', '.morpheus-param-range', controlsParamChange
-  ($ '#morpheus-param-inputs').on 'mouseup', '.morpheus-param-number', controlsParamChange
-
+  parameterize.on 'update', state.parameters.domElement, controlsArgumentsUpdate

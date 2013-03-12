@@ -2568,7 +2568,7 @@ morpheus.gui =
 (function() {
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, setModelArguments, state, windowResize, wrapParams,
+  var apiInit, canvasInit, constants, controlsArgumentsUpdate, controlsInit, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, setModelArguments, state, windowResize, wrapParams,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
@@ -2849,26 +2849,14 @@ morpheus.gui =
   keyDown = safeExport('morpheus.gui: keyDown', void 0, function(event) {});
 
   controlsSourceCompile = safeExport('morpheus.gui.controlsSourceCompile', void 0, function() {
-    sceneInit();
+    morpheus.gui.sceneReset();
+    morpheus.gui.sceneScript(script, function(error) {
+      return console.error(error);
+    });
   });
 
-  controlsParamChange = safeExport('morpheus.gui.controlsParamChange', void 0, function(event) {
-    /* TODO: replace with parameterize-form
-    splitElName = event.target.name.split '[', 2
-    paramName = splitElName[0]
-    paramIndex = if splitElName.length > 1 then (Number (splitElName[1].split ']', 2)[0]) else 0
-    model = state.models['scene']
-    if model.params[paramName]?
-      switch model.params[paramName].type
-        when 'float'
-          model.args[paramName] = Number ($ event.target).val()
-        when 'vec2', 'vec3', 'vec4'
-          model.args[paramName][paramIndex] = Number ($ event.target).val()
-        else
-          morpheus.logInternalError "Unknown type `#{model.params[paramName].type}` for parameter `#{paramName}` during change event."
-    morpheus.renderer.modelArguments 'scene', model.args
-    */
-
+  controlsArgumentsUpdate = safeExport('morpheus.gui.controlsArgumentsUpdate', void 0, function(event) {
+    setModelArguments('scene', parameterize.get(state.parameters.domElement, getModelParameters('scene')));
   });
 
   registerDOMEvents = function() {
@@ -2882,16 +2870,11 @@ morpheus.gui =
   };
 
   registerEditorEvents = function() {
-    return ($('#morpheus-source-compile')).click(controlsSourceCompile);
+    return ($('#morpheus-source-compile')).on('click', controlsSourceCompile);
   };
 
   registerControlEvents = function() {
-    ($('#morpheus-param-inputs')).on('change', '.morpheus-param-range', controlsParamChange);
-    ($('#morpheus-param-inputs')).on('change', '.morpheus-param-number', controlsParamChange);
-    ($('#morpheus-param-inputs')).on('mousedown', '.morpheus-param-range', controlsParamChange);
-    ($('#morpheus-param-inputs')).on('mousedown', '.morpheus-param-number', controlsParamChange);
-    ($('#morpheus-param-inputs')).on('mouseup', '.morpheus-param-range', controlsParamChange);
-    return ($('#morpheus-param-inputs')).on('mouseup', '.morpheus-param-number', controlsParamChange);
+    return parameterize.on('update', state.parameters.domElement, controlsArgumentsUpdate);
   };
 
   sceneIdle = function() {
