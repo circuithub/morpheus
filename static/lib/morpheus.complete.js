@@ -6923,7 +6923,7 @@ morpheus.gui =
 (function() {
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, state, windowResize, wrapParams,
+  var apiInit, canvasInit, constants, controlsInit, controlsParamChange, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, setModelArguments, state, windowResize, wrapParams,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
@@ -7409,37 +7409,53 @@ morpheus.gui =
   };
 
   getModelParameters = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
-    var key, val;
+    var k, params, v, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return wrapParams(state.models[modelName].params);
     }
-    return (function() {
-      var _ref, _results;
-      _ref = state.models;
-      _results = [];
-      for (key in _ref) {
-        val = _ref[key];
-        _results.push(wrapParams(val.params));
-      }
-      return _results;
-    })();
+    params = {};
+    _ref = state.models;
+    for (k in _ref) {
+      v = _ref[k];
+      params[k] = v.params;
+    }
+    return params;
   });
 
-  getModelArguments = safeExport('morpheus.gui.getModelParameters', {}, function(modelName) {
-    var key, val;
+  getModelArguments = safeExport('morpheus.gui.getModelArguments', {}, function(modelName) {
+    var args, k, v, _ref;
     if ((modelName != null) && (state.models[modelName] != null)) {
       return state.models[modelName].args;
     }
-    return (function() {
-      var _ref, _results;
-      _ref = state.models;
-      _results = [];
-      for (key in _ref) {
-        val = _ref[key];
-        _results.push(val.args);
+    args = {};
+    _ref = state.models;
+    for (k in _ref) {
+      v = _ref[k];
+      args[k] = v.args;
+    }
+    return args;
+  });
+
+  setModelArguments = safeExport('morpheus.gui.setModelArguments', {}, function(modelName, args) {
+    var k, model, v;
+    if (!(modelName != null)) {
+      for (k in args) {
+        v = args[k];
+        model = state.models[k];
+        if (!(model != null)) {
+          throw "No model with the name '" + modelName + "' exists in the scene.";
+        }
+        model.args = v;
+        morpheus.renderer.modelArguments(k, model.args);
       }
-      return _results;
-    })();
+      return;
+    }
+    model = state.models[modelName];
+    if (!(model != null)) {
+      throw "No model with the name '" + modelName + "' exists in the scene.";
+    }
+    model.args = args;
+    morpheus.renderer.modelArguments(modelName, model.args);
   });
 
   /*
@@ -7476,6 +7492,8 @@ morpheus.gui =
   result.getModelParameters = getModelParameters;
 
   result.getModelArguments = getModelArguments;
+
+  result.setModelArguments = setModelArguments;
 
   return result;
 
