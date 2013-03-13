@@ -122,29 +122,47 @@ morpheus.renderer =
     return success;
   });
 
-  modelArguments = safeExport('morpheus.renderer.modelArguments', void 0, function(modelName, args) {
-    var i, name, nom, val, x;
-    for (name in args) {
-      val = args[name];
-      if ((!Array.isArray(val)) && (typeof val === 'object') && (val.min != null) && (val.max != null)) {
+  modelArguments = safeExport('morpheus.renderer.modelArguments', void 0, function(modelName, args, params) {
+    var arg, i, id, nom, param, paramToUniform, uniformID, unwrap, x, _ref;
+    unwrap = function(data) {
+      switch (data._tag) {
+        case 'tolerance':
+        case 'range':
+          return data[0];
+        default:
+          return data;
+      }
+    };
+    paramToUniform = {};
+    if (params != null) {
+      for (uniformID in params) {
+        param = params[uniformID];
+        id = unwrap(param)[0];
+        paramToUniform[id] = uniformID;
+      }
+    }
+    for (id in args) {
+      arg = args[id];
+      uniformID = (_ref = paramToUniform[id]) != null ? _ref : id;
+      if ((!Array.isArray(arg)) && (typeof arg === 'object') && (arg.min != null) && (arg.max != null)) {
         nom = null;
-        if (Array.isArray(val.min)) {
+        if (Array.isArray(arg.min)) {
           nom = (function() {
-            var _i, _len, _ref, _results;
-            _ref = val.min;
+            var _i, _len, _ref1, _results;
+            _ref1 = arg.min;
             _results = [];
-            for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-              x = _ref[i];
-              _results.push((x + val.max[i]) * 0.5);
+            for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
+              x = _ref1[i];
+              _results.push((x + arg.max[i]) * 0.5);
             }
             return _results;
           })();
         } else {
-          nom = (val.min + val.max) * 0.5;
+          nom = (arg.min + arg.max) * 0.5;
         }
-        (gl(modelName)).uniform(name, nom);
+        (gl(modelName)).uniform(uniformID, nom);
       } else {
-        (gl(modelName)).uniform(name, val);
+        (gl(modelName)).uniform(uniformID, arg);
       }
     }
   });

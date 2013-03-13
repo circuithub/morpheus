@@ -32,18 +32,31 @@ modelShaders = safeExport 'morpheus.renderer.modelShaders', false, (modelName, s
   gl.refresh state.shader.program
   return success
 
-modelArguments = safeExport 'morpheus.renderer.modelArguments', undefined, (modelName, args) ->
-  for name,val of args
-    # If the value is a toleranced type then calculate nominal as the average of min and max
-    if (not Array.isArray val) and (typeof val == 'object') and val.min? and val.max?
+modelArguments = safeExport 'morpheus.renderer.modelArguments', undefined, (modelName, args, params) ->  
+  # Helper to get the id of a wrapped parameter
+  unwrap = (data) -> switch data._tag
+    when 'tolerance', 'range' then data[0] # unwrap tolerance/range tags
+    else data
+
+  # Build a map from script ids to parameter ids
+  paramToUniform = {}
+  if params? then for uniformID,param of params
+    [id] = unwrap param
+    paramToUniform[id] = uniformID
+
+  # Assign arguments to webgl uniforms
+  for id,arg of args
+    uniformID = paramToUniform[id] ? id
+    # If the argument is a toleranced type then calculate nominal as the average of min and max
+    if (not Array.isArray arg) and (typeof arg == 'object') and arg.min? and arg.max?
       nom = null
-      if Array.isArray val.min
-        nom = ((x + val.max[i]) * 0.5 for x,i in val.min)
+      if Array.isArray arg.min
+        nom = ((x + arg.max[i]) * 0.5 for x,i in arg.min)
       else
-        nom = (val.min + val.max) * 0.5
-      (gl modelName).uniform name, nom
+        nom = (arg.min + arg.max) * 0.5
+      (gl modelName).uniform uniformID, nom
     else
-      (gl modelName).uniform name, val
+      (gl modelName).uniform uniformID, arg
   return
 
 modelRotate = safeExport 'morpheus.renderer.modelRotate', undefined, (modelName, angles) ->

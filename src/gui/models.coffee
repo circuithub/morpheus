@@ -31,14 +31,14 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
       if not model?
         throw "No model with the name '#{modelName}' exists in the scene."
       model.args = v
-      morpheus.renderer.modelArguments k, model.args
+      morpheus.renderer.modelArguments k, model.args, model.params
     return
   # Update the model referenced by modelName
   model = state.models[modelName]
   if not model?
     throw "No model with the name '#{modelName}' exists in the scene."
   model.args = args
-  morpheus.renderer.modelArguments modelName, model.args
+  morpheus.renderer.modelArguments modelName, model.args, model.params
   return
 
 ###

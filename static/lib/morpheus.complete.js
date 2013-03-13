@@ -10,7 +10,7 @@ var glQuery = (function() {
   var gl = function(selector) {
     return gl.fn.init(selector);
   },
-  debugLevel = 1,
+  debugLevel = 0,
   // The scenes, each of which contains a hierarchy of identifiers
   scenes = {},
   // Commands to be executed
@@ -6843,29 +6843,47 @@ morpheus.renderer =
     return success;
   });
 
-  modelArguments = safeExport('morpheus.renderer.modelArguments', void 0, function(modelName, args) {
-    var i, name, nom, val, x;
-    for (name in args) {
-      val = args[name];
-      if ((!Array.isArray(val)) && (typeof val === 'object') && (val.min != null) && (val.max != null)) {
+  modelArguments = safeExport('morpheus.renderer.modelArguments', void 0, function(modelName, args, params) {
+    var arg, i, id, nom, param, paramToUniform, uniformID, unwrap, x, _ref;
+    unwrap = function(data) {
+      switch (data._tag) {
+        case 'tolerance':
+        case 'range':
+          return data[0];
+        default:
+          return data;
+      }
+    };
+    paramToUniform = {};
+    if (params != null) {
+      for (uniformID in params) {
+        param = params[uniformID];
+        id = unwrap(param)[0];
+        paramToUniform[id] = uniformID;
+      }
+    }
+    for (id in args) {
+      arg = args[id];
+      uniformID = (_ref = paramToUniform[id]) != null ? _ref : id;
+      if ((!Array.isArray(arg)) && (typeof arg === 'object') && (arg.min != null) && (arg.max != null)) {
         nom = null;
-        if (Array.isArray(val.min)) {
+        if (Array.isArray(arg.min)) {
           nom = (function() {
-            var _i, _len, _ref, _results;
-            _ref = val.min;
+            var _i, _len, _ref1, _results;
+            _ref1 = arg.min;
             _results = [];
-            for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-              x = _ref[i];
-              _results.push((x + val.max[i]) * 0.5);
+            for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
+              x = _ref1[i];
+              _results.push((x + arg.max[i]) * 0.5);
             }
             return _results;
           })();
         } else {
-          nom = (val.min + val.max) * 0.5;
+          nom = (arg.min + arg.max) * 0.5;
         }
-        (gl(modelName)).uniform(name, nom);
+        (gl(modelName)).uniform(uniformID, nom);
       } else {
-        (gl(modelName)).uniform(name, val);
+        (gl(modelName)).uniform(uniformID, arg);
       }
     }
   });
@@ -7079,7 +7097,7 @@ morpheus.gui =
     requestId = JSandbox["eval"]({
       data: csmSourceCode,
       callback: function(result) {
-        var attr, defaultValue, id, meta, model, name, oldAttr, params, _ref, _ref1, _ref2, _ref3, _ref4;
+        var defaultValue, id, meta, model, oldParam, param, params, uniformID, unwrap, _ref, _ref1, _ref2, _ref3, _ref4;
         morpheus.logDebug(result);
         model = state.models['scene'];
         if (!(model != null)) {
@@ -7090,36 +7108,36 @@ morpheus.gui =
           };
         }
         params = (_ref = result != null ? (_ref1 = result.attr) != null ? _ref1.params : void 0 : void 0) != null ? _ref : {};
+        unwrap = function(data) {
+          switch (data._tag) {
+            case 'tolerance':
+            case 'range':
+              return data[0];
+            default:
+              return data;
+          }
+        };
         _ref2 = model.params;
-        for (name in _ref2) {
-          oldAttr = _ref2[name];
-          attr = params[name];
-          if (!(attr != null) || attr._tag !== oldAttr._tag) {
-            delete model.args[name];
+        for (uniformID in _ref2) {
+          oldParam = _ref2[uniformID];
+          param = params[uniformID];
+          if (!(param != null) || param._tag !== oldParam._tag) {
+            _ref3 = unwrap(param), id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
+            delete model.args[id];
           }
         }
-        for (name in params) {
-          attr = params[name];
-          if (!(__indexOf.call(model.args, name) >= 0)) {
-            _ref3 = ["", {}, 0], id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
-            switch (attr._tag) {
-              case 'tolerance':
-                _ref4 = attr[0], id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
-                break;
-              case 'range':
-                throw "TODO: Range not yet implemented";
-                break;
-              default:
-                id = attr[0], meta = attr[1], defaultValue = attr[2];
-            }
-            model.args[name] = defaultValue;
+        for (uniformID in params) {
+          param = params[uniformID];
+          _ref4 = unwrap(param), id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
+          if (!(__indexOf.call(model.args, id) >= 0)) {
+            model.args[id] = defaultValue;
           }
         }
         model.params = params;
         model.shaders = morpheus.generator.compileGLSL(morpheus.generator.compileASM(result), model.params);
         morpheus.logDebug(model.shaders[1]);
         morpheus.renderer.modelShaders('scene', model.shaders);
-        morpheus.renderer.modelArguments('scene', model.args);
+        morpheus.renderer.modelArguments('scene', model.args, model.params);
         controlsInit();
         state.application.sceneInitialized = true;
         if (typeof callback === "function") {
@@ -7436,7 +7454,7 @@ morpheus.gui =
           throw "No model with the name '" + modelName + "' exists in the scene.";
         }
         model.args = v;
-        morpheus.renderer.modelArguments(k, model.args);
+        morpheus.renderer.modelArguments(k, model.args, model.params);
       }
       return;
     }
@@ -7445,7 +7463,7 @@ morpheus.gui =
       throw "No model with the name '" + modelName + "' exists in the scene.";
     }
     model.args = args;
-    morpheus.renderer.modelArguments(modelName, model.args);
+    morpheus.renderer.modelArguments(modelName, model.args, model.params);
   });
 
   /*
