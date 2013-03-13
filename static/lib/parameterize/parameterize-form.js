@@ -993,12 +993,16 @@ var __slice = [].slice;
     $selector = $(selector);
     $selector.on('change', 'input[type="checkbox"],select', callback);
     $selector.on('keypress', 'input[type="text"]', function(e) {
+      var args;
       if (e.which === 0) {
         return;
       }
-      callback.apply(null, arguments);
+      args = arguments;
+      window.setTimeout((function() {
+        return callback.apply(null, args);
+      }), 0);
     });
-    $selector.on('keydown', 'input[type="text"]', function(e) {
+    $selector.on('keyup', 'input[type="text"]', function(e) {
       if (e.which === 0) {
         return;
       }
@@ -1035,7 +1039,7 @@ var __slice = [].slice;
     $selector = $(selector);
     $selector.off('change', 'input[type="checkbox"],select');
     $selector.off('keypress', 'input[type="text"]');
-    $selector.off('keydown', 'input[type="text"]');
+    $selector.off('keyup', 'input[type="text"]');
   };
   return module.exports = form;
 })(typeof adt !== "undefined" && adt !== null ? adt : require('adt.js'));
