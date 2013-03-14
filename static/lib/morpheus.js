@@ -2767,7 +2767,7 @@ morpheus.gui =
           oldParam = _ref2[uniformID];
           param = params[uniformID];
           if (!(param != null) || param._tag !== oldParam._tag) {
-            _ref3 = unwrap(param), id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
+            _ref3 = unwrap(param != null ? param : oldParam), id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
             delete model.args[id];
           }
         }

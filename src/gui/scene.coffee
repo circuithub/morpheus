@@ -22,7 +22,7 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       for uniformID,oldParam of model.params
         param = params[uniformID]
         if not param? or param._tag != oldParam._tag
-          [id,meta,defaultValue] = unwrap param
+          [id,meta,defaultValue] = unwrap (param ? oldParam)
           delete model.args[id]
       # Initialize unassigned model arguments
       for uniformID,param of params
