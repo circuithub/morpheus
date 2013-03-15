@@ -143,7 +143,7 @@ prependText = (preText) -> (callback) -> (text) ->
   callback?(preText + text)
 
 # [String] -> Maybe (String -> IO) -> () -> IO
-concatFiles = (files) -> (callback) ->
+concatSrcFiles = (files) -> (callback) ->
   contents = new Array files.length
   remaining = files.length
   for file, index in files then do (file, index) ->
@@ -160,7 +160,7 @@ writeJSFile = (filename) -> (callback) -> (text) ->
     callback?()
 
 # [String] -> (String -> IO) -> IO
-concatJSFiles = (files) -> (callback) ->
+concatLibFiles = (files) -> (callback) ->
   contents = new Array files.length
   remaining = files.length
   for file, index in files then do (file, index) ->
@@ -175,7 +175,7 @@ Build scripts
 
 # Maybe (() -> IO) -> IO
 buildMorpheus = (callback) ->
-  (concatJSFiles morpheusFiles) (writeJSFile 'morpheus') callback
+  (concatLibFiles morpheusFiles) (writeJSFile 'morpheus') callback
 
 # Maybe (String -> IO) -> String -> IO
 prependDebug = prependText "morpheusDebug = true\n"
@@ -183,29 +183,29 @@ prependDebug = prependText "morpheusDebug = true\n"
 # Maybe (() -> IO) -> IO
 buildApi = (callback, debug) ->
   if debug
-    (concatFiles apiFiles) (prependDebug (buildText 'morpheus-api', 'api') callback)
+    (concatSrcFiles apiFiles) (prependDebug (buildText 'morpheus-api', 'api') callback)
   else
-    (concatFiles apiFiles) (buildText 'morpheus-api', 'api') callback
+    (concatSrcFiles apiFiles) (buildText 'morpheus-api', 'api') callback
 buildGenerator = (callback, debug) ->
   if debug
-    (concatFiles generatorFiles) (prependDebug (buildText 'morpheus-generator', 'generator') callback)
+    (concatSrcFiles generatorFiles) (prependDebug (buildText 'morpheus-generator', 'generator') callback)
   else
-    (concatFiles generatorFiles) (buildText 'morpheus-generator', 'generator') callback
+    (concatSrcFiles generatorFiles) (buildText 'morpheus-generator', 'generator') callback
 buildEditor = (callback, debug) ->
   if debug
-    (concatFiles editorFiles) (prependDebug (buildText 'morpheus-editor', 'editor') callback)
+    (concatSrcFiles editorFiles) (prependDebug (buildText 'morpheus-editor', 'editor') callback)
   else
-    (concatFiles editorFiles) (buildText 'morpheus-editor', 'editor') callback
+    (concatSrcFiles editorFiles) (buildText 'morpheus-editor', 'editor') callback
 buildRenderer = (callback, debug) ->
   if debug
-    (concatFiles rendererFiles) (prependDebug (buildText 'morpheus-renderer', 'renderer') callback)
+    (concatSrcFiles rendererFiles) (prependDebug (buildText 'morpheus-renderer', 'renderer') callback)
   else
-    (concatFiles rendererFiles) (buildText 'morpheus-renderer', 'renderer') callback
+    (concatSrcFiles rendererFiles) (buildText 'morpheus-renderer', 'renderer') callback
 buildGui = (callback, debug) ->
   if debug
-    (concatFiles guiFiles) (prependDebug (buildText 'morpheus-gui', 'gui') callback)
+    (concatSrcFiles guiFiles) (prependDebug (buildText 'morpheus-gui', 'gui') callback)
   else
-    (concatFiles guiFiles) (buildText 'morpheus-gui', 'gui') callback
+    (concatSrcFiles guiFiles) (buildText 'morpheus-gui', 'gui') callback
 
 # Maybe (() -> IO) -> IO
 minify = (callback) ->
@@ -223,9 +223,9 @@ minify = (callback) ->
 
 # Maybe (() -> IO) -> IO
 packComplete = (callback) ->
-  (concatJSFiles completeFiles) (writeJSFile 'morpheus.complete') (-> ->
+  (concatLibFiles completeFiles) (writeJSFile 'morpheus.complete') (-> ->
     console.log "...Done (morpheus.complete.js)"
-    callback?()) 
+    callback?())
 
 ###
 Tasks
