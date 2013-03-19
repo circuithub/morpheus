@@ -9,9 +9,8 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       morpheus.logDebug result ## TEMPORARY
       
       # Update the model parameters
-      model = state.models['scene']
-      if not model?
-        model = state.models['scene'] = { shaders: [], params: {}, args: {} }
+      state.models.scene ?= { shaders: [], params: {}, args: {} }
+      model = state.models.scene
       params = result?.attr?.params ? {}
 
       # Helper to get the id of a wrapped parameter

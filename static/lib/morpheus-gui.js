@@ -148,17 +148,17 @@ morpheus.gui =
     requestId = JSandbox["eval"]({
       data: csmSourceCode,
       callback: function(result) {
-        var defaultValue, id, meta, model, oldParam, param, params, uniformID, unwrap, _ref, _ref1, _ref2, _ref3, _ref4;
+        var defaultValue, id, meta, model, oldParam, param, params, uniformID, unwrap, _base, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
         morpheus.logDebug(result);
-        model = state.models['scene'];
-        if (!(model != null)) {
-          model = state.models['scene'] = {
+        if ((_ref = (_base = state.models).scene) == null) {
+          _base.scene = {
             shaders: [],
             params: {},
             args: {}
           };
         }
-        params = (_ref = result != null ? (_ref1 = result.attr) != null ? _ref1.params : void 0 : void 0) != null ? _ref : {};
+        model = state.models.scene;
+        params = (_ref1 = result != null ? (_ref2 = result.attr) != null ? _ref2.params : void 0 : void 0) != null ? _ref1 : {};
         unwrap = function(data) {
           switch (data._tag) {
             case 'tolerance':
@@ -168,18 +168,18 @@ morpheus.gui =
               return data;
           }
         };
-        _ref2 = model.params;
-        for (uniformID in _ref2) {
-          oldParam = _ref2[uniformID];
+        _ref3 = model.params;
+        for (uniformID in _ref3) {
+          oldParam = _ref3[uniformID];
           param = params[uniformID];
           if (!(param != null) || param._tag !== oldParam._tag) {
-            _ref3 = unwrap(param != null ? param : oldParam), id = _ref3[0], meta = _ref3[1], defaultValue = _ref3[2];
+            _ref4 = unwrap(param != null ? param : oldParam), id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
             delete model.args[id];
           }
         }
         for (uniformID in params) {
           param = params[uniformID];
-          _ref4 = unwrap(param), id = _ref4[0], meta = _ref4[1], defaultValue = _ref4[2];
+          _ref5 = unwrap(param), id = _ref5[0], meta = _ref5[1], defaultValue = _ref5[2];
           if (!(__indexOf.call(model.args, id) >= 0)) {
             model.args[id] = defaultValue;
           }
@@ -280,7 +280,6 @@ morpheus.gui =
   keyDown = safeExport('morpheus.gui: keyDown', void 0, function(event) {});
 
   controlsSourceCompile = safeExport('morpheus.gui.controlsSourceCompile', void 0, function() {
-    morpheus.gui.sceneReset();
     morpheus.gui.sceneScript(morpheus.editor.getSourceCode(state.editor.domElement), function(error) {
       if (error != null) {
         console.error(error);
