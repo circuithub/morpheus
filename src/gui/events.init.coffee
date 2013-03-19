@@ -48,8 +48,8 @@ apiInit = (morpheusScriptCode, callback) ->
       # TODO: test that the correct api was actually fetched
       state.api.sourceCode = data
       morpheus.log "Loaded " + state.api.url
-      callback?(morpheusScriptCode)
-    .error () ->
+      callback? morpheusScriptCode
+    .error ->
       morpheus.log "Error loading API script"
 
 # Initialize the gui controls and register events once the rest of the document has completely loaded
@@ -60,11 +60,10 @@ init = (containerEl, canvasEl, callback) ->
     state.scene = morpheus.renderer.createScene state.canvas.getContext 'experimental-webgl'
     morpheus.renderer.runScene state.canvas, (->)
   canvasInit()
-  morpheusScriptCode = morpheus.editor?.getSourceCode() ? ""
+  morpheusScriptCode = (morpheus.editor?.getSourceCode state.editor.domElement) ? ""
   apiInit morpheusScriptCode, ->
     callback?()
     sceneScript morpheusScriptCode if not state.application.sceneInitialized
   registerDOMEvents()
-  registerEditorEvents()
   state.application.initialized = true
 

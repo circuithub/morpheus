@@ -57,7 +57,7 @@ translate({ offset: [ 0.0, 0.0,-0.4] }, sphere({ radius: 0.2 }))
 
   <script>
     window.onload = function(){
-      morpheus.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
+      morpheus.gui.createEditor('#morpheus-editor', document.getElementById('csm-source-code').textContent);
       morpheus.gui.create('#morpheus-gui');
     };
   </script>

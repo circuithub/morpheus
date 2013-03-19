@@ -12,6 +12,10 @@ state =
       middleDown: false
       leftDragDistance: 0
       middleDragDistance: 0
+  editor: 
+    domElement: null
+  parameters:
+    domElement: null
   api:
     url: null
     sourceCode: null
@@ -19,8 +23,6 @@ state =
     initialized: false
     sceneInitialized: false
   models: {}
-  parameters:
-    domElement: null
   paths:
     morpheusUrlRoot: null
     jsandboxUrl: null

@@ -1,6 +1,7 @@
 result = exports ? {}
 result.create = create
 result.createControls = createControls
+result.createEditor = createEditor
 result.sceneScript = sceneScript
 result.sceneReset = sceneReset
 result.getModelParameters = getModelParameters

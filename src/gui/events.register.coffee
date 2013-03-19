@@ -12,8 +12,10 @@ registerDOMEvents = () ->
   window.addEventListener 'resize', windowResize, true
 
 # Register UI controls events
-registerEditorEvents = () ->
-  ($ '#morpheus-source-compile').on 'click', controlsSourceCompile
+registerEditorEvents = ->
+  $container = $ state.editor.domElement
+  ($container.find '.morpheus-source-compile').on 'click', controlsSourceCompile
+  #TODO: $container.find '.morpheus-source-autocompile
 
-registerControlEvents = () ->
+registerControlEvents = ->
   parameterize.on 'update', state.parameters.domElement, controlsArgumentsUpdate

@@ -39,7 +39,8 @@
   <script>
 
     window.onload = function(){
-      morpheus.editor.create(document.getElementById('morpheus-editor'), document.getElementById('csm-source-code').textContent);
+      var editorEl = document.getElementById('morpheus-editor');
+      morpheus.editor.create(editorEl, document.getElementById('csm-source-code').textContent);
 
       var apiUrl = $("link[rel='api']").attr('href');
       var apiSourceCode;
@@ -49,7 +50,7 @@
           console.log("Loaded " + apiUrl);
 
           // Perform translation
-          var csmSourceCode = morpheus.generator.translateCSM(apiSourceCode, morpheus.editor.getSourceCode());
+          var csmSourceCode = morpheus.generator.translateCSM(apiSourceCode, morpheus.editor.getSourceCode(editorEl));
           console.log(csmSourceCode);
           console.log(eval(csmSourceCode));
           //morpheus.generator.compileGLSL(morpheus.generator.compileASM(eval(csmSourceCode)));
@@ -58,7 +59,6 @@
           return console.error("Error loading API script");
         });
     };
-
 
     /*
     requestId = JSandbox.eval 

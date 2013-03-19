@@ -1,5 +1,5 @@
 # Create the DOM elements for the editor
-getSourceCode = safeExport 'morpheus.editor.getSourceCode', '', ->
+getSourceCode = safeExport 'morpheus.editor.getSourceCode', '', (containerSelector) ->
   # TODO: possibly avoid jQuery in the future
-  return ($ '#morpheus-source-code').val()
+  return (($ (containerSelector ? document)).find '.morpheus-source-code').val()
 

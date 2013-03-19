@@ -39,6 +39,7 @@ create = safeExport 'morpheus.gui.create', false, (container, jsandboxUrl, morph
     JSandbox.create state.paths.jsandboxUrl
 
   # Initialize the application
+  # TODO: don't use getElementById (use a (class) child selector on the container)
   init containerEl, (document.getElementById 'morpheus-canvas'), callback
   return true
 
@@ -63,3 +64,10 @@ createControls = safeExport 'morpheus.gui.createControls', false, (container) ->
   controlsInit()
   registerControlEvents()
   return true
+
+createEditor = safeExport 'morpheus.gui.createEditor', false, (container, sourceCode) ->
+  morpheus.editor.create container, sourceCode
+  state.editor.domElement = container
+  registerEditorEvents()
+  return true
+

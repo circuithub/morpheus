@@ -2342,15 +2342,15 @@ morpheus.editor =
     return csmSourceCode;
   };
 
-  create = safeExport('morpheus.editor.create', void 0, function(domElement, sourceCode) {
+  create = safeExport('morpheus.editor.create', void 0, function(containerSelector, sourceCode) {
     if (!(sourceCode != null)) {
       sourceCode = "";
     }
-    domElement.innerHTML = "<span><input id='morpheus-source-autocompile' name='morpheus-source-autocompile' type='checkbox' disabled='disabled'><label id='morpheus-source-autocompile-label' for='morpheus-source-autocompile'>Auto-compile</label></span>\n<input id='morpheus-source-compile' name='morpheus-source-compile' type='button' value='Compile'>\n<textarea id='morpheus-source-code' name='morpheus-source-code'>\n" + sourceCode + "\n</textarea>";
+    ($(containerSelector)).html("<span><input class='morpheus-source-autocompile' name='morpheus-source-autocompile' type='checkbox' disabled='disabled'><label class='morpheus-source-autocompile-label' for='morpheus-source-autocompile'>Auto-compile</label></span>\n<input class='morpheus-source-compile' name='morpheus-source-compile' type='button' value='Compile'>\n<textarea class='morpheus-source-code' name='morpheus-source-code'>\n" + sourceCode + "\n</textarea>");
   });
 
-  getSourceCode = safeExport('morpheus.editor.getSourceCode', '', function() {
-    return ($('#morpheus-source-code')).val();
+  getSourceCode = safeExport('morpheus.editor.getSourceCode', '', function(containerSelector) {
+    return (($(containerSelector != null ? containerSelector : document)).find('.morpheus-source-code')).val();
   });
 
   exports = exports != null ? exports : {};
@@ -2605,7 +2605,7 @@ morpheus.gui =
 (function() {
   "use strict";
 
-  var apiInit, canvasInit, constants, controlsArgumentsUpdate, controlsInit, controlsSourceCompile, create, createControls, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, setModelArguments, state, windowResize, wrapParams,
+  var apiInit, canvasInit, constants, controlsArgumentsUpdate, controlsInit, controlsSourceCompile, create, createControls, createEditor, getModelArguments, getModelParameters, gl, init, keyDown, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, mouseCoordsWithinElement, mouseDown, mouseMove, mouseUp, mouseWheel, registerControlEvents, registerDOMEvents, registerEditorEvents, result, safeExport, safeTry, sceneIdle, sceneReset, sceneScript, setModelArguments, state, windowResize, wrapParams,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
@@ -2698,6 +2698,12 @@ morpheus.gui =
         middleDragDistance: 0
       }
     },
+    editor: {
+      domElement: null
+    },
+    parameters: {
+      domElement: null
+    },
     api: {
       url: null,
       sourceCode: null
@@ -2707,9 +2713,6 @@ morpheus.gui =
       sceneInitialized: false
     },
     models: {},
-    parameters: {
-      domElement: null
-    },
     paths: {
       morpheusUrlRoot: null,
       jsandboxUrl: null
@@ -2874,6 +2877,7 @@ morpheus.gui =
   keyDown = safeExport('morpheus.gui: keyDown', void 0, function(event) {});
 
   controlsSourceCompile = safeExport('morpheus.gui.controlsSourceCompile', void 0, function() {
+    console.log("TESTING SOURCE COMPILE");
     morpheus.gui.sceneReset();
     morpheus.gui.sceneScript(script, function(error) {
       return console.error(error);
@@ -2895,7 +2899,9 @@ morpheus.gui =
   };
 
   registerEditorEvents = function() {
-    return ($('#morpheus-source-compile')).on('click', controlsSourceCompile);
+    var $container;
+    $container = $(state.editor.domElement);
+    return ($container.find('.morpheus-source-compile')).on('click', controlsSourceCompile);
   };
 
   registerControlEvents = function() {
@@ -2976,7 +2982,7 @@ morpheus.gui =
       morpheus.renderer.runScene(state.canvas, (function() {}));
     }
     canvasInit();
-    morpheusScriptCode = (_ref = (_ref1 = morpheus.editor) != null ? _ref1.getSourceCode() : void 0) != null ? _ref : "";
+    morpheusScriptCode = (_ref = (_ref1 = morpheus.editor) != null ? _ref1.getSourceCode(state.editor.domElement) : void 0) != null ? _ref : "";
     apiInit(morpheusScriptCode, function() {
       if (typeof callback === "function") {
         callback();
@@ -2986,7 +2992,6 @@ morpheus.gui =
       }
     });
     registerDOMEvents();
-    registerEditorEvents();
     return state.application.initialized = true;
   };
 
@@ -3045,6 +3050,13 @@ morpheus.gui =
     }
     controlsInit();
     registerControlEvents();
+    return true;
+  });
+
+  createEditor = safeExport('morpheus.gui.createEditor', false, function(container, sourceCode) {
+    morpheus.editor.create(container, sourceCode);
+    state.editor.domElement = container;
+    registerEditorEvents();
     return true;
   });
 
@@ -3137,6 +3149,8 @@ morpheus.gui =
   result.create = create;
 
   result.createControls = createControls;
+
+  result.createEditor = createEditor;
 
   result.sceneScript = sceneScript;
 

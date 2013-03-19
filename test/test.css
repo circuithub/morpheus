@@ -100,13 +100,13 @@ html, body {
   margin: 0 10px;
   font-size: small;
 }
-#morpheus-source-code {
+.morpheus-source-code {
   display: block;
   width: 100%;
   height: 480px;
   resize: none;
 }
-#morpheus-source-compile {
+.morpheus-source-compile {
   float: right;
 }
 #morpheus-controls {

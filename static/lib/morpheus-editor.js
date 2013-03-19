@@ -65,15 +65,15 @@ morpheus.editor =
     return csmSourceCode;
   };
 
-  create = safeExport('morpheus.editor.create', void 0, function(domElement, sourceCode) {
+  create = safeExport('morpheus.editor.create', void 0, function(containerSelector, sourceCode) {
     if (!(sourceCode != null)) {
       sourceCode = "";
     }
-    domElement.innerHTML = "<span><input id='morpheus-source-autocompile' name='morpheus-source-autocompile' type='checkbox' disabled='disabled'><label id='morpheus-source-autocompile-label' for='morpheus-source-autocompile'>Auto-compile</label></span>\n<input id='morpheus-source-compile' name='morpheus-source-compile' type='button' value='Compile'>\n<textarea id='morpheus-source-code' name='morpheus-source-code'>\n" + sourceCode + "\n</textarea>";
+    ($(containerSelector)).html("<span><input class='morpheus-source-autocompile' name='morpheus-source-autocompile' type='checkbox' disabled='disabled'><label class='morpheus-source-autocompile-label' for='morpheus-source-autocompile'>Auto-compile</label></span>\n<input class='morpheus-source-compile' name='morpheus-source-compile' type='button' value='Compile'>\n<textarea class='morpheus-source-code' name='morpheus-source-code'>\n" + sourceCode + "\n</textarea>");
   });
 
-  getSourceCode = safeExport('morpheus.editor.getSourceCode', '', function() {
-    return ($('#morpheus-source-code')).val();
+  getSourceCode = safeExport('morpheus.editor.getSourceCode', '', function(containerSelector) {
+    return (($(containerSelector != null ? containerSelector : document)).find('.morpheus-source-code')).val();
   });
 
   exports = exports != null ? exports : {};
