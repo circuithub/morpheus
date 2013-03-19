@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<!--
+      Morpheus - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2011-2013 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Morpheus</title>
+  <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
+  <meta name='author' content='Your Name'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+// See https://circuithub.com/parts/AD/ADSP-BF536BBCZ-4B for an example of this type of package
+
+var grid = latice2("grid",
+      {label: "Grid Size", components: ["Columns #", "Rows #"]},
+      [11,11]),
+    gridPitch = pitch2("gridPitch",
+      {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)", components: ["d","e"]},
+      [0.5,0.5]),
+    pkgDim = tolerance(dimension3("pkgDim",
+      {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
+      {min: [5.8, 5.8, 1.3], max: [6.2, 6.2, 1.7]})),
+    ballDiameter = dimension1("ballDiameter",
+      {label: "b", description: "Ball Diameter"},
+      0.3);
+    /* Artistic data
+    alignRadius = dimension1("alignRadius",
+      {label: "Alignment Mark Radius", description: "Radius of the alignment mark on the package"},
+      0.2),
+    dimension1 = dimension1("alignMargin",
+      {label: "Alignment Mark Margin"},
+      0.1);
+    //*/
+
+//* Package (chip is 0.9)
+box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.5 + 0.7 * 0.5), pkgDim.index(2).mul(1.0 - 0.7) ] })
+.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(0.5 - (1.0 - 0.7) * 0.5)] })
+.chamfer({ radius: pkgDim.index(2).mul(0.1) })
+.material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
+//*/
+//* Substrate
+box({ dimensions: [ pkgDim.index(0), pkgDim.index(1), pkgDim.index(2).mul(0.7) ] })
+.material({ color: [0.3, 0.8, 0.3] }), // Substrate (fiber glass / plastic / ceramic)
+//*/
+//* Pad grid
+repeat({ count: [grid.index(0), grid.index(1), 1], interval: [gridPitch.index(0), gridPitch.index(1), 0.5] },
+  sphere({ radius: ballDiameter.mul(0.5) })
+)
+.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(-0.5 * 0.7)] })
+.material({ color: [0.8, 0.8, 0.8] }) // Solder
+//*/
+  </script>
+
+  <!-- Stylesheet -->
+  <link rel='stylesheet' href='test.css' media='screen' type='text/css'></link>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='scenejsLog' style='display:block;'></div>
+
+  <div id='morpheus-layout'>
+    <form id='morpheus-editor'></form>
+    <div id='morpheus-gui'></div>
+    <div id='morpheus-controls'></div>
+  </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
+  <!--<link rel='jsandbox' href='../static/lib/jsandbox/jsandbox-worker.js'>
+  <link rel='api' href='../static/lib/morpheus-api.js'>-->
+  <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
+  
+  <!-- Application logic -->
+  
+  <script src='../static/lib/morpheus.complete.js'></script>
+  
+  <script>
+    window.onload = function(){
+      morpheus.gui.createEditor('#morpheus-editor', document.getElementById('csm-source-code').textContent);
+      morpheus.gui.create('#morpheus-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
+      morpheus.gui.createControls('#morpheus-controls');
+    };
+  </script>
+</body>
+</html>
