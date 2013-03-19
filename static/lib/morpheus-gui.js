@@ -280,10 +280,11 @@ morpheus.gui =
   keyDown = safeExport('morpheus.gui: keyDown', void 0, function(event) {});
 
   controlsSourceCompile = safeExport('morpheus.gui.controlsSourceCompile', void 0, function() {
-    console.log("TESTING SOURCE COMPILE");
     morpheus.gui.sceneReset();
-    morpheus.gui.sceneScript(script, function(error) {
-      return console.error(error);
+    morpheus.gui.sceneScript(morpheus.editor.getSourceCode(state.editor.domElement), function(error) {
+      if (error != null) {
+        console.error(error);
+      }
     });
   });
 
