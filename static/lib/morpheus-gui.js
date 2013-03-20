@@ -505,7 +505,115 @@ morpheus.gui =
   });
 
   setModelArguments = safeExport('morpheus.gui.setModelArguments', {}, function(modelName, args) {
-    var k, model, v;
+    var dimensionType, globalScale, k, model, v, _render, _scaleArgument, _unwrap;
+    globalScale = 0.1;
+    _unwrap = function(data) {
+      switch (data._tag) {
+        case 'tolerance':
+        case 'range':
+          return data[0];
+        default:
+          return data;
+      }
+    };
+    dimensionType = {
+      real: true,
+      dimension1: true,
+      dimension2: true,
+      dimension3: true,
+      vector2: true,
+      vector3: true,
+      point2: true,
+      point3: true,
+      pitch1: true,
+      pitch2: true,
+      pitch3: true,
+      angle: false,
+      polar: false,
+      cylindrical: void 0,
+      spherical: void 0,
+      integer: false,
+      natural: false,
+      latice1: false,
+      latice2: false,
+      latice3: false,
+      boolean: false,
+      option: false
+    };
+    _scaleArgument = function(arg, param) {
+      var a, tag;
+      tag = (_unwrap(param))._tag;
+      if (!(dimensionType[tag] != null)) {
+        throw "Parameter type " + tag + " is not yet supported.";
+      }
+      if (!dimensionType[(_unwrap(param))._tag]) {
+        return arg;
+      }
+      if (Array.isArray(arg)) {
+        return (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = arg.length; _i < _len; _i++) {
+            a = arg[_i];
+            _results.push(a * globalScale);
+          }
+          return _results;
+        })();
+      } else if (typeof arg === 'object') {
+        if (!arg.min && arg.max) {
+          throw "Could not find min and max keys for toleranced argument.";
+        }
+        if (Array.isArray(arg.min)) {
+          return {
+            min: (function() {
+              var _i, _len, _ref, _results;
+              _ref = arg.min;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                a = _ref[_i];
+                _results.push(a * globalScale);
+              }
+              return _results;
+            })(),
+            max: (function() {
+              var _i, _len, _ref, _results;
+              _ref = arg.max;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                a = _ref[_i];
+                _results.push(a * globalScale);
+              }
+              return _results;
+            })()
+          };
+        } else {
+          return {
+            min: arg.min * globalScale,
+            max: a * globalScale
+          };
+        }
+      }
+      return arg * globalScale;
+    };
+    _render = function(model, args) {
+      var arg, id, k, newArgs, param, paramToUniform, uniformID, _ref;
+      paramToUniform = {};
+      if (model.params != null) {
+        _ref = model.params;
+        for (uniformID in _ref) {
+          param = _ref[uniformID];
+          id = _unwrap(param)[0];
+          paramToUniform[id] = uniformID;
+        }
+      }
+      newArgs = {};
+      for (k in args) {
+        arg = args[k];
+        newArgs[k] = _scaleArgument(arg, model.params[paramToUniform[k]]);
+      }
+      model.args = newArgs;
+      return morpheus.renderer.modelArguments(modelName, model.args, model.params);
+    };
     if (!(modelName != null)) {
       for (k in args) {
         v = args[k];
@@ -513,8 +621,7 @@ morpheus.gui =
         if (!(model != null)) {
           throw "No model with the name '" + modelName + "' exists in the scene.";
         }
-        model.args = v;
-        morpheus.renderer.modelArguments(k, model.args, model.params);
+        _render(model, v);
       }
       return;
     }
@@ -522,8 +629,7 @@ morpheus.gui =
     if (!(model != null)) {
       throw "No model with the name '" + modelName + "' exists in the scene.";
     }
-    model.args = args;
-    morpheus.renderer.modelArguments(modelName, model.args, model.params);
+    _render(model, args);
   });
 
   /*
