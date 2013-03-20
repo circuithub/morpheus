@@ -2783,9 +2783,8 @@ morpheus.gui =
         }
         model.params = params;
         model.shaders = morpheus.generator.compileGLSL(morpheus.generator.compileASM(result), model.params);
-        morpheus.logDebug(model.shaders[1]);
         morpheus.renderer.modelShaders('scene', model.shaders);
-        morpheus.renderer.modelArguments('scene', model.args, model.params);
+        morpheus.gui.setModelArguments('scene', model.args);
         controlsInit();
         state.application.sceneInitialized = true;
         if (typeof callback === "function") {

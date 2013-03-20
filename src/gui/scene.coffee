@@ -32,10 +32,9 @@ sceneScript = safeExport 'morpheus.gui: sceneScript', undefined, (morpheusScript
       model.params = params
       # Generate shaders for the model
       model.shaders = morpheus.generator.compileGLSL (morpheus.generator.compileASM result), model.params
-      morpheus.logDebug model.shaders[1] ## TEMPORARY
       # Update the model in the renderer
       morpheus.renderer.modelShaders 'scene', model.shaders
-      morpheus.renderer.modelArguments 'scene', model.args, model.params
+      morpheus.gui.setModelArguments 'scene', model.args
       controlsInit()
       state.application.sceneInitialized = true
       callback?()
