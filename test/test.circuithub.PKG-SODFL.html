@@ -20,8 +20,8 @@ var pkgDim = tolerance(dimension3("pkgDim",
     D1 = tolerance(dimension1("D1",
       {description: "Extent of the package body"},
       {min: 2, max: 2.4})),
-    padDim = tolerance(dimension2("padDim",
-      {label: "Pads", description: "Dimensions of each pad", components: ["L", "b"]},
+    leadDim = tolerance(dimension2("leadDim",
+      {label: "Leads", description: "Dimensions of each lead", components: ["L", "b"]},
       {min: [0.55, 0.25], max: [0.75, 0.35]}));
 
 //* Package
@@ -29,10 +29,10 @@ box({ dimensions: [D1, pkgDim.index(1), pkgDim.index(2)] })
 .chamfer({ radius: pkgDim.index(2).mul(0.025) })
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
-//* Pads
-box({ dimensions: [padDim.index(0), padDim.index(1), pkgDim.index(2).mul(0.2)] }) 
+//* Leads
+box({ dimensions: [leadDim.index(0), leadDim.index(1), pkgDim.index(2).mul(0.2)] }) 
 .chamfer({ radius: pkgDim.index(2).mul(0.025) })
-.translate({ offset: [pkgDim.index(0).sub(padDim.index(0)).mul(0.5), 0.0, pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
+.translate({ offset: [pkgDim.index(0).sub(leadDim.index(0)).mul(0.5), 0.0, pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
 .mirror({ axes: [0] })
 .material({ color: [0.8, 0.8, 0.8] }) // Solder
 //*/
