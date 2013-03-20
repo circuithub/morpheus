@@ -14,44 +14,26 @@
 
   <!-- The CSM script -->
   <script id='csm-source-code' type='csm/csm-javascript'>
-// See https://circuithub.com/parts/AD/ADSP-BF536BBCZ-4B for an example of this type of package
-
-var grid = latice2("grid",
-      {label: "Grid Size", components: ["Columns #", "Rows #"]},
-      [11,11]),
-    gridPitch = pitch2("gridPitch",
-      {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)", components: ["d","e"]},
-      [0.5,0.5]),
-    pkgDim = tolerance(dimension3("pkgDim",
+var pkgDim = tolerance(dimension3("pkgDim",
       {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
-      {min: [5.8, 5.8, 1.3], max: [6.2, 6.2, 1.7]})),
-    ballDiameter = dimension1("ballDiameter",
-      {label: "b", description: "Ball Diameter"},
-      0.3);
-    /* Artistic data
-    alignRadius = dimension1("alignRadius",
-      {label: "Alignment Mark Radius", description: "Radius of the alignment mark on the package"},
-      0.2),
-    dimension1 = dimension1("alignMargin",
-      {label: "Alignment Mark Margin"},
-      0.1);
-    //*/
+      {min: [3, 1.4, 0.8], max: [3.4, 1.8, 1.2]})),
+    D1 = tolerance(dimension1("D1",
+      {description: "Extent of the package body"},
+      {min: 2, max: 2.4})),
+    padDim = tolerance(dimension2("padDim",
+      {label: "Pads", description: "Dimensions of each pad", components: ["L", "b"]},
+      {min: [0.55, 0.25], max: [0.75, 0.35]}));
 
-//* Package (chip is 0.9 the width/height of the substrate, and 0.4 the height of the package)
-box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.9), pkgDim.index(2).mul(0.4) ] })
-.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(0.5 * 0.6 + 0.5 * 0.4)] })
-.chamfer({ radius: pkgDim.index(2).mul(0.1) })
+//* Package
+box({ dimensions: [D1, pkgDim.index(1), pkgDim.index(2)] })
+.chamfer({ radius: pkgDim.index(2).mul(0.025) })
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
-//* Substrate
-box({ dimensions: [ pkgDim.index(0), pkgDim.index(1), pkgDim.index(2).mul(0.6) ] })
-.material({ color: [0.3, 0.8, 0.3] }), // Substrate (fiber glass / plastic / ceramic)
-//*/
-//* Pad grid
-repeat({ count: [grid.index(0), grid.index(1), 1], interval: [gridPitch.index(0), gridPitch.index(1), 0.5] },
-  sphere({ radius: ballDiameter.mul(0.5) })
-)
-.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(-0.5 * 0.6)] })
+//* Pads
+box({ dimensions: [padDim.index(0), padDim.index(1), pkgDim.index(2).mul(0.2)] }) 
+.chamfer({ radius: pkgDim.index(2).mul(0.025) })
+.translate({ offset: [pkgDim.index(0).sub(padDim.index(0)).mul(0.5), 0.0, pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
+.mirror({ axes: [0] })
 .material({ color: [0.8, 0.8, 0.8] }) // Solder
 //*/
   </script>
