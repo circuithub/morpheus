@@ -3185,7 +3185,7 @@ morpheus.gui =
         } else {
           return {
             min: arg.min * globalScale,
-            max: a * globalScale
+            max: arg.max * globalScale
           };
         }
       }

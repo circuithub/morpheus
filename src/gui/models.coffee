@@ -69,7 +69,7 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
       if Array.isArray arg.min
         return { min: (a * globalScale for a in arg.min), max: (a * globalScale for a in arg.max) }
       else
-        return { min: arg.min * globalScale, max: a * globalScale }
+        return { min: arg.min * globalScale, max: arg.max * globalScale }
     return arg * globalScale
   # ###
 
