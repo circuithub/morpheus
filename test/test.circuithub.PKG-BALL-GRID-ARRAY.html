@@ -37,21 +37,21 @@ var grid = latice2("grid",
       0.1);
     //*/
 
-//* Package (chip is 0.9)
-box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.5 + 0.7 * 0.5), pkgDim.index(2).mul(1.0 - 0.7) ] })
-.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(0.5 - (1.0 - 0.7) * 0.5)] })
+//* Package (chip is 0.9 the width/height of the substrate, and 0.4 the height of the package)
+box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.9), pkgDim.index(2).mul(0.4) ] })
+.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(0.5 * 0.6 + 0.5 * 0.4)] })
 .chamfer({ radius: pkgDim.index(2).mul(0.1) })
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
 //* Substrate
-box({ dimensions: [ pkgDim.index(0), pkgDim.index(1), pkgDim.index(2).mul(0.7) ] })
+box({ dimensions: [ pkgDim.index(0), pkgDim.index(1), pkgDim.index(2).mul(0.6) ] })
 .material({ color: [0.3, 0.8, 0.3] }), // Substrate (fiber glass / plastic / ceramic)
 //*/
 //* Pad grid
 repeat({ count: [grid.index(0), grid.index(1), 1], interval: [gridPitch.index(0), gridPitch.index(1), 0.5] },
   sphere({ radius: ballDiameter.mul(0.5) })
 )
-.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(-0.5 * 0.7)] })
+.translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(-0.5 * 0.6)] })
 .material({ color: [0.8, 0.8, 0.8] }) // Solder
 //*/
   </script>
