@@ -119,27 +119,34 @@ compileASM = safeExport 'morpheus.generator.compileASM', null, (concreteSolidMod
     bend: (node) ->
       offset = if node.attr.offset? then node.attr.offset else 0
       (offsetVec = [0.0,0.0,0.0])[node.attr.offsetAxis] = offset
-      direction = if node.attr.direction? then node.attr.direction else 1
+      direction = node.attr.direction
+      direction ?= 1
+      direction = -1 if direction != 1
       if not node.attr.radius? or node.attr.radius == 0
         asm.union (
           asm.intersect (compileASMNode n for n in node.nodes)...,
             if direction == 1
               asm.translate { offset: offsetVec },
-                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) },
                   asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
             else
               asm.invert asm.translate { offset: offsetVec },
-                asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
-                  asm.halfspace { val: 0.0, axis: node.attr.axis }
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul -0.5, node.attr.angle) },
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
         ),(
           asm.intersect (
             asm.translate { offset: offsetVec },
-              asm.rotate { axis: node.attr.axis, angle: node.attr.angle },
+              asm.rotate { axis: node.attr.axis, angle: (glsl.mul direction, node.attr.angle) },
                 (compileASMNode n for n in node.nodes)...
           ),(
-            asm.invert asm.translate { offset: offsetVec },
-              asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) }, 
-                asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+            if direction == 1
+              asm.invert asm.translate { offset: offsetVec },
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul 0.5, node.attr.angle) },
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
+            else
+              asm.translate { offset: offsetVec },
+                asm.rotate { axis: node.attr.axis, angle: (glsl.mul -0.5, node.attr.angle) },
+                  asm.halfspace { val: 0.0, axis: node.attr.offsetAxis }
           )
         )
       else

@@ -759,7 +759,13 @@ morpheus.generator =
         var direction, n, offset, offsetVec, radiusVec, upAxis;
         offset = node.attr.offset != null ? node.attr.offset : 0;
         (offsetVec = [0.0, 0.0, 0.0])[node.attr.offsetAxis] = offset;
-        direction = node.attr.direction != null ? node.attr.direction : 1;
+        direction = node.attr.direction;
+        if (direction == null) {
+          direction = 1;
+        }
+        if (direction !== 1) {
+          direction = -1;
+        }
         if (!(node.attr.radius != null) || node.attr.radius === 0) {
           return asm.union(asm.intersect.apply(asm, __slice.call((function() {
             var _i, _len, _ref, _results;
@@ -782,15 +788,15 @@ morpheus.generator =
             offset: offsetVec
           }, asm.rotate({
             axis: node.attr.axis,
-            angle: node.attr.angle
+            angle: glsl.mul(-0.5, node.attr.angle)
           }, asm.halfspace({
             val: 0.0,
-            axis: node.attr.axis
+            axis: node.attr.offsetAxis
           }))))])), asm.intersect(asm.translate({
             offset: offsetVec
           }, asm.rotate.apply(asm, [{
             axis: node.attr.axis,
-            angle: node.attr.angle
+            angle: glsl.mul(direction, node.attr.angle)
           }].concat(__slice.call((function() {
             var _i, _len, _ref, _results;
             _ref = node.nodes;
@@ -800,11 +806,19 @@ morpheus.generator =
               _results.push(compileASMNode(n));
             }
             return _results;
-          })())))), asm.invert(asm.translate({
+          })())))), (direction === 1 ? asm.invert(asm.translate({
             offset: offsetVec
           }, asm.rotate({
             axis: node.attr.axis,
             angle: glsl.mul(0.5, node.attr.angle)
+          }, asm.halfspace({
+            val: 0.0,
+            axis: node.attr.offsetAxis
+          })))) : asm.translate({
+            offset: offsetVec
+          }, asm.rotate({
+            axis: node.attr.axis,
+            angle: glsl.mul(-0.5, node.attr.angle)
           }, asm.halfspace({
             val: 0.0,
             axis: node.attr.offsetAxis
