@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<!--
+      Morpheus - A sleek WebGL solid modeling tool for electronic components and circuitboards
+      Copyright (c) 2013 CircuitHub.com
+-->
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+  <title>Morpheus</title>
+  <meta name='description' content='A sleek WebGL solid modeling tool for electronic components and circuitboards'>
+  <meta name='author' content='Your Name'>
+  <link rel="shortcut icon" href="/favicon.ico">
+
+  <!-- The CSM script -->
+  <script id='csm-source-code' type='csm/csm-javascript'>
+var pkgDim = tolerance(dimension3("pkgDim",
+      {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
+      {min: [7.9, 7.9, 2.9], max: [8.1, 8.1, 3.1]})),
+    grid = latice2("grid",
+      {label: "Grid Size", description: "Number of pins per side", components: ["Columns #", "Rows #"]},
+      [8,8]),
+    gridPitch = pitch1("gridPitch",
+      {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)"},
+      0.635),
+    /*leadShape = option("leadShape",
+      {label: "Lead Shape", description: "Shape of the landing area"},
+      ["D-Shape", "Rectangle", "Oblong"],
+      "D-Shape"),*/
+    leadDim = tolerance(dimension2("leadDim",
+      {label: "Leads", description: "Dimensions of each lead", components: ["b", "L"]},
+      {min: [0.45, 0.75], max: [0.55, 0.85]})),
+    /*centerLead = boolean("centerLead",
+      {label: "Center Lead", description: "Does this package have a center exposed heat-lug/pad?", components: ["D2", "E2"]},
+      false),*/
+    centerLeadDim = tolerance(dimension2("centerLeadDim",
+      {label: "Center Lead", description: "Center lead dimensions", components: ["D2", "E2"]},
+      {min: [1.1, 0.7], max: [1.2, 0.8]})),
+    r = dimension1("r",
+      {label: "r", description: "Corner radius of the center pad (mm). Set to 0 for square corners."},
+      0.15);
+    
+
+//* Package
+box({ dimensions: pkgDim })
+.chamfer({ radius: pkgDim.index(2).mul(0.025) })
+.material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
+//*/
+//* Leads
+material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
+
+  // Vertical leads
+  box({ dimensions: [leadDim.index(1), leadDim.index(0), pkgDim.index(2).mul(0.2)] }) 
+  .translate({ offset: [pkgDim.index(0).mul(1.01).sub(leadDim.index(1)).mul(0.5), 0.0, pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
+  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, gridPitch, 0.5] })
+  .mirror({ axes: [0] }),
+
+  // Horizontal leads
+  box({ dimensions: [leadDim.index(0), leadDim.index(1), pkgDim.index(2).mul(0.2)] }) 
+  .translate({ offset: [0.0, pkgDim.index(1).mul(1.01).sub(leadDim.index(1)).mul(0.5), pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
+  .repeat({ count: [grid.index(0), 1, 1], interval: [gridPitch, 0.5, 0.5] })
+  .mirror({ axes: [1] }),
+
+  // Center lead
+  box({ dimensions: [centerLeadDim.index(0), centerLeadDim.index(1), pkgDim.index(2).mul(0.2)] }) 
+  .chamfer({ radius: r })
+  .translate({ offset: [0.0, 0.0, pkgDim.index(2).mul(0.5 - 0.2 * 0.5 + 0.01).neg()] })
+
+)
+//*/
+//* Center Lead
+//*/
+  </script>
+
+  <!-- Stylesheet -->
+  <link rel='stylesheet' href='test.css' media='screen' type='text/css'></link>
+</head>
+<body>
+
+  <!-- Screen layout -->
+
+  <div id='scenejsLog' style='display:block;'></div>
+
+  <div id='morpheus-layout'>
+    <form id='morpheus-editor'></form>
+    <div id='morpheus-gui'></div>
+    <div id='morpheus-controls'></div>
+  </div>
+  </div>
+
+  <!-- Prompt IE users to install Chrome Frame. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if IE]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+
+  <!-- Framework -->
+
+  <script src='//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
+  <script>window.jQuery || document.write("<script src='../static/lib/jquery/jquery-1.7.1.min.js'><\/script>")</script>
+  <!--<link rel='jsandbox' href='../static/lib/jsandbox/jsandbox-worker.js'>
+  <link rel='api' href='../static/lib/morpheus-api.js'>-->
+  <script src='../static/lib/uglifyjs-parser/parse-js.js'></script>
+  
+  <!-- Application logic -->
+  
+  <script src='../static/lib/morpheus.complete.js'></script>
+  
+  <script>
+    window.onload = function(){
+      morpheus.gui.createEditor('#morpheus-editor', document.getElementById('csm-source-code').textContent);
+      morpheus.gui.create('#morpheus-gui','../static/lib/jsandbox/jsandbox-worker.js', '../static/lib/');
+      morpheus.gui.createControls('#morpheus-controls');
+    };
+  </script>
+</body>
+</html>

@@ -47,7 +47,7 @@ box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.9), pkgDim.i
 box({ dimensions: [ pkgDim.index(0), pkgDim.index(1), pkgDim.index(2).mul(0.6) ] })
 .material({ color: [0.3, 0.8, 0.3] }), // Substrate (fiber glass / plastic / ceramic)
 //*/
-//* Pad grid
+//* Ball grid
 repeat({ count: [grid.index(0), grid.index(1), 1], interval: [gridPitch.index(0), gridPitch.index(1), 0.5] },
   sphere({ radius: ballDiameter.mul(0.5) })
 )
