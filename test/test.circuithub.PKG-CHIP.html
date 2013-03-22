@@ -15,7 +15,24 @@
   <!-- The CSM script -->
   <script id='csm-source-code' type='csm/csm-javascript'>
 
-// TODO...
+var pkgDim = tolerance(dimension3("pkgDim",
+      {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
+      {min: [3.0, 1.4, 0.7], max: [3.4, 1.8, 0.8]})),
+    L = tolerance(dimension1("L", 
+      {label: "L", description: "The width (shorter side) of each lead"},
+      {min: 0.25, max: 0.75}));
+
+
+//* Chip body
+box({ dimensions: [pkgDim.index(0).sub(L.mul(0.5)), pkgDim.index(1).mul(0.99), pkgDim.index(2).mul(0.99)] })
+.material({ color: [0.6, 0.45, 0.3] }), // ???
+//*/
+//* Leads
+box({ dimensions: [L, pkgDim.index(1), pkgDim.index(2)] })
+.translate({ offset: [pkgDim.index(0).sub(L.mul(0.5)).mul(0.5),0.0,0.0] })
+.mirror({ axes: [0] })
+.material({ color: [0.8,0.8,0.8] }) // Copper alloy ???
+//*/
 
   </script>
 
