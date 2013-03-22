@@ -14,25 +14,42 @@
 
   <!-- The CSM script -->
   <script id='csm-source-code' type='csm/csm-javascript'>
+var grid = latice1("grid",
+      {label: "Columns #", description: "Number of pins per side"},
+      [4]),
+    e = pitch1("e",
+      {label: "e", description: "Pitch (lead-to-lead spacing)"},
+      2.54),
+    E = dimension1("E",
+      {label: "E", description: "Distance between the two rows of gulls"},
+      9.0),
+    pkgInnerDim = dimension2("pkgInnerDim",
+      {label: "", description: "Extent of the package body", components: ["D1", "E1"]},
+      [9.8, 6.0]),
+    d = dimension1("d",
+      {label: "d", description: "Diameter of the finished drill hole. This list is limited to the most widely available (multi-factory) drill sizes to reduce cost. You can modify the template to override this list."},
+      // TODO: change this into a list of options: [0.2, 0.36, 0.51, 0.63, 0.74, 0.84, 0.91, 1.03, 1.1, 1.17, 1.36, 1.55, 1.7, 2.03, 2.22, 2.37, 2.55, 2.79, 3.2, 3.58, 3.84, 4.24, 4.9, 6.38]
+      0.51);
 
-var pkgDim = tolerance(dimension3("pkgDim",
-      {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
-      {min: [3.0, 1.4, 0.7], max: [3.4, 1.8, 0.8]})),
-    L = tolerance(dimension1("L", 
-      {label: "L", description: "The width (shorter side) of each lead"},
-      {min: 0.25, max: 0.75}));
-
-//* Chip body
-box({ dimensions: [pkgDim.index(0).sub(L.mul(0.5)), pkgDim.index(1).mul(0.99), pkgDim.index(2).mul(0.99)] })
-.material({ color: [0.6, 0.45, 0.3] }), // ???
+//* Package
+box({ dimensions: [pkgInnerDim.index(0), pkgInnerDim.index(1), 0.3] })
+.chamfer({ radius: 0.3 * 0.05 })
+.material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
 //* Leads
-box({ dimensions: [L, pkgDim.index(1), pkgDim.index(2)] })
-.translate({ offset: [pkgDim.index(0).sub(L.mul(0.5)).mul(0.5),0.0,0.0] })
-.mirror({ axes: [0] })
-.material({ color: [0.8,0.8,0.8] }) // Copper alloy ???
-//*/
+material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
 
+  //* Simple leads
+  // Vertical leads
+  cylinder({ axis: 2, radius: d.mul(0.5 * 0.99), length: 0.2 })
+  .chamfer({ radius: d.mul(0.5 * 0.1) })
+  .translate({ offset: [0.0, E.mul(0.5), -0.3 * 0.5 - 0.2 * 0.5] })
+  .repeat({ count: [grid, 1, 1], interval: [e, 0.5, 0.5] })
+  .mirror({ axes: [1] }),
+  //*/
+
+)
+//*/
   </script>
 
   <!-- Stylesheet -->
