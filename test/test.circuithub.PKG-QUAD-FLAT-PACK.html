@@ -17,8 +17,8 @@
 var grid = latice2("grid",
       {label: "Grid Size", description: "Number of pins per side", components: ["Columns #", "Rows #"]},
       [8,8]),
-    gridPitch = pitch1("gridPitch",
-      {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)"},
+    e = pitch1("e",
+      {label: "e", description: "Pitch (lead-to-lead spacing)"},
       0.635),
     pkgDim = tolerance(dimension3("pkgDim",
       {label: "Overall Package", description: "Extent of the package body", components: ["D", "E", "A"]},
@@ -55,13 +55,13 @@ material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
   // Vertical leads
   box({ dimensions: [leadDim.index(1), leadDim.index(0), A1.mul(2.0)] }) 
   .translate({ offset: [pkgDim.index(1).sub(leadDim.index(1)).mul(0.5), 0.0, pkgDim.index(2).mul(-0.5).add(A1)] })
-  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, gridPitch, 0.5] })
+  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, e, 0.5] })
   .mirror({ axes: [0] }),
 
   // Horizontal leads
   box({ dimensions: [leadDim.index(0), leadDim.index(1), A1.mul(2.0)] }) 
   .translate({ offset: [0.0, pkgDim.index(0).sub(leadDim.index(1)).mul(0.5), pkgDim.index(2).mul(-0.5).add(A1)] })
-  .repeat({ count: [grid.index(0), 1, 1], interval: [gridPitch, 0.5, 0.5] })
+  .repeat({ count: [grid.index(0), 1, 1], interval: [e, 0.5, 0.5] })
   .mirror({ axes: [1] }),
   */
 
@@ -78,7 +78,7 @@ material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
     pkgDim.index(1).add(pkgInnerDim.index(1)).mul(0.25),
     0.0,
     pkgDim.index(2).mul(-0.5).add(A1)] })
-  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, gridPitch, 0.5] })
+  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, e, 0.5] })
   .mirror({ axes: [0] }),
 
   // Horizotnal leads
@@ -93,7 +93,7 @@ material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
     0.0,
     pkgDim.index(0).add(pkgInnerDim.index(0)).mul(0.25),
     pkgDim.index(2).mul(-0.5).add(A1) ]})
-  .repeat({ count: [grid.index(0), 1, 1], interval: [gridPitch, 0.5, 0.5] })
+  .repeat({ count: [grid.index(0), 1, 1], interval: [e, 0.5, 0.5] })
   .mirror({ axes: [1] }),
   //*/
 
