@@ -6986,6 +6986,10 @@ morpheus.renderer =
 
   exports.modelRotate = modelRotate;
 
+  exports.getRenderingContext = function() {
+    return state.context;
+  };
+
   return exports;
 
 }).call(this);
