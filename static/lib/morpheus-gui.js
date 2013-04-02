@@ -381,7 +381,7 @@ morpheus.gui =
     state.canvas = canvasEl;
     if (state.canvas != null) {
       state.scene = morpheus.renderer.createScene(state.canvas.getContext('experimental-webgl'));
-      morpheus.renderer.runScene(state.canvas, (function() {}));
+      morpheus.renderer.runScene(null);
     }
     canvasInit();
     morpheusScriptCode = (_ref = (_ref1 = morpheus.editor) != null ? _ref1.getSourceCode(state.editor.domElement) : void 0) != null ? _ref : "";

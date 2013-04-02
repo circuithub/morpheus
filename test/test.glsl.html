@@ -273,7 +273,7 @@ void main(void) {
       var fs = document.getElementById('shader-fs').textContent;
       var canvasEl = document.getElementById('morpheus-canvas');
       var scene = morpheus.renderer.createScene(canvasEl.getContext('experimental-webgl'));
-      morpheus.renderer.runScene(canvasEl, function(){});
+      morpheus.renderer.runScene(null);
 
       // Create the model parameters
       var model =  { shaders: [], params: {}, args: {} };

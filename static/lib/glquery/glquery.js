@@ -1326,11 +1326,14 @@ var glQuery = (function() {
     // Wrap glQuery canvas
     var wrapCanvasAPI = function(self) {
       var api = { // Public
-        start: function(rootId) {
+        start: function(rootId, fnPre, fnPost, fnIdle) {
           logDebug("canvas.start");
           if (rootId != null) {
             if (!assertType(rootId, 'string', 'canvas.start', 'rootId')) return this;
             self.rootId = rootId;
+            self.fnPre = typeof fnPre === 'function'? fnPre : null;
+            self.fnPost = typeof fnPost === 'function'? fnPost : null;
+            self.fnIdle = typeof fnIdle === 'function'? fnIdle : null;
             self.nextFrame = window.requestAnimationFrame(self.fnLoop(), self.glContext.canvas);
             self.suspended = false;
           }
@@ -1429,13 +1432,21 @@ var glQuery = (function() {
       nextFrame: null,
       suspended: true,
       clearMask: gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
+      fnPre: null,
+      fnPost: null,
+      fnIdle: null,
       fnLoop: function() {
         self = this;
         return function fnLoop() {
           if (self.glContext.isContextLost())
             return; // Ensure rendering does not continue if context is lost
-          self.glContext.clear(self.clearMask);
-          gl(self.rootId).render(self.glContext);
+          if (gl.update()) {
+            if (self.fnPre) self.fnPre();
+            self.glContext.clear(self.clearMask);
+            gl(self.rootId).render(self.glContext);
+            if (self.fnPost) self.fnPost();
+          }
+          else if (self.fnIdle) self.fnIdle();
           self.nextFrame = window.requestAnimationFrame(fnLoop, self.glContext.canvas);
         };
       }

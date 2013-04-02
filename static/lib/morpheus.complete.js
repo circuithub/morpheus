@@ -26,8 +26,6 @@ var glQuery = (function() {
   shaderLocations = {},
   // Counters for identifiers
   shaderProgramCounter = 0,
-  // WebGL contexts
-  contexts = [],
   // Event callbacks
   eventFns = { 
     contextlost: [], 
@@ -601,6 +599,13 @@ var glQuery = (function() {
   gl.update = function() {
     return commands.length > 0;
   };
+
+  var
+  // Counters for identifiers
+  contextCounter = 0,
+  // WebGL contexts
+  contexts = [],
+  canvases = [];
 
   gl.refresh = function(obj) {
     if (obj instanceof WebGLProgram && obj['_glquery_id'] != null) {
@@ -1318,73 +1323,17 @@ var glQuery = (function() {
     if (!assert(canvasCtx != null, "Could not get a 'experimental-webgl' context."))
       return dummy;
 
-    canvasEl.addEventListener("webglcontextlost", function(event) {
-      var i;
-      // Trigger user events
-      triggerContextEvents(eventFns.contextlost, event);
-      // Cancel rendering on all canvases that use request animation frame via
-      // gl.canvas(...).start().
-      for (i = 0; i < contexts.length; ++i) {
-        var context = contexts[i];
-        if (context.glContext.canvas !== canvasEl)
-          continue;
-        if (context.nextFrame != null)
-          window.cancelAnimationFrame(context.nextFrame);
-        break;
-      }
-      // Prevent default handling of event
-      event.preventDefault();
-    }, false);
-
-    canvasEl.addEventListener("webglcontextrestored", function(event) {
-      var i;
-      // TODO: reload managed webgl resources
-      // Trigger user events
-      triggerContextEvents(eventFns.contextrestored, event);
-      // Resume rendering on all contexts that have not explicitly been suspended
-      // via gl.canvas(...).suspend().
-      for (i = 0; i < contexts.length; ++i) {
-        var context = contexts[i];
-        if (context.glContext.canvas !== canvasEl)
-          continue;
-        if (context.nextFrame == null && context.suspended === false)
-          window.requestAnimationFrame(context.fnLoop(), context.glContext.canvas);
-        break;
-      }
-    }, false);
-
-    canvasEl.addEventListener("webglcontextcreationerror", function(event) {
-      triggerContextEvents(eventFns.contextcreationerror, event);
-    }, false);
-
     // Wrap glQuery canvas
-    return (function() { 
-      var self = { // Private
-        glContext: canvasCtx,
-        rootId: null,
-        nextFrame: null,
-        suspended: true,
-        clearMask: gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
-        fnLoop: function() {
-          self = this;
-          return function fnLoop() {
-            if (self.glContext.isContextLost())
-              return; // Ensure rendering does not continue if context is lost
-            self.glContext.clear(self.clearMask);
-            gl(self.rootId).render(self.glContext);
-            self.nextFrame = window.requestAnimationFrame(fnLoop, self.glContext.canvas);
-          };
-        }
-      };
-      // Add context to the global list
-      contexts.push(self);
-      // Provide context canvas api
+    var wrapCanvasAPI = function(self) {
       var api = { // Public
-        start: function(rootId) {
+        start: function(rootId, fnPre, fnPost, fnIdle) {
           logDebug("canvas.start");
           if (rootId != null) {
             if (!assertType(rootId, 'string', 'canvas.start', 'rootId')) return this;
             self.rootId = rootId;
+            self.fnPre = typeof fnPre === 'function'? fnPre : null;
+            self.fnPost = typeof fnPost === 'function'? fnPost : null;
+            self.fnIdle = typeof fnIdle === 'function'? fnIdle : null;
             self.nextFrame = window.requestAnimationFrame(self.fnLoop(), self.glContext.canvas);
             self.suspended = false;
           }
@@ -1427,7 +1376,82 @@ var glQuery = (function() {
         if (!(k in api)) // Don't override the base api
           api[k] = canvasExtAPI[k](self);
       return api;
-    })();
+    };
+
+    // Add an identifying index to the context
+    if (typeof canvasCtx._glquery_id !== 'undefined')
+      return wrapCanvasAPI(canvases[canvasCtx._glquery_id]);
+
+    canvasCtx._glquery_id = contextCounter;
+    contexts[canvasCtx._glquery_id] = canvasCtx;
+    ++contextCounter;    
+
+    canvasEl.addEventListener("webglcontextlost", function(event) {
+      var i;
+      // Trigger user events
+      triggerContextEvents(eventFns.contextlost, event);
+      // Cancel rendering on all canvases that use request animation frame via
+      // gl.canvas(...).start().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.glContext.canvas !== canvasEl)
+          continue;
+        if (context.nextFrame != null)
+          window.cancelAnimationFrame(context.nextFrame);
+        break;
+      }
+      // Prevent default handling of event
+      event.preventDefault();
+    }, false);
+
+    canvasEl.addEventListener("webglcontextrestored", function(event) {
+      var i;
+      // TODO: reload managed webgl resources
+      // Trigger user events
+      triggerContextEvents(eventFns.contextrestored, event);
+      // Resume rendering on all contexts that have not explicitly been suspended
+      // via gl.canvas(...).suspend().
+      for (i = 0; i < contexts.length; ++i) {
+        var context = contexts[i];
+        if (context.glContext.canvas !== canvasEl)
+          continue;
+        if (context.nextFrame == null && context.suspended === false)
+          window.requestAnimationFrame(context.fnLoop(), context.glContext.canvas);
+        break;
+      }
+    }, false);
+
+    canvasEl.addEventListener("webglcontextcreationerror", function(event) {
+      triggerContextEvents(eventFns.contextcreationerror, event);
+    }, false);
+    
+    // Add context to the global list
+    canvases[canvasCtx._glquery_id] = {
+      glContext: canvasCtx,
+      rootId: null,
+      nextFrame: null,
+      suspended: true,
+      clearMask: gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT,
+      fnPre: null,
+      fnPost: null,
+      fnIdle: null,
+      fnLoop: function() {
+        self = this;
+        return function fnLoop() {
+          if (self.glContext.isContextLost())
+            return; // Ensure rendering does not continue if context is lost
+          if (gl.update()) {
+            if (self.fnPre) self.fnPre();
+            self.glContext.clear(self.clearMask);
+            gl(self.rootId).render(self.glContext);
+            if (self.fnPost) self.fnPost();
+          }
+          else if (self.fnIdle) self.fnIdle();
+          self.nextFrame = window.requestAnimationFrame(fnLoop, self.glContext.canvas);
+        };
+      }
+    };
+    return wrapCanvasAPI(canvases[canvasCtx._glquery_id]);
   };
 
   gl.canvas.extend = function(name, fn) {
@@ -6956,22 +6980,10 @@ morpheus.renderer =
     }).vertexAttrib('position', state.vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(state.ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
   });
 
-  runScene = safeExport('morpheus.renderer.runScene', void 0, function(canvas, idleCallback) {
-    var callback;
-    state.context.viewport(0, 0, canvas.width, canvas.height);
-    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+  runScene = safeExport('morpheus.renderer.runScene', void 0, function(idleCallback) {
     state.context.cullFace(state.context.BACK);
     state.context.enable(state.context.CULL_FACE);
-    callback = safeExport('morpheus.renderer: render', void 0, function() {
-      if (gl.update()) {
-        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
-        (gl('scene')).render(state.context);
-      } else {
-        idleCallback();
-      }
-      return self.nextFrame = window.requestAnimationFrame(callback, canvas);
-    });
-    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    gl.canvas(state.context).clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor(0.0, 0.0, 0.0, 0.0).start('scene', null, null, idleCallback);
   });
 
   exports = exports != null ? exports : {};
@@ -7378,7 +7390,7 @@ morpheus.gui =
     state.canvas = canvasEl;
     if (state.canvas != null) {
       state.scene = morpheus.renderer.createScene(state.canvas.getContext('experimental-webgl'));
-      morpheus.renderer.runScene(state.canvas, (function() {}));
+      morpheus.renderer.runScene(null);
     }
     canvasInit();
     morpheusScriptCode = (_ref = (_ref1 = morpheus.editor) != null ? _ref1.getSourceCode(state.editor.domElement) : void 0) != null ? _ref : "";

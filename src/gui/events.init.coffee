@@ -58,7 +58,7 @@ init = (containerEl, canvasEl, callback) ->
   state.canvas = canvasEl
   if state.canvas?
     state.scene = morpheus.renderer.createScene state.canvas.getContext 'experimental-webgl'
-    morpheus.renderer.runScene state.canvas, (->)
+    morpheus.renderer.runScene null
   canvasInit()
   morpheusScriptCode = (morpheus.editor?.getSourceCode state.editor.domElement) ? ""
   apiInit morpheusScriptCode, ->

@@ -2574,22 +2574,10 @@ morpheus.renderer =
     }).vertexAttrib('position', state.vbo, 9 * 8, gl.FLOAT, 3, false, 0, 0).vertexElem(state.ibo, 6 * 6, gl.UNSIGNED_SHORT, 0).uniform('view', gl.matrix4.newLookAt([10.0, 10.0, 10.0], [0.0, 0.0, 0.0], [0.0, 0.0, 1.0])).uniform('projection', gl.matrix4.newOrtho(-math_sqrt2, math_sqrt2, -math_sqrt2, math_sqrt2, 0.1, 100.0)).uniform('model', state.rotation).triangles();
   });
 
-  runScene = safeExport('morpheus.renderer.runScene', void 0, function(canvas, idleCallback) {
-    var callback;
-    state.context.viewport(0, 0, canvas.width, canvas.height);
-    state.context.clearColor(0.0, 0.0, 0.0, 0.0);
+  runScene = safeExport('morpheus.renderer.runScene', void 0, function(idleCallback) {
     state.context.cullFace(state.context.BACK);
     state.context.enable(state.context.CULL_FACE);
-    callback = safeExport('morpheus.renderer: render', void 0, function() {
-      if (gl.update()) {
-        state.context.clear(state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT);
-        (gl('scene')).render(state.context);
-      } else {
-        idleCallback();
-      }
-      return self.nextFrame = window.requestAnimationFrame(callback, canvas);
-    });
-    state.nextFrame = window.requestAnimationFrame(callback, canvas);
+    gl.canvas(state.context).clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor(0.0, 0.0, 0.0, 0.0).start('scene', null, null, idleCallback);
   });
 
   exports = exports != null ? exports : {};
@@ -2996,7 +2984,7 @@ morpheus.gui =
     state.canvas = canvasEl;
     if (state.canvas != null) {
       state.scene = morpheus.renderer.createScene(state.canvas.getContext('experimental-webgl'));
-      morpheus.renderer.runScene(state.canvas, (function() {}));
+      morpheus.renderer.runScene(null);
     }
     canvasInit();
     morpheusScriptCode = (_ref = (_ref1 = morpheus.editor) != null ? _ref1.getSourceCode(state.editor.domElement) : void 0) != null ? _ref : "";

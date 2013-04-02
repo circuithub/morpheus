@@ -49,21 +49,14 @@ createScene = safeExport 'morpheus.renderer.createScene', undefined, (context) -
   .triangles()
   return
 
-runScene = safeExport 'morpheus.renderer.runScene', undefined, (canvas, idleCallback) ->
+runScene = safeExport 'morpheus.renderer.runScene', undefined, (idleCallback) ->
   # Setup rendering parameters
-  state.context.viewport 0, 0, canvas.width, canvas.height
-  state.context.clearColor 0.0, 0.0, 0.0, 0.0
   state.context.cullFace state.context.BACK
   state.context.enable state.context.CULL_FACE
 
-  # Run the scene with an idle callback function
-  callback = safeExport 'morpheus.renderer: render', undefined, ->
-    if gl.update()
-      state.context.clear state.context.DEPTH_BUFFER_BIT | state.context.COLOR_BUFFER_BIT
-      (gl 'scene').render state.context
-    else
-      idleCallback()
-    self.nextFrame = window.requestAnimationFrame callback, canvas
-  state.nextFrame = window.requestAnimationFrame callback, canvas
+  gl.canvas(state.context)
+    .clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
+    .clearColor(0.0, 0.0, 0.0, 0.0)
+    .start('scene', null, null, idleCallback)
   return
 
