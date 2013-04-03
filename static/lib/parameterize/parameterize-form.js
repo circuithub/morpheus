@@ -1049,7 +1049,6 @@ var parameterWriter, writeParameter, writeTolerance,
 
 writeParameter = function(els, value) {
   var el, i, _i, _len;
-  console.log("param", value);
   if (!Array.isArray(value)) {
     if (els.length !== 1) {
       throw "Value provided " + value + " cannot populate " + els.length + " fields.";
@@ -1068,7 +1067,6 @@ writeParameter = function(els, value) {
 
 writeTolerance = function(els, value) {
   var el, i, j, max, min, minMax, _i, _len, _ref;
-  console.log("tolerance", value);
   minMax = [value.min, value.max];
   min = minMax[0], max = minMax[1];
   if (!Array.isArray(min)) {

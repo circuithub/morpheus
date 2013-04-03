@@ -55,8 +55,8 @@ runScene = safeExport 'morpheus.renderer.runScene', undefined, (idleCallback) ->
   state.context.enable state.context.CULL_FACE
 
   gl.canvas(state.context)
-    .clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
-    .clearColor(0.0, 0.0, 0.0, 0.0)
-    .start('scene', null, null, idleCallback)
+  .clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
+  .clearColor(0.0, 0.0, 0.0, 0.0)
+  .start('scene', null, null, idleCallback)
   return
 
