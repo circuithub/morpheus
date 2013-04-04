@@ -610,8 +610,7 @@ morpheus.gui =
         arg = args[k];
         newArgs[k] = _scaleArgument(arg, model.params[paramToUniform[k]]);
       }
-      model.args = newArgs;
-      return morpheus.renderer.modelArguments(modelName, model.args, model.params);
+      return morpheus.renderer.modelArguments(modelName, newArgs, model.params);
     };
     if (!(modelName != null)) {
       for (k in args) {

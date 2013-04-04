@@ -84,9 +84,8 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
     newArgs = {}
     for k,arg of args
       newArgs[k] = _scaleArgument arg, model.params[paramToUniform[k]]
-    model.args = newArgs
     # Render model
-    morpheus.renderer.modelArguments modelName, model.args, model.params
+    morpheus.renderer.modelArguments modelName, newArgs, model.params
   
   if not modelName?
     # Update all models in the hash
