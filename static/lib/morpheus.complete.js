@@ -4063,7 +4063,6 @@ var parameterWriter, writeParameter, writeTolerance,
 
 writeParameter = function(els, value) {
   var el, i, _i, _len;
-  console.log("param", value);
   if (!Array.isArray(value)) {
     if (els.length !== 1) {
       throw "Value provided " + value + " cannot populate " + els.length + " fields.";
@@ -4082,7 +4081,6 @@ writeParameter = function(els, value) {
 
 writeTolerance = function(els, value) {
   var el, i, j, max, min, minMax, _i, _len, _ref;
-  console.log("tolerance", value);
   minMax = [value.min, value.max];
   min = minMax[0], max = minMax[1];
   if (!Array.isArray(min)) {
@@ -6794,7 +6792,8 @@ morpheus.renderer =
 (function() {
   "use strict";
 
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state;
+  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state,
+    __slice = [].slice;
 
   math_sqrt2 = Math.sqrt(2.0);
 
@@ -6870,7 +6869,8 @@ morpheus.renderer =
       vs: null,
       fs: null
     },
-    rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+    clearColor: [0.2, 0.2, 0.2, 1.0]
   };
 
   modelShaders = safeExport('morpheus.renderer.modelShaders', false, function(modelName, shaders) {
@@ -6981,9 +6981,14 @@ morpheus.renderer =
   });
 
   runScene = safeExport('morpheus.renderer.runScene', void 0, function(idleCallback) {
-    state.context.cullFace(state.context.BACK);
-    state.context.enable(state.context.CULL_FACE);
-    gl.canvas(state.context).clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor(0.0, 0.0, 0.0, 0.0).start('scene', null, null, idleCallback);
+    var canvas, _gl;
+    _gl = state.context;
+    _gl.cullFace(_gl.BACK);
+    _gl.enable(_gl.CULL_FACE);
+    _gl.enable(_gl.BLEND);
+    _gl.blendFuncSeparate(_gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ZERO, _gl.ONE);
+    canvas = gl.canvas(state.context);
+    canvas.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor.apply(canvas, state.clearColor).start('scene', null, null, idleCallback);
   });
 
   exports = exports != null ? exports : {};
@@ -6997,6 +7002,10 @@ morpheus.renderer =
   exports.modelArguments = modelArguments;
 
   exports.modelRotate = modelRotate;
+
+  exports.clearColor = function(r, g, b, a) {
+    return state.clearColor = __slice.call(arguments);
+  };
 
   exports.getRenderingContext = function() {
     return state.context;

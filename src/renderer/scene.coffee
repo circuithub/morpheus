@@ -51,12 +51,16 @@ createScene = safeExport 'morpheus.renderer.createScene', undefined, (context) -
 
 runScene = safeExport 'morpheus.renderer.runScene', undefined, (idleCallback) ->
   # Setup rendering parameters
-  state.context.cullFace state.context.BACK
-  state.context.enable state.context.CULL_FACE
+  _gl = state.context
+  _gl.cullFace _gl.BACK
+  _gl.enable _gl.CULL_FACE
+  _gl.enable _gl.BLEND
+  _gl.blendFuncSeparate _gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ZERO, _gl.ONE
 
-  gl.canvas(state.context)
+  canvas = gl.canvas state.context
+  canvas
   .clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
-  .clearColor(0.0, 0.0, 0.0, 0.0)
+  .clearColor.apply(canvas, state.clearColor)
   .start('scene', null, null, idleCallback)
   return
 
