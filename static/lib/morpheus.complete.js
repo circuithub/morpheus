@@ -6870,7 +6870,7 @@ morpheus.renderer =
       fs: null
     },
     rotation: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
-    clearColor: [0.2, 0.2, 0.2, 1.0]
+    clearColor: [0.0, 0.0, 0.0, 0.0]
   };
 
   modelShaders = safeExport('morpheus.renderer.modelShaders', false, function(modelName, shaders) {
