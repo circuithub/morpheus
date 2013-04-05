@@ -64,3 +64,8 @@ runScene = safeExport 'morpheus.renderer.runScene', undefined, (idleCallback) ->
   .start('scene', null, null, idleCallback)
   return
 
+clearColor = (r,g,b,a) -> 
+  state.clearColor = [arguments...]
+  if state.context?
+    (gl.canvas state.context).clearColor r,g,b,a
+

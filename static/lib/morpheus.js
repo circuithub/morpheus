@@ -2388,7 +2388,7 @@ morpheus.renderer =
 (function() {
   "use strict";
 
-  var createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state,
+  var clearColor, createScene, exports, gl, math_degToRad, math_invsqrt2, math_radToDeg, math_sqrt2, modelArguments, modelRotate, modelShaders, runScene, safeExport, safeTry, state,
     __slice = [].slice;
 
   math_sqrt2 = Math.sqrt(2.0);
@@ -2587,6 +2587,13 @@ morpheus.renderer =
     canvas.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor.apply(canvas, state.clearColor).start('scene', null, null, idleCallback);
   });
 
+  clearColor = function(r, g, b, a) {
+    state.clearColor = __slice.call(arguments);
+    if (state.context != null) {
+      return (gl.canvas(state.context)).clearColor(r, g, b, a);
+    }
+  };
+
   exports = exports != null ? exports : {};
 
   exports.createScene = createScene;
@@ -2599,9 +2606,7 @@ morpheus.renderer =
 
   exports.modelRotate = modelRotate;
 
-  exports.clearColor = function(r, g, b, a) {
-    return state.clearColor = __slice.call(arguments);
-  };
+  exports.clearColor = clearColor;
 
   exports.getRenderingContext = function() {
     return state.context;
