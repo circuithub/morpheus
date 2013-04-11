@@ -17,7 +17,7 @@
 // See https://circuithub.com/parts/AD/ADSP-BF536BBCZ-4B for an example of this type of package
 
 var grid = latice2("grid",
-      {label: "Grid Size", components: ["Columns #", "Rows #"]},
+      {label: "Grid Size", description: "Columns (N1) by rows (N2) of balls", components: ["N1 (Columns)", "N2 (Rows)"]},
       [11,11]),
     gridPitch = pitch2("gridPitch",
       {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)", components: ["d","e"]},
@@ -28,14 +28,6 @@ var grid = latice2("grid",
     ballDiameter = dimension1("ballDiameter",
       {label: "b", description: "Ball Diameter"},
       0.3);
-    /* Artistic data
-    alignRadius = dimension1("alignRadius",
-      {label: "Alignment Mark Radius", description: "Radius of the alignment mark on the package"},
-      0.2),
-    dimension1 = dimension1("alignMargin",
-      {label: "Alignment Mark Margin"},
-      0.1);
-    //*/
 
 //* Package (chip is 0.9 the width/height of the substrate, and 0.4 the height of the package)
 box({ dimensions: [ pkgDim.index(0).mul(0.9), pkgDim.index(1).mul(0.9), pkgDim.index(2).mul(0.4) ] })
