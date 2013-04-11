@@ -15,7 +15,49 @@
   <!-- The CSM script -->
   <script id='csm-source-code' type='csm/csm-javascript'>
 
-// TODO...
+// E.g. see https://circuithub.com/parts/3M/2312-6111TG
+
+var grid = latice2("grid",
+    {label: "Grid Size", description: "Number of leads", components: ["N1 (Columns)", "N2 (Rows)"]},
+    [4,2]),
+  gridPitch = pitch2("gridPitch",
+    {label: "Grid Pitch", description: "Pitch (lead-to-lead spacing)", components: ["b","e"]},
+    [2.54,2.54]),
+  gridMargin = dimension2("gridMargin",
+    {label: "Grid Margin", description: "Horizontal and vertical margins (center-to-edge spacing) between the leads and the package boundaries", components: ["b1", "e1"]},
+    [2.54,2.54]),
+  A = dimension1("A",
+    {label: "A", description: "Total height"},
+    8.0),
+  A1 = dimension1("A1",
+    {label: "A1", description: "Over??? height"},
+    6.0),
+  A2 = dimension1("A2",
+    {label: "A2", description: "Case height"},
+    2.25),
+  j = dimension1("j", 
+    {label: "j", description: "Lead diameter"},
+    1.0);
+
+//* Package
+box({ dimensions: [gridPitch.index(0).mul(grid.index(0)), gridPitch.index(1).mul(grid.index(1)), A2] })
+.chamfer({ radius: 0.3 * 0.05 })
+.material({ color: [0.2, 0.2, 0.2] }) // Plastic (charcoal black)
+//*/
+/* Leads
+material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
+
+  //* Simple leads
+  // Vertical leads
+  cylinder({ axis: 2, radius: d.mul(0.5 * 0.99), length: 0.2 })
+  .chamfer({ radius: d.mul(0.5 * 0.1) })
+  .translate({ offset: [0.0, E.mul(0.5), -0.3 * 0.5 - 0.2 * 0.5] })
+  .repeat({ count: [grid, 1, 1], interval: [e, 0.5, 0.5] })
+  .mirror({ axes: [1] })
+  //* /
+
+)
+//*/
 
   </script>
 
