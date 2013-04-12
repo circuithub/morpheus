@@ -40,7 +40,7 @@ var grid = latice2("grid",
       1.0);
 
 //* Package
-box({ dimensions: [(gridPitch.mul(grid).add(gridMargin).sub(gridPitch)).index(0), (gridPitch.mul(grid).add(gridMargin).sub(gridPitch)).index(1), A2.mul(0.8)] })
+box({ dimensions: [(gridPitch.mul(grid).add(gridMargin.mul(2.0)).sub(gridPitch)).index(0), (gridPitch.mul(grid).add(gridMargin.mul(2.0)).sub(gridPitch)).index(1), A2.mul(0.8)] })
 .translate({ offset: [0.0, 0.0, A2.mul(0.1)] })
 .chamfer({ radius: 0.3 * 0.05 })
 .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
