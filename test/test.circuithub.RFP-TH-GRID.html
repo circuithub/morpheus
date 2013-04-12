@@ -25,7 +25,7 @@ var grid = latice2("grid",
       [2.54,2.54]),
     gridMargin = dimension2("gridMargin",
       {label: "Grid Margin", description: "Horizontal and vertical margins (center-to-edge spacing) between the leads and the package boundaries", components: ["b1", "e1"]},
-      [2.54,2.54]),
+      [1.27,1.27]),
     A = dimension1("A",
       {label: "A", description: "Total height"},
       8.0),
@@ -34,10 +34,10 @@ var grid = latice2("grid",
       6.0),
     A2 = dimension1("A2",
       {label: "A2", description: "Case height"},
-      2.25),
+      2.54),
     j = dimension1("j", 
       {label: "j", description: "Lead diameter"},
-      1.0);
+      0.64);
 
 //* Package
 box({ dimensions: [(gridPitch.mul(grid).add(gridMargin.mul(2.0)).sub(gridPitch)).index(0), (gridPitch.mul(grid).add(gridMargin.mul(2.0)).sub(gridPitch)).index(1), A2.mul(0.8)] })
