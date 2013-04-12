@@ -40,6 +40,8 @@ createScene = safeExport 'morpheus.renderer.createScene', undefined, (context) -
   
   # Create the scene
   # TODO: Use the model boundaries to set up the projection parameters and the camera distance
+  #gl.scene({ 'scene': ['model'] })
+  #gl('model')
   gl.scene({ 'scene': '' })
   .vertexAttrib('position', state.vbo, 9*8, gl.FLOAT, 3, false, 0, 0)
   .vertexElem(state.ibo, 6*6, gl.UNSIGNED_SHORT, 0)
@@ -55,7 +57,7 @@ runScene = safeExport 'morpheus.renderer.runScene', undefined, (idleCallback) ->
   _gl.cullFace _gl.BACK
   _gl.enable _gl.CULL_FACE
   _gl.enable _gl.BLEND
-  _gl.blendFuncSeparate _gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ZERO, _gl.ONE
+  _gl.blendFuncSeparate _gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ONE, _gl.ONE
 
   canvas = gl.canvas state.context
   canvas

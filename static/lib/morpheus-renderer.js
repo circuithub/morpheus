@@ -202,7 +202,7 @@ morpheus.renderer =
     _gl.cullFace(_gl.BACK);
     _gl.enable(_gl.CULL_FACE);
     _gl.enable(_gl.BLEND);
-    _gl.blendFuncSeparate(_gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ZERO, _gl.ONE);
+    _gl.blendFuncSeparate(_gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ONE, _gl.ONE);
     canvas = gl.canvas(state.context);
     canvas.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor.apply(canvas, state.clearColor).start('scene', null, null, idleCallback);
   });

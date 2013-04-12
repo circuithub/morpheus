@@ -67,19 +67,19 @@ var glQuery = (function() {
   // Generate a key-value map for the given nodes and id's for anonymous nodes
   normalizeNodes = function(nodes) {
     if (Array.isArray(nodes)) {
-      // Automatically generate a parent id and normalize all child nodes
+      // Normalize all child nodes
       var resultNodes = [];
       resultNodes.hashes = {};
       resultNodes.lastUpdate = 0;
       for (var i = 0; i < nodes.length; ++i) {
         var resultNode = normalizeNodes(nodes[i])
-        if (Array.isArray(nodes)) {
-          // Don't nest arrays, generate a new id for the node instead
+        if (Array.isArray(resultNode)) {
+          // Don't nest arrays, automaticaly generate a parent id for the node instead
           var obj = {};
-          obj[generateId()] = resultNodes;
+          obj[generateId()] = resultNode;
           resultNodes.push(obj);
         }
-        if (resultNode != null)
+        else if (resultNode != null)
           resultNodes.push(resultNode);
         else
           // TODO: In call to either scene or insert....
@@ -6986,7 +6986,7 @@ morpheus.renderer =
     _gl.cullFace(_gl.BACK);
     _gl.enable(_gl.CULL_FACE);
     _gl.enable(_gl.BLEND);
-    _gl.blendFuncSeparate(_gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ZERO, _gl.ONE);
+    _gl.blendFuncSeparate(_gl.SRC_ALPHA, _gl.ONE_MINUS_SRC_ALPHA, _gl.ONE, _gl.ONE);
     canvas = gl.canvas(state.context);
     canvas.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT).clearColor.apply(canvas, state.clearColor).start('scene', null, null, idleCallback);
   });
