@@ -270,7 +270,7 @@ morpheus.api =
         if (arg instanceof MorpheusExpression) {
           return this.update("(" + (this.serialize()) + ")[" + (arg.serialize()) + "]");
         } else if (typeof arg === 'number' && (arg | 0) === arg) {
-          return this.update("" + (this.serialize()) + "[" + arg + "]");
+          return this.update("(" + (this.serialize()) + ")[" + arg + "]");
         } else {
           throw "Argument to index must be an integer";
         }

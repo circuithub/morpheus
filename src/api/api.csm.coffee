@@ -153,7 +153,7 @@ do () ->
       if arg instanceof MorpheusExpression
         @update "(#{@serialize()})[#{arg.serialize()}]"
       else if typeof arg == 'number' and (arg | 0) == arg # (bitwise op converts operand to integer)
-        @update "#{@serialize()}[#{arg}]"
+        @update "(#{@serialize()})[#{arg}]"
       else
         throw "Argument to index must be an integer"
     mul: (arg) ->
