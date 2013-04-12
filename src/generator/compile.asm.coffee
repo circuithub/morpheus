@@ -58,10 +58,10 @@ compileASM = safeExport 'morpheus.generator.compileASM', null, (concreteSolidMod
       if node.attr.length?
         halfspaces = [
           asm.halfspace 
-            val: node.attr.length * 0.5
+            val: (glsl.mul node.attr.length, 0.5)
             axis: node.attr.axis
           asm.invert asm.halfspace
-            val: node.attr.length * -0.5
+            val: (glsl.mul node.attr.length, -0.5)
             axis: node.attr.axis
         ]
         asm.intersect (asm.cylinder { radius: node.attr.radius, axis: node.attr.axis }), halfspaces[0], halfspaces[1]
