@@ -40,21 +40,23 @@ var grid = latice2("grid",
     1.0);
 
 //* Package
-box({ dimensions: [gridPitch.index(0).mul(grid.index(0)), gridPitch.index(1).mul(grid.index(1)), A2] })
+box({ dimensions: [(gridPitch.mul(grid).add(gridMargin).sub(gridPitch)).index(0), (gridPitch.mul(grid).add(gridMargin).sub(gridPitch)).index(1), A2.mul(0.8)] })
+.translate({ offset: [0.0, 0.0, A2.mul(0.1)] })
 .chamfer({ radius: 0.3 * 0.05 })
-.material({ color: [0.2, 0.2, 0.2] }) // Plastic (charcoal black)
+.material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 //*/
-/* Leads
-material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
+//* Leads
+repeat({ count: [grid.index(0), grid.index(1), 1], interval: [gridPitch.index(0), gridPitch.index(1), 0.5] },
+  
+  box({ dimensions: [gridPitch.index(0).mul(0.75).add(j.mul(0.25)), gridPitch.index(1).mul(0.75).add(j.mul(0.25)), A2.mul(0.2)] })
+  .translate({ offset: [0.0, 0.0, A2.mul(-0.8 * 0.5)] })
+  .chamfer({ radius: j.mul(0.3 * 0.05) })
+  .material({ color: [0.2, 0.2, 0.2] }), // Plastic (charcoal black)
 
-  //* Simple leads
-  // Vertical leads
-  cylinder({ axis: 2, radius: d.mul(0.5 * 0.99), length: 0.2 })
-  .chamfer({ radius: d.mul(0.5 * 0.1) })
-  .translate({ offset: [0.0, E.mul(0.5), -0.3 * 0.5 - 0.2 * 0.5] })
-  .repeat({ count: [grid, 1, 1], interval: [e, 0.5, 0.5] })
-  .mirror({ axes: [1] })
-  //* /
+  box({ dimensions: [j, j, A] })
+  .chamfer({ radius: j.mul(0.5 * 0.1) })
+  .material({ color: [0.8, 0.8, 0.8] }) // Copper alloy
+  .translate({ offset: [0.0, 0.0, A1.sub(A.add(A2).mul(0.5))] })
 
 )
 //*/
