@@ -68,34 +68,34 @@ material({ color: [0.8, 0.8, 0.8] }, // Copper alloy
   //* Complex leads
   // Vertical leads
   box({ dimensions: [
-    pkgDim.index(1).sub(pkgInnerDim.index(1)).mul(0.5),
     leadDim.index(0),
+    pkgDim.index(1).sub(pkgInnerDim.index(1)).mul(0.5),
     A1.mul(2.0) ]})
-  .bend({ axis: 1, angle: -65, offsetAxis: 0, direction: -1,  //TODO: why does angle need to be negative here?
+  .bend({ axis: 0, angle: 65, offsetAxis: 1, direction: -1,
     offset: pkgDim.index(1).sub(pkgInnerDim.index(1)).mul(0.25).sub(leadDim.index(1))  // (total lead length / 2) - (lead landing length)
   })
   .translate({ offset: [
+    0.0,
     pkgDim.index(1).add(pkgInnerDim.index(1)).mul(0.25),
-    0.0,
-    pkgDim.index(2).mul(-0.5).add(A1)] })
-  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, e, 0.5] })
-  .mirror({ axes: [0] }),
-
-  // Horizotnal leads
-  box({ dimensions: [
-    leadDim.index(0),
-    pkgDim.index(0).sub(pkgInnerDim.index(0)).mul(0.5),
-    A1.mul(2.0) ]})
-  .bend({ axis: 0, angle: 65, offsetAxis: 1, direction: -1,
-    offset: pkgDim.index(0).sub(pkgInnerDim.index(0)).mul(0.25).sub(leadDim.index(1))  // (total lead length / 2) - (lead landing length)
-  })
-  .translate({ offset: [
-    0.0,
-    pkgDim.index(0).add(pkgInnerDim.index(0)).mul(0.25),
     pkgDim.index(2).mul(-0.5).add(A1) ]})
   .repeat({ count: [grid.index(0), 1, 1], interval: [e, 0.5, 0.5] })
   .mirror({ axes: [1] }),
   //*/
+
+  // Horizontal leads
+  box({ dimensions: [
+    pkgDim.index(0).sub(pkgInnerDim.index(0)).mul(0.5),
+    leadDim.index(0),
+    A1.mul(2.0) ]})
+  .bend({ axis: 1, angle: -65, offsetAxis: 0, direction: -1,  //TODO: why does angle need to be negative here?
+    offset: pkgDim.index(0).sub(pkgInnerDim.index(0)).mul(0.25).sub(leadDim.index(1))  // (total lead length / 2) - (lead landing length)
+  })
+  .translate({ offset: [
+    pkgDim.index(0).add(pkgInnerDim.index(0)).mul(0.25),
+    0.0,
+    pkgDim.index(2).mul(-0.5).add(A1)] })
+  .repeat({ count: [1, grid.index(1), 1], interval: [0.5, e, 0.5] })
+  .mirror({ axes: [0] }),
 
   // Center lead
   box({ dimensions: [centerLeadDim.index(0), centerLeadDim.index(1), A1.mul(2.0)] }) 
