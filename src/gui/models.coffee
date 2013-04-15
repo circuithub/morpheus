@@ -28,10 +28,12 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
   # ###
   # TEMPORARY: Scale parameters for CircuitHub
   globalScale = 0.1
+
   # Helper to get the id of a wrapped parameter
   _unwrap = (data) -> switch data._tag
     when 'tolerance', 'range' then data[0] # unwrap tolerance/range tags
     else data
+
   dimensionType = 
     real: true
     dimension1: true
@@ -73,19 +75,31 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
     return arg * globalScale
   # ###
 
-  # Helper used to render a model and update its arguments
-  _render = (model, args) ->
-    # Build a map from script ids to parameter ids
+  # Helper used to render a model and scale its arguments
+  _render = (paramToUniform, model) ->
+    # Scale arguments
+    newArgs = {}
+    if model.params?
+      for k,arg of model.args
+        newArgs[k] = _scaleArgument arg, model.params[paramToUniform[k]]
+    # Render model
+    morpheus.renderer.modelArguments modelName, newArgs, model.params
+    return
+
+  # Helper used to update a model (without scaling arguments)
+  _update = (paramToUniform, model, args) ->
+    for k,arg of args
+      if paramToUniform[k]? # ( k in params )
+        model.args[k] = args[k]
+    return
+
+  # Helper to build a map from script ids to parameter ids
+  _buildParamToUniform = (model) ->
     paramToUniform = {}
     if model.params? then for uniformID,param of model.params
       [id] = _unwrap param
       paramToUniform[id] = uniformID
-    # Scale arguments
-    newArgs = {}
-    for k,arg of args
-      newArgs[k] = _scaleArgument arg, model.params[paramToUniform[k]]
-    # Render model
-    morpheus.renderer.modelArguments modelName, newArgs, model.params
+    return paramToUniform
   
   if not modelName?
     # Update all models in the hash
@@ -93,13 +107,17 @@ setModelArguments = safeExport 'morpheus.gui.setModelArguments', {}, (modelName,
       model = state.models[k]
       if not model?
         throw "No model with the name '#{modelName}' exists in the scene."
-      _render model, v
+      paramToUniform = _buildParamToUniform model
+      _update paramToUniform, model, v
+      _render paramToUniform, model
     return
   # Update the model referenced by modelName
   model = state.models[modelName]
   if not model?
     throw "No model with the name '#{modelName}' exists in the scene."
-  _render model, args
+  paramToUniform = _buildParamToUniform model
+  _update paramToUniform, model, args
+  _render paramToUniform, model
   return
 
 ###
