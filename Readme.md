@@ -37,6 +37,14 @@ Basic installation using either [npm](http://npmjs.org/) or [cake](http://coffee
   </td>
 </tr></table>
 
+### Running examples
+
+1. Run `node server.js`
+2. Go to http://localhost:8080/test/index.html
+3. Enjoy the eye candy :)
+
+### etc...
+
 For everything else, there's cake menu:
   
     > cake
