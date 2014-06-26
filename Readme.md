@@ -3,7 +3,7 @@ Copyright (c) 2011-2013 CircuitHub Inc.
 
 ### About
 
-A plugable parameteric solid modeller for the WWW.
+A plugable scriptable solid modeller for the WWW.
 
 ### Licensing
 
@@ -42,6 +42,8 @@ Basic installation using either [npm](http://npmjs.org/) or [cake](http://coffee
 1. Run `node server.js`
 2. Go to http://localhost:8080/test/index.html
 3. Enjoy the eye candy :)
+
+![eye candy](eyecandy.jpg)
 
 ### etc...
 
